@@ -1,5 +1,3 @@
-import { RecentAds } from "../components/RecentAds";
-
 export function HomePage() {
-  return <RecentAds />;
+  return <h3>Vive les cadeaux de noël !</h3>;
 }
