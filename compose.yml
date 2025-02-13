@@ -1,9 +1,8 @@
 services:
   front:
     build: ./frontend
-    # image: mongo
     ports:
-      - 5173:5173 # host_port:container_port
+      - 5173:5173
     volumes:
       - ./frontend/index.html:/app/index.html
       - ./frontend/src:/app/src
@@ -12,31 +11,21 @@ services:
   back:
     build: ./backend
     ports:
-      - 5000:5000 # host_port:container_port
+      - 5000:5000
     environment:
       - CHOKIDAR_USEPOLLING=true
     env_file:
-      - database.env
-      - backend/.env
+      - .env
     volumes:
-      - ./backend/src:/app/src # warning between window & linux, should use polling instead of file notification
-      # - ./backend/database:/app/database # not needed anymore, was useful for SQLite
+      - ./backend/src:/app/src 
   db:
     image: postgres
     ports:
-      - 3001:5432 # host_port:container_port
+      - 3001:5432
     env_file:
-      - database.env
+      - .env
     volumes:
-      # enough for local dev
-      # - /var/lib/postgresql/data # creating anonymous volume
       - dbdata:/var/lib/postgresql/data
-
-# With docker, 4 ways to deal with data:
-# - no volume → data are stored in the container (not durable)
-# - ./somesfolderofmycomputer:./somefolderinthecontainer → mount the host filesystem in the container filesystem
-# - /somefolderinthecontainer → mount an anonymous volume managed by docker in the container filesystem
-# - namedvolume:/somefolderinthecontainer → mount a named volume created with Docker but manually managed in the container filesystem
 
 volumes:
   dbdata:
