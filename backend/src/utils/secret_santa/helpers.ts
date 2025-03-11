@@ -1,4 +1,4 @@
-function getRandomPair(players: string[]) {
+function getRandomPairs(players: string[]) {
   const availablePlayers = structuredClone(players);
   const pairs: Record<string, string> = {};
   players.forEach((player, i) => {
