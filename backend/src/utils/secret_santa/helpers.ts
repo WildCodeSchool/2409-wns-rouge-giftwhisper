@@ -1,7 +1,8 @@
 function getRandomPairs(players: string[]) {
   const availablePlayers = structuredClone(players);
   const pairs: Record<string, string> = {};
-  players.forEach((player, i) => {
+  for (let i = 0; i < players.length; i++) {
+    const player = players[i];
     // Deal with last pair //
     if (i === players.length - 2) {
       const lastPlayer = players[i + 1];
@@ -10,7 +11,7 @@ function getRandomPairs(players: string[]) {
         const finalPlayer = availablePlayers.find((p) => p !== lastPlayer);
         if (!finalPlayer) throw new Error('There was an issue during the raffle, try again');
         pairs[lastPlayer] = finalPlayer;
-        return;
+        break;
       }
     }
     ///////////////////////////////////////////////////
@@ -42,6 +43,6 @@ function getRandomPairs(players: string[]) {
     availablePlayers.splice(randomNumber, 1);
     if (attributedReceiver) availablePlayers.push(attributedReceiver);
     if (isCurrentPlayerInPool) availablePlayers.push(player);
-  });
+  };
   return pairs;
 }
