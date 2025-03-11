@@ -11,7 +11,7 @@ services:
   back:
     build: ./backend
     ports:
-      - 5500:5500
+      - 5500:5000
     environment:
       - CHOKIDAR_USEPOLLING=true
     env_file:
