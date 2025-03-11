@@ -7,41 +7,40 @@ export class User extends BaseEntity {
   
   @PrimaryGeneratedColumn()
   @Field(() => ID)
-  id: number;
+  id!: number;
 
   @Column()
   @Field()
-  first_name: string;
+  first_name!: string;
 
   @Column()
   @Field()
-  last_name: string;
+  last_name!: string;
 
   @Column({ unique: true })
   @Field()
-  email: string;
+  email!: string;
 
   @Column()
-  password: string;
+  hashedPassword!: string;
 
-  @Column({ type: "date", nullable: true })
+  @Column({ type: "date" })
   @Field()
-  date_of_birth: Date;
+  date_of_birth!: Date;
 
   @Column({ default: false })
   @Field()
-  is_verified: boolean;
+  is_verified!: boolean;
 
   @Column({ type: "timestamp", nullable: true })
   @Field()
-  last_login: Date;
+  last_login: Date = new Date();
 
   @CreateDateColumn()
   @Field()
-  created_at: Date;
+  created_at: Date = new Date();
 
   @UpdateDateColumn()
   @Field()
-  updated_at: Date;
-
+  updated_at: Date = new Date()
 }
