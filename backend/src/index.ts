@@ -5,7 +5,6 @@ import { ApolloServer } from "@apollo/server";
 import { startStandaloneServer } from "@apollo/server/standalone";
 import { GiftResolver } from "./resolvers/Gift";
 
-
 async function initialize() {
   await datasource.initialize();
   console.log("Datasource is connected");
@@ -18,7 +17,7 @@ async function initialize() {
   const server = new ApolloServer({ schema });
 
   const { url } = await startStandaloneServer(server, {
-    listen: { port: 5000, host:"0.0.0.0" }
+    listen: { port: 5500 },
   });
   console.log(`GraphQL server ready at ${url}`);
 }

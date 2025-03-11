@@ -17,7 +17,7 @@ services:
     env_file:
       - .env
     volumes:
-      - ./backend/src:/app/src 
+      - ./backend/src:/app/src
   db:
     image: postgres
     ports:
