@@ -1,6 +1,7 @@
 import { Length } from "class-validator";
 import { Field, ID, ObjectType } from "type-graphql";
-import { BaseEntity, Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { BaseEntity, Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { UserGroup } from "./UserGroup";
 
 @Entity()
 @ObjectType()
@@ -34,4 +35,8 @@ export class Group extends BaseEntity {
   @Column({ type: "boolean", default: false })
   @Field()
   is_active!: boolean;
+
+  @OneToMany(() => UserGroup, (userGroup) => userGroup.group)
+  @Field(() => [UserGroup])
+  userGroups!: UserGroup[];
 }

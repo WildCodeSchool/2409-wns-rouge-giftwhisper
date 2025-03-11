@@ -1,6 +1,7 @@
 import { Field, ID, ObjectType } from "type-graphql";
-import { BaseEntity, Column, CreateDateColumn, Entity, ManyToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { BaseEntity, Column, CreateDateColumn, Entity, ManyToMany, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { Chat } from "./Chat";
+import { UserGroup } from "./UserGroup";
 
 @Entity()
 @ObjectType()
@@ -48,4 +49,8 @@ export class User extends BaseEntity {
   @ManyToMany(() => Chat, (chat) => chat.users)
   @Field(() => [Chat])
   chats!: Chat[];
+
+  @OneToMany(() => UserGroup, (userGroup) => userGroup.user)
+  @Field(() => [UserGroup])
+  userGroups!: UserGroup[];
 }
