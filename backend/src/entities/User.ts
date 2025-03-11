@@ -1,5 +1,6 @@
 import { Field, ID, ObjectType } from "type-graphql";
-import { BaseEntity, Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { BaseEntity, Column, CreateDateColumn, Entity, ManyToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Chat } from "./Chat";
 
 @Entity()
 @ObjectType()
@@ -32,15 +33,19 @@ export class User extends BaseEntity {
   @Field()
   is_verified!: boolean;
 
-  @Column({ type: "timestamp", nullable: true })
+  @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   @Field()
-  last_login: Date = new Date();
+  last_login!: Date;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   @Field()
-  created_at: Date = new Date();
+  created_at!: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   @Field()
-  updated_at: Date = new Date()
+  updated_at!: Date;  
+
+  @ManyToMany(() => Chat, (chat) => chat.users)
+  @Field(() => [Chat])
+  chats!: Chat[];
 }
