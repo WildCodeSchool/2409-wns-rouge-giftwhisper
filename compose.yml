@@ -41,3 +41,5 @@ services:
 volumes:
   dbdata:
     driver: local
+  pgadmin_data:
+    driver: local
