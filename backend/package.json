@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "jest",
+    "test:unit": "jest",
+    "test:unit:watch": "jest --watch",
+    "test:integration": "NODE_ENV=test jest --config jest.integration.config.ts",
+    "test:integration:watch": "NODE_ENV=test jest --config jest.integration.config.ts --watch",
     "start": "tsnd ./src/index.ts"
   },
   "author": "",
