@@ -1,24 +1,17 @@
-import { Field, ObjectType } from "type-graphql";
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  JoinTable,
-  ManyToMany,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
-} from "typeorm";
+import { Field, ID, InputType, ObjectType } from "type-graphql";
+import { BaseEntity, Column, CreateDateColumn, Entity, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { User } from "./User";
 
-@Entity()
 @ObjectType()
-export class Chat {
+@Entity()
+export class Chat extends BaseEntity {
+  @Field(() => ID)
   @PrimaryGeneratedColumn()
   @Field()
   id!: number;
 
-  @Column()
   @Field()
+  @Column()
   name!: string;
 
   @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
@@ -28,9 +21,25 @@ export class Chat {
   @UpdateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
   @Field()
   updatedAt!: Date;
-
+  
+  @Field(() => [User])
   @ManyToMany(() => User, (user) => user.chats)
   @JoinTable()
-  @Field(() => [User])
   users!: User[];
 }
+
+@InputType()
+export class ChatCreateInput {
+  @Field()
+  name!: string;
+
+  @Field(() => [UserInput])
+  users!: UserInput[];
+}
+
+@InputType()
+export class UserInput {
+  @Field(() => ID)
+  id!: number;
+}
+
