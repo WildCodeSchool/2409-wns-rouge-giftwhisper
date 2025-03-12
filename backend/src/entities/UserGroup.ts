@@ -1,23 +1,17 @@
-import {
-  CreateDateColumn,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  PrimaryColumn,
-} from "typeorm";
+import { CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
 import { User } from "./User";
 import { Group } from "./Group";
-import { Field, ObjectType } from "type-graphql";
-
+import { Field, ID, ObjectType } from "type-graphql";
+@ObjectType()
 @Entity()
 @ObjectType()
 export class UserGroup {
   @PrimaryColumn()
-  @Field()
+  @Field(() => ID)
   userId!: number;
 
   @PrimaryColumn()
-  @Field()
+  @Field(() => ID)
   groupId!: number;
 
   @ManyToOne(() => User, (user) => user.userGroups)
