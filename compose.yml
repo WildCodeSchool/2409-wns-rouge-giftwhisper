@@ -11,7 +11,7 @@ services:
   back:
     build: ./backend
     ports:
-      - 5500:5000
+      - 5500:5500
     environment:
       - CHOKIDAR_USEPOLLING=true
     env_file:
@@ -26,6 +26,17 @@ services:
       - .env
     volumes:
       - dbdata:/var/lib/postgresql/data
+  
+  db-test:
+    image: postgres
+    ports:
+      - 3002:5432
+    environment:
+      - POSTGRES_USER=test
+      - POSTGRES_PASSWORD=test
+      - POSTGRES_DB=giftwhisper_test
+    volumes:
+      - db_test_data:/var/lib/postgresql/data
 
   pgadmin:
     image: dpage/pgadmin4
@@ -40,6 +51,8 @@ services:
       - db
 volumes:
   dbdata:
+    driver: local
+  db_test_data:
     driver: local
   pgadmin_data:
     driver: local

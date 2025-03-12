@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import { datasource } from "./datasource";
+import { datasource } from "./datasource.config";
 import { buildSchema } from "type-graphql";
 import { ApolloServer } from "@apollo/server";
 import { startStandaloneServer } from "@apollo/server/standalone";
