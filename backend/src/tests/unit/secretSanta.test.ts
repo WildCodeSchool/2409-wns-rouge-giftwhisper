@@ -28,7 +28,7 @@ describe('getRandomPairs', () => {
   describe('Testing function with hard values instead of random values', () => {
     //We will use a random number of players for the test
     const randomMaxSize = Math.floor(Math.random() * (players.length - 2) + 3);
-    const randomSizedPlayersArray = structuredClone(players.slice(0, randomMaxSize));
+    const randomSizedPlayersArray = players.slice(0, randomMaxSize);
     const pairs = getRandomPairs(randomSizedPlayersArray, { random: false });
 
     test("Each player must me paired", () => {
@@ -59,7 +59,7 @@ describe('getRandomPairs', () => {
   describe('Testing function with random values', () => {
     //We will use a random number of players for the test
     const randomMaxSize = Math.floor(Math.random() * (players.length - 2) + 3);
-    const randomSizedPlayersArray = structuredClone(players.slice(0, randomMaxSize));
+    const randomSizedPlayersArray = players.slice(0, randomMaxSize);
     const pairs = getRandomPairs(randomSizedPlayersArray, { random: false });
 
     test("Each player must me paired", () => {
