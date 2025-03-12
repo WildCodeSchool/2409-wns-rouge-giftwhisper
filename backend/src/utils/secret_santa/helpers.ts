@@ -1,7 +1,7 @@
 
 /**
  * @info Function based on the Fisher-States alogrithm, returns unique pairs of strings
- * @param players An array of string representing the firstname and lastnamer of the palyers "John Doe"
+ * @param players An array of string representing the firstname and lastname of the palyers "John Doe", length >= 3 required
  * @param options An object containing options : random
  * @param options.random Shoud be ignored, used for test purposes only, set at true by default  
  * @returns An array of object with a gifter key and a receiver key, {gifter: 'John Doe', receiver: 'Jane Doe'}
