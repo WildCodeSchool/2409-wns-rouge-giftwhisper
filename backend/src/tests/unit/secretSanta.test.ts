@@ -38,10 +38,9 @@ describe('getRandomPairs', () => {
     test("Each player should be paired with the player at i + 1", () => {
       for (let i = 0; i < randomSizedPlayersArray.length; i++) {
         const pair = pairs.find(pair => pair.gifter === randomSizedPlayersArray[i]);
-        const receiverIndex = randomSizedPlayersArray.findIndex((p) => p === pair?.receiver);
         //The last player of the array is expected to be paired with the first player of the array
-        const expectedIndex = i + 1 < randomSizedPlayersArray.length ? i + 1 : 0;
-        expect(receiverIndex).toBe(expectedIndex);
+        const expectedReceiver = i + 1 < randomSizedPlayersArray.length ? randomSizedPlayersArray[i + 1] : randomSizedPlayersArray[0];
+        expect(pair?.receiver).toBe(expectedReceiver);
       }
     });
 
