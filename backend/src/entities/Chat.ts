@@ -14,6 +14,7 @@ import { User } from "./User";
 @ObjectType()
 export class Chat {
   @PrimaryGeneratedColumn()
+  @Field()
   id!: number;
 
   @Column()
