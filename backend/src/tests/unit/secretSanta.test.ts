@@ -1,6 +1,16 @@
 import { getRandomPairs } from "../../utils/secret_santa/helpers";
+import type { SecretSantaPair } from "../../utils/types/secretSanta";
 
-const hasSamePairPlayer = (pairs: { gifter: string, receiver: string }[]) => {
+const allPairedWithValidPlayer = (pairs: SecretSantaPair[], players: string[]) => {
+  let pairedWithValidPlayer = true;
+  for (const pair of pairs) {
+    const { gifter, receiver } = pair;
+    if (!players.includes(gifter) || !players.includes(receiver)) pairedWithValidPlayer = false;
+  }
+  return pairedWithValidPlayer
+}
+
+const hasSamePairPlayer = (pairs: SecretSantaPair[]) => {
   let samePlayerPair = false;
   for (let i = 0; i < pairs.length; i++) {
     const { gifter, receiver } = pairs[i];
@@ -8,7 +18,8 @@ const hasSamePairPlayer = (pairs: { gifter: string, receiver: string }[]) => {
   };
   return samePlayerPair;
 };
-const hasPairReciprocity = (pairs: { gifter: string, receiver: string }[]) => {
+
+const hasPairReciprocity = (pairs: SecretSantaPair[]) => {
   let pairReciprocity = false;
   for (let i = 0; i < pairs.length; i++) {
     const { gifter, receiver } = pairs[i];
@@ -19,6 +30,7 @@ const hasPairReciprocity = (pairs: { gifter: string, receiver: string }[]) => {
   };
   return pairReciprocity;
 };
+
 
 describe('getRandomPairs', () => {
   const players = ['Marc A', 'Joe B', 'Naima C', 'Tarek D', 'Claude E', 'Bruno F', 'Jasmine G', 'Xavier H', 'Moussa I', 'Kevin J'];
@@ -33,6 +45,7 @@ describe('getRandomPairs', () => {
 
     test("Each player must me paired", () => {
       expect(pairs.length).toBe(randomMaxSize);
+      expect(allPairedWithValidPlayer(pairs, randomSizedPlayersArray)).toBe(true);
     });
 
     test("Each player should be paired with the player at i + 1", () => {
@@ -63,6 +76,7 @@ describe('getRandomPairs', () => {
 
     test("Each player must me paired", () => {
       expect(pairs.length).toBe(randomMaxSize);
+      expect(allPairedWithValidPlayer(pairs, randomSizedPlayersArray)).toBe(true);
     });
 
     it("Should prevent user from getting paired with themselves", () => {
