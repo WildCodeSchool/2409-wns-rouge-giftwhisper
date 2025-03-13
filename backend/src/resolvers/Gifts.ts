@@ -2,7 +2,7 @@ import { Resolver, Query, Mutation, Arg } from "type-graphql";
 import { Gift } from "../entities/Gift";
 
 @Resolver()
-export class GiftResolver {
+export class GiftsResolver {
   @Query(() => [Gift])
   async gifts() {
     const gifts = await Gift.find();
@@ -10,7 +10,7 @@ export class GiftResolver {
   }
 
   @Mutation(() => Gift)
-  async createGift(@Arg('title') title: string) {
+  async createGift(@Arg("title") title: string) {
     const newGift = new Gift();
     newGift.title = title;
     await newGift.save();
