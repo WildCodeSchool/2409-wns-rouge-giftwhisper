@@ -8,11 +8,6 @@ export class UsersResolver {
   //Create
   @Mutation(() => User)
   async createUser(@Arg("data") data: UserCreateInput): Promise<User> {
-    const errors = await validate(data);
-    if (errors.length > 0) {
-      throw new Error(`Validation error: ${JSON.stringify(errors)}`);
-    }
-
     const newUser = new User();
     newUser.email = data.email;
     newUser.first_name = data.first_name;
@@ -22,6 +17,11 @@ export class UsersResolver {
 
     // Hachage du mot de passe
     newUser.hashedPassword = await argon2.hash(data.password);
+
+    const errors = await validate(newUser);
+    if (errors.length > 0) {
+      throw new Error(`Validation error: ${JSON.stringify(errors)}`);
+    }
 
     await newUser.save();
     return newUser;

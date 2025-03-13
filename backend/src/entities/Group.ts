@@ -1,12 +1,20 @@
 import { Length } from "class-validator";
 import { Field, ID, InputType, ObjectType } from "type-graphql";
-import { BaseEntity, Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import {
+  BaseEntity,
+  Column,
+  CreateDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from "typeorm";
 import { UserGroup } from "./UserGroup";
+import { Chat } from "./Chat";
 
 @Entity()
 @ObjectType()
 export class Group extends BaseEntity {
-  
   @PrimaryGeneratedColumn()
   @Field(() => ID)
   id!: number;
@@ -16,21 +24,21 @@ export class Group extends BaseEntity {
   @Field()
   name!: string;
 
-  @Column({ type: "timestamp", nullable: true})
+  @Column({ type: "timestamp", nullable: true })
   @Field({ nullable: true })
   end_date?: Date;
 
-  @Column({ type: "boolean", nullable: false})
+  @Column({ type: "boolean", nullable: false })
   @Field()
   is_secret_santa!: boolean;
 
-  @CreateDateColumn({ type: "timestamp" })
+  @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
   @Field()
-  created_at: Date = new Date();
+  created_at!: Date;
 
-  @UpdateDateColumn({ type: "timestamp", nullable: true })
+  @UpdateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
   @Field({ nullable: true })
-  updated_at?: Date;
+  updated_at!: Date;
 
   @Column({ type: "boolean", default: false })
   @Field()
@@ -39,6 +47,10 @@ export class Group extends BaseEntity {
   @OneToMany(() => UserGroup, (userGroup) => userGroup.group)
   @Field(() => [UserGroup])
   userGroups!: UserGroup[];
+
+  @OneToMany(() => Chat, (chat) => chat.group)
+  @Field(() => [Chat])
+  chats!: Chat[];
 }
 
 @InputType()
@@ -56,16 +68,16 @@ export class GroupCreateInput {
 
 @InputType()
 export class GroupUpdateInput {
-    @Field()
-    @Length(1, 50, { message: "Name must be under 50 chars" })
-    name?: string;
+  @Field({ nullable: true })
+  @Length(1, 50, { message: "Name must be under 50 chars" })
+  name?: string;
 
-    @Field({ nullable: true })
-    end_date?: Date;
+  @Field({ nullable: true })
+  end_date?: Date;
 
-    @Field({ nullable: true })
-    is_secret_santa?: boolean;
+  @Field({ nullable: true })
+  is_secret_santa?: boolean;
 
-    @Field({ nullable: true })
-    is_active?: boolean;
+  @Field({ nullable: true })
+  is_active?: boolean;
 }

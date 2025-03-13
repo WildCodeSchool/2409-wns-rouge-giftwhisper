@@ -1,8 +1,15 @@
-import { CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
+import {
+  CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryColumn,
+  PrimaryGeneratedColumn,
+} from "typeorm";
 import { User } from "./User";
 import { Group } from "./Group";
-import { Field, ID, ObjectType } from "type-graphql";
-@ObjectType()
+import { Field, ID, ObjectType, InputType } from "type-graphql";
+
 @Entity()
 @ObjectType()
 export class UserGroup {
@@ -28,3 +35,6 @@ export class UserGroup {
   @Field()
   join_at!: Date;
 }
+
+@InputType()
+export class UserGroupCreateInput {}
