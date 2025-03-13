@@ -5,6 +5,7 @@ import {
   ManyToOne,
   PrimaryColumn,
   PrimaryGeneratedColumn,
+  BaseEntity,
 } from "typeorm";
 import { User } from "./User";
 import { Group } from "./Group";
@@ -12,7 +13,7 @@ import { Field, ID, ObjectType, InputType } from "type-graphql";
 
 @Entity()
 @ObjectType()
-export class UserGroup {
+export class UserGroup extends BaseEntity {
   @PrimaryColumn()
   @Field(() => ID)
   userId!: number;
