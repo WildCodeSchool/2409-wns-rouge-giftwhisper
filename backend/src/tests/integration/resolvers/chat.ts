@@ -8,7 +8,7 @@ export function chatResolverTest(testArgs: TestArgsType) {
     it("Should create a chat with valid data", async () => {
       const mockChatData = {
         name: "The very first chat, yay !",
-        users: [1, 3],
+        users: [12, 14],
         groupId: 1,
       };
       const response = await testArgs.server?.executeOperation<{

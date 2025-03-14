@@ -80,4 +80,7 @@ export class GroupUpdateInput {
 
   @Field({ nullable: true })
   is_active?: boolean;
+
+  @Field(() => [ID], { nullable: true })
+  userIds?: number[];
 }

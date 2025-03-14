@@ -6,12 +6,12 @@ import { assert } from "../index.test";
 
 export function usersResolverTest(testArgs: TestArgsType) {
   describe("User Resolver Tests", () => {
-    it("Should create a user with valid data", async () => {
+    it("Should create a verifieduser with valid data", async () => {
       const mockUser = {
-        email: "jean-claude11@gmail.com",
+        email: "jean-claude22@gmail.com",
         password: "Whisky-Lover@44!",
-        first_name: "Jean-Claude11",
-        last_name: "Whisky11",
+        first_name: "Jean-Claude22",
+        last_name: "Whisky22",
         date_of_birth: new Date("12/12/1973"),
         is_verified: true,
       };
@@ -37,7 +37,7 @@ export function usersResolverTest(testArgs: TestArgsType) {
       expect(createdUserId).toBeDefined();
       const userFromDb = await User.findOneBy({ id: createdUserId });
       expect(userFromDb?.email).toBe(mockUser.email);
-    });
+    })
 
     // it("Should create multiple users with valid data", async () => {
     //   for await (const user of mockUserData) {
@@ -65,5 +65,5 @@ export function usersResolverTest(testArgs: TestArgsType) {
     //     expect(userFromDb?.email).toBe(user.email);
     //   }
     // });
-  });
+  })
 }

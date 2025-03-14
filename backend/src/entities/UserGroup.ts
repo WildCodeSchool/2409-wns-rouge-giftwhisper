@@ -4,7 +4,6 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryColumn,
-  PrimaryGeneratedColumn,
   BaseEntity,
 } from "typeorm";
 import { User } from "./User";
@@ -14,20 +13,14 @@ import { Field, ID, ObjectType, InputType } from "type-graphql";
 @Entity()
 @ObjectType()
 export class UserGroup extends BaseEntity {
-  @PrimaryColumn()
-  @Field(() => ID)
-  userId!: number;
-
-  @PrimaryColumn()
-  @Field(() => ID)
-  groupId!: number;
-
-  @ManyToOne(() => User, (user) => user.userGroups)
+  @PrimaryColumn({ name: 'userId', type: 'number' })
+  @ManyToOne(() => User, (user) => user.id)
   @JoinColumn({ name: "userId" })
   @Field(() => User)
   user!: User;
 
-  @ManyToOne(() => Group, (group) => group.userGroups)
+  @PrimaryColumn({ name: 'groupId', type: 'number' })
+  @ManyToOne(() => Group, (group) => group.id)
   @JoinColumn({ name: "groupId" })
   @Field(() => Group)
   group!: Group;
@@ -37,5 +30,3 @@ export class UserGroup extends BaseEntity {
   join_at!: Date;
 }
 
-@InputType()
-export class UserGroupCreateInput {}
