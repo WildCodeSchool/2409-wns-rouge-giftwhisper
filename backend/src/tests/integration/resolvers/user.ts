@@ -6,9 +6,9 @@ import { assert } from "../index.test";
 
 export function usersResolverTest(testArgs: TestArgsType) {
   describe("User Resolver Tests", () => {
-    it("Should create a verifieduser with valid data", async () => {
+    it("Should create a verified user with valid data", async () => {
       const mockUser = {
-        email: "jean-claude22@gmail.com",
+        email: `jean-claude-${Date.now()}@gmail.com`,
         password: "Whisky-Lover@44!",
         first_name: "Jean-Claude22",
         last_name: "Whisky22",
@@ -39,31 +39,34 @@ export function usersResolverTest(testArgs: TestArgsType) {
       expect(userFromDb?.email).toBe(mockUser.email);
     })
 
-    // it("Should create multiple users with valid data", async () => {
-    //   for await (const user of mockUserData) {
-    //     const response = await testArgs.server?.executeOperation<{
-    //       createUser: User;
-    //     }>({
-    //       query: mutationCreateUser,
-    //       variables: {
-    //         data: {
-    //           email: user.email,
-    //           password: user.password,
-    //           first_name: user.first_name,
-    //           last_name: user.last_name,
-    //           date_of_birth: user.date_of_birth,
-    //           is_verified: user.is_verified,
-    //         },
-    //       },
-    //     });
+    it("Should create multiple users with valid data", async () => {
+      const mockUsersList = mockUserData.slice(0, 10);
+      testArgs.data.userIds = [];
+      for (const user of mockUsersList) {
+        const response = await testArgs.server?.executeOperation<{
+          createUser: User;
+        }>({
+          query: mutationCreateUser,
+          variables: {
+            data: {
+              email: user.email,
+              password: user.password,
+              first_name: user.first_name,
+              last_name: user.last_name,
+              date_of_birth: user.date_of_birth,
+              is_verified: user.is_verified,
+            },
+          },
+        });
 
-    //     assert(response?.body.kind === "single");
-    //     expect(response.body.singleResult.errors).toBeUndefined();
-    //     const createdUserId = response.body.singleResult.data?.createUser.id;
-    //     expect(createdUserId).toBeDefined();
-    //     const userFromDb = await User.findOneBy({ id: createdUserId });
-    //     expect(userFromDb?.email).toBe(user.email);
-    //   }
-    // });
+        assert(response?.body.kind === "single");
+        expect(response.body.singleResult.errors).toBeUndefined();
+        const createdUserId = response.body.singleResult.data?.createUser.id;
+        expect(createdUserId).toBeDefined();
+        const userFromDb = await User.findOneBy({ id: createdUserId });
+        expect(userFromDb?.email).toBe(user.email);
+        testArgs.data.userIds.push(userFromDb?.id)
+      };
+    });
   })
 }
