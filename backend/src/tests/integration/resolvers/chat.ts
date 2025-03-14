@@ -9,7 +9,7 @@ import { getRandomPairs } from "../../../utils/secret_santa/helpers";
 
 export function chatResolverTest(testArgs: TestArgsType) {
   describe("Chat Resolver Tests", () => {
-    it.skip("Should create a chat with valid data", async () => {
+    it("Should create a chat with valid data", async () => {
       const response = await testArgs.server?.executeOperation<{
         createChat: Chat;
       }>({
