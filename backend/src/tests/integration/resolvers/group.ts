@@ -70,6 +70,22 @@ export function groupResolverTest(testArgs: TestArgsType) {
       const stringCreatedUserIds = testArgs.data.userIds.map((id: string | number) => String(id));
 
       expect(stringUserIdsInGroup.sort()).toEqual(stringCreatedUserIds.sort());
+
+      //Update du groupe en actif pour simuler le fait que tous les participants ont bien rejoint le groupe (et donc qu'ils sont inscrits sur l'app)
+      const update = await testArgs.server?.executeOperation<{
+        updateGroup: Group;
+      }>({
+        query: mutationUpdateGroup,
+        variables: {
+          id:  testArgs.data.groupId[0],
+          data: {
+            is_active: true,
+          },
+        },
+      });
+      
+      assert(update?.body.kind === "single");
+      expect(update.body.singleResult.errors).toBeUndefined();
     });
   });
 }
