@@ -7,7 +7,6 @@ import {
   JoinTable,
   ManyToMany,
   ManyToOne,
-  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
@@ -23,8 +22,8 @@ export class Chat extends BaseEntity {
   id!: number;
 
   @Field()
-  @Column()
-  name!: string;
+  @Column({nullable: true})
+  name?: string;
 
   @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
   @Field()
@@ -49,8 +48,8 @@ export class Chat extends BaseEntity {
 
 @InputType()
 export class ChatCreateInput {
-  @Field()
-  name!: string;
+  @Field({nullable: true})
+  name?: string;
 
   @Field(() => [ID])
   users!: number[];

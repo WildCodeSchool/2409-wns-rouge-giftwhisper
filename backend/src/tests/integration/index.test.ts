@@ -8,7 +8,7 @@ import { databaseTests } from "./database/database";
 
 export type TestArgsType = {
   server: ApolloServer<BaseContext> | null;
-  data: {};
+  data: any;
 };
 
 const testArgs: TestArgsType = {
@@ -25,6 +25,9 @@ beforeAll(async () => {
   // Initialisation de la connexion à la base de données de test
   await datasource.initialize();
   
+  // Drop et recréation des tables pour avoir une base de données propre
+  await datasource.synchronize(true); // Le paramètre 'true' force la suppression des tables avant de les recréer
+
   // Initialisation du serveur Apollo
   const schema = await getSchema();
   const testServer = new ApolloServer({ schema });

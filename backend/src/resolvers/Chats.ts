@@ -38,7 +38,9 @@ export class ChatsResolver {
     }
 
     const chat = new Chat();
-    chat.name = data.name;
+    if (data.name !== undefined){
+      chat.name = data.name;
+    }
     chat.users = users;
     chat.group = groupId;
 

@@ -39,20 +39,19 @@ describe('getRandomPairs', () => {
   // In this fashion, a player will be paired with the player next to him (i + 1) from the original array of players.
   describe('Testing function with hard values instead of random values', () => {
     //We will use a random number of players for the test
-    const randomMaxSize = Math.floor(Math.random() * (players.length - 2) + 3);
-    const randomSizedPlayersArray = players.slice(0, randomMaxSize);
-    const pairs = getRandomPairs(randomSizedPlayersArray, { random: false });
+    const nonRandomPlayers = structuredClone(players);
+    const pairs = getRandomPairs(nonRandomPlayers, { random: false });
 
     test("Each player must me paired", () => {
-      expect(pairs.length).toBe(randomMaxSize);
-      expect(allPairedWithValidPlayer(pairs, randomSizedPlayersArray)).toBe(true);
+      expect(pairs.length).toBe(nonRandomPlayers.length);
+      expect(allPairedWithValidPlayer(pairs, nonRandomPlayers)).toBe(true);
     });
 
     test("Each player should be paired with the player at i + 1", () => {
-      for (let i = 0; i < randomSizedPlayersArray.length; i++) {
-        const pair = pairs.find(pair => pair.gifter === randomSizedPlayersArray[i]);
+      for (let i = 0; i < nonRandomPlayers.length; i++) {
+        const pair = pairs.find(pair => pair.gifter === nonRandomPlayers[i]);
         //The last player of the array is expected to be paired with the first player of the array
-        const expectedReceiver = i + 1 < randomSizedPlayersArray.length ? randomSizedPlayersArray[i + 1] : randomSizedPlayersArray[0];
+        const expectedReceiver = i + 1 < nonRandomPlayers.length ? nonRandomPlayers[i + 1] : nonRandomPlayers[0];
         expect(pair?.receiver).toBe(expectedReceiver);
       }
     });
@@ -70,13 +69,12 @@ describe('getRandomPairs', () => {
 
   describe('Testing function with random values', () => {
     //We will use a random number of players for the test
-    const randomMaxSize = Math.floor(Math.random() * (players.length - 2) + 3);
-    const randomSizedPlayersArray = players.slice(0, randomMaxSize);
-    const pairs = getRandomPairs(randomSizedPlayersArray, { random: false });
+    const randomPlayers = structuredClone(players);
+    const pairs = getRandomPairs(randomPlayers, { random: false });
 
     test("Each player must me paired", () => {
-      expect(pairs.length).toBe(randomMaxSize);
-      expect(allPairedWithValidPlayer(pairs, randomSizedPlayersArray)).toBe(true);
+      expect(pairs.length).toBe(randomPlayers.length);
+      expect(allPairedWithValidPlayer(pairs, randomPlayers)).toBe(true);
     });
 
     it("Should prevent user from getting paired with themselves", () => {

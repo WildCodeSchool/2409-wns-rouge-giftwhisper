@@ -59,7 +59,7 @@ export class User extends BaseEntity {
   @Field(() => [Chat])
   chats!: Chat[];
 
-  @OneToMany(() => UserGroup, (userGroup) => userGroup.user)
+  @OneToMany(() => UserGroup, (userGroup) => userGroup.user, )
   @Field(() => [UserGroup])
   userGroups!: UserGroup[];
 }
