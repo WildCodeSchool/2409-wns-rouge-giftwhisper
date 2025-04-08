@@ -16,6 +16,7 @@ import GroupCreation from "./pages/GroupCreation";
 import GroupSettings from "./pages/GroupSettings";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
+import SignUp from "./pages/SignUp";
 
 const client = new ApolloClient({
   uri: "/api",
@@ -31,6 +32,7 @@ function App() {
           <Route Component={PageLayout}>
             <Route path="/" Component={HomePage} />
             <Route path="/sign-in" Component={SignIn} />
+            <Route path="/sign-up" Component={SignUp} />
             <Route path="/dashboard" Component={Dashboard} />
             <Route path="/about" Component={About} />
             <Route path="/profile" Component={Profile} />
