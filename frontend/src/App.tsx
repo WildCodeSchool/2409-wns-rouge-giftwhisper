@@ -1,6 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import "./App.css";
-import { PageLayout } from "./components/Layout";
+import { PageLayout } from "./components/PageLayout";
 import { HomePage } from "./pages/Home";
 import {
   ApolloClient,
@@ -42,7 +42,6 @@ function App() {
             <Route path="/group-settings" Component={GroupSettings} />
             <Route path="/chat-window" Component={ChatWindow} />
             <Route path="*" Component={() => <Navigate to="/" />} />
-            //More routes here 🔥
           </Route>
         </Routes>
       </BrowserRouter>
