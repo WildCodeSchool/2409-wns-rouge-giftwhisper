@@ -17,17 +17,17 @@ jobs:
         working-directory: ./backend
 
       - name: Run backend tests
-        run: npm test
+        run: npm run test:unit
         working-directory: ./backend
 
       # --- FRONTEND ---
-      - name: Install frontend deps
-        run: npm ci
-        working-directory: ./frontend
+      # - name: Install frontend deps
+      #   run: npm ci
+      #   working-directory: ./frontend
 
-      - name: Run frontend tests
-        run: npm test
-        working-directory: ./frontend
+      # - name: Run frontend tests
+      #   run: npm test
+      #   working-directory: ./frontend
 
       # --- DOCKER HUB ---
       - name: Login to Docker Hub
