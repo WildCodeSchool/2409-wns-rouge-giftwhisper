@@ -1,9 +1,11 @@
-import { Outlet, Link } from "react-router-dom";
+import { Outlet, Link, useLocation } from "react-router-dom";
 
 export function PageLayout() {
+  const location = useLocation();
   return (
-    <body>
-      <main>
+    <main>
+      {location.pathname !== '/chat-window'
+        ?
         <ul>
           <li><Link to={'/'}>Home</Link></li>
           <li><Link to={'/sign-in'}>Sign In</Link></li>
@@ -17,8 +19,9 @@ export function PageLayout() {
           <li><Link to={'/group-settings'}>Group Settings</Link></li>
           <li><Link to={'/chat-window'}>Chat Windows</Link></li>
         </ul>
-        <Outlet />
-      </main>
-    </body>
+        : null
+      }
+      <Outlet />
+    </main>
   );
 }
