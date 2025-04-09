@@ -45,5 +45,11 @@ jobs:
           context: ./backend
           push: true
           tags: ${{ vars.DOCKERHUB_REPO }}:latest
+      - name: Build and push for frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          tags: ${{ vars.DOCKERHUB_REPO_FRONT }}:latest
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
