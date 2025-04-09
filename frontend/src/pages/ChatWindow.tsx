@@ -30,18 +30,31 @@ function ChatWindow() {
   return (
     <>
       <article className="chat-window">
-        <h1>⬅️ Pour {giftReceiver}</h1>
+        <header className="header">
+          <div className="info">
+            <p>⬅️</p>
+            <h1>Pour {giftReceiver}</h1>
+          </div>
+          <p>ℹ️</p>
+        </header>
         <section className="messages">
           {messages.map((message) => {
             return (
               <div key={message.id} className={`message${message.author !== 'me' ? ' align-right' : ''}`}>
-                <p>{message.author} : {message.text}</p>
+                <div className={`author${message.author !== 'me' ? ' align-right' : ''}`}>
+                  <div className="pellet"></div>
+                  <p>{message.author}</p>
+                </div>
+                <p>{message.text}</p>
               </div>
             )
           })}
         </section>
         <form className="message-form" onSubmit={submit}>
-          <input value={message} onChange={(e) => setMessage(e.currentTarget.value)} name="chat-message" id="chat-message" type="text" />
+          <div className="input-box">
+            <button> + </button>
+            <input placeholder="Message" value={message} onChange={(e) => setMessage(e.currentTarget.value)} name="chat-message" id="chat-message" type="text" />
+          </div>
           <button type="submit">➡️</button>
         </form>
       </article>
