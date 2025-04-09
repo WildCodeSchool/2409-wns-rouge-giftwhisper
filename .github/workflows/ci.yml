@@ -3,6 +3,8 @@ name: ci
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   build:
@@ -32,7 +34,7 @@ jobs:
       # --- GIT SHA ---
       - name: Get short SHA
         id: sha
-        run: echo "value=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+        run: echo "value=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
 
       # --- DOCKER ---
       - name: Login to Docker Hub
