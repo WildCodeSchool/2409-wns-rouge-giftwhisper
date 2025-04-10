@@ -19,7 +19,7 @@ jobs:
         working-directory: ./backend
 
       - name: Run backend tests
-        run: npm run test:unit
+        run: npm run test:unit && npm run test:integration
         working-directory: ./backend
 
       # --- FRONTEND ---
