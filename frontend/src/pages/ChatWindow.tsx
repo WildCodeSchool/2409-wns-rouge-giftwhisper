@@ -35,7 +35,7 @@ function ChatWindow() {
 
   return (
     <>
-      <article className="h-screen flex flex-col">
+      <article className="h-screen flex flex-col overflow-hidden">
         {/* <header className="bg-gradient-to-r from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB] h-10 flex items-center px-4 justify-between">
           <div className="flex items-center gap-4 max-w-[90%]">
             <Link to="/">
