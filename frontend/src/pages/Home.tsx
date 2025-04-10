@@ -5,9 +5,9 @@ import { Link } from "react-router-dom";
 export function HomePage() {
   return (
     <>
-      <header className="flex flex-col items-center gap-4 w-fit px-4 pb-10 bg-custom-gradient-dsktp md:w-full md:flex-row md:px-20 md:pb-0 md:pt-10 md:mb-10 xl:px-56 xl:pt-20 2xl:px-80 2xl:pt-16">
+      <header className="flex flex-col items-center gap-4 w-fit px-4 pb-10 bg-custom-gradient-dsktp md:w-full md:flex-row md:px-20 md:pb-0 md:mb-10 xl:px-56 2xl:px-80 md:pt-0">
         <div className="flex flex-col items-center gap-4 md:items-start">
-          <h1 className="text-3xl 2xl:text-4xl font-bold text-primary md:text-primary-foreground">
+          <h1 className="text-3xl 2xl:text-4xl font-bold pt-10 text-primary md:pt-0 md:text-primary-foreground">
             Envie d'offrir le cadeau parfait sans prise de tête ?
           </h1>
           <p className="text-xl 2xl:text-2xl md:text-primary-foreground">
