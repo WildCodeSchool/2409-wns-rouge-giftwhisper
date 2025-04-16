@@ -83,5 +83,5 @@ jobs:
           context: ./backend
           push: true
           tags: |
-            ${{ vars.DOCKERHUB_REPO }}:latest
-            ${{ vars.DOCKERHUB_REPO }}:${{ steps.sha.outputs.value }}
+            ${{ vars.DOCKERHUB_REPO_STAGING_SERVER }}:latest
+            ${{ vars.DOCKERHUB_REPO_STAGING_SERVER }}:${{ steps.sha.outputs.value }}

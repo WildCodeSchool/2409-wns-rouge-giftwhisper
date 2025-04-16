@@ -6,6 +6,7 @@ on:
   pull_request:
     branches: [staging]
 
+jobs:
   build:
     runs-on: ubuntu-latest
     steps:
@@ -45,5 +46,5 @@ on:
           context: ./frontend
           push: true
           tags: |
-            ${{ vars.DOCKERHUB_REPO_FRONT }}:latest
-            ${{ vars.DOCKERHUB_REPO_FRONT }}:${{ steps.sha.outputs.value }}
+            ${{ vars.DOCKERHUB_REPO_STAGING_FRONT }}:latest
+            ${{ vars.DOCKERHUB_REPO_STAGING_FRONT }}:${{ steps.sha.outputs.value }}
