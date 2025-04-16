@@ -18,6 +18,17 @@ services:
       - .env
     volumes:
       - ./backend/src:/app/src
+
+  nginx:
+    image: nginx
+    volumes:
+      - ./nginx:/etc/nginx
+    ports:
+      - ${GATEWAY_PORT:-8000}:80
+    depends_on:
+      - back
+      - front
+
   db:
     image: postgres
     ports:
@@ -26,7 +37,7 @@ services:
       - .env
     volumes:
       - dbdata:/var/lib/postgresql/data
-  
+
   db-test:
     image: postgres
     ports:
