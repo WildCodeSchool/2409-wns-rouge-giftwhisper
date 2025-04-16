@@ -44,15 +44,15 @@ export class User extends BaseEntity {
   @Field()
   is_verified!: boolean;
 
-  @UpdateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
+  @UpdateDateColumn()
   @Field()
   last_login!: Date;
 
-  @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
+  @CreateDateColumn()
   @Field()
   created_at!: Date;
 
-  @UpdateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
+  @UpdateDateColumn()
   @Field()
   updated_at!: Date;
 
