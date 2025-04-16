@@ -35,7 +35,7 @@ export class User extends BaseEntity {
   @Column()
   hashedPassword!: string;
 
-  @Column({ type: "date" })
+  @Column()
   @Field()
   date_of_birth!: Date;
 
