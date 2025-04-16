@@ -52,7 +52,6 @@ export function usersResolverTest(testArgs: TestArgsType) {
               first_name: user.first_name,
               last_name: user.last_name,
               date_of_birth: user.date_of_birth,
-              is_verified: user.is_verified,
             },
           },
         });
