@@ -13,7 +13,6 @@ export class UsersResolver {
     newUser.first_name = data.first_name;
     newUser.last_name = data.last_name;
     newUser.date_of_birth = data.date_of_birth;
-    newUser.is_verified = data.is_verified;
 
     // Hachage du mot de passe
     newUser.hashedPassword = await argon2.hash(data.password);

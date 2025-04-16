@@ -82,9 +82,6 @@ export class UserCreateInput {
 
   @Field()
   date_of_birth!: Date;
-
-  @Field()
-  is_verified!: boolean;
 }
 
 @InputType()
