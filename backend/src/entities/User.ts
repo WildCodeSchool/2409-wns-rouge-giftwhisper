@@ -102,8 +102,5 @@ export class UserUpdateInput {
   date_of_birth?: Date;
 
   @Field({ nullable: true })
-  is_verified?: boolean;
-
-  @Field({ nullable: true })
   last_login?: Date;
 }

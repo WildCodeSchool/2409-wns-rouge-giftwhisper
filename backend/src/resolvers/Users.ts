@@ -58,7 +58,6 @@ export class UsersResolver {
     if (data.last_name !== undefined) user.last_name = data.last_name;
     if (data.date_of_birth !== undefined)
       user.date_of_birth = data.date_of_birth;
-    if (data.is_verified !== undefined) user.is_verified = data.is_verified;
     if (data.last_login !== undefined) user.last_login = data.last_login;
 
     await user.save();
