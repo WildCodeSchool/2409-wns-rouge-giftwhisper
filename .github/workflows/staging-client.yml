@@ -46,5 +46,5 @@ jobs:
           context: ./frontend
           push: true
           tags: |
-            ${{ vars.DOCKERHUB_REPO_STAGING_FRONT }}:latest
-            ${{ vars.DOCKERHUB_REPO_STAGING_FRONT }}:${{ steps.sha.outputs.value }}
+            ${{ vars.DOCKERHUB_REPO }}-staging-client:latest
+            ${{ vars.DOCKERHUB_REPO }}-staging-client:${{ steps.sha.outputs.value }}
