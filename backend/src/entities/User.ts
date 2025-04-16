@@ -104,3 +104,12 @@ export class UserUpdateInput {
   @Field({ nullable: true })
   last_login?: Date;
 }
+
+@InputType()
+export class UserLoginInput {
+  @Field()
+  email?: string;
+
+  @Field()
+  password?: string;
+}
