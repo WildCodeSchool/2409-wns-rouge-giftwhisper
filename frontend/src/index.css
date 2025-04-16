@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap");
+
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -39,6 +41,7 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-primary: oklch(0.64 0.1405 20.76);
 }
 
 :root {
@@ -111,10 +114,35 @@
 }
 
 @layer base {
+  html {
+    font-family: "Quicksand", sans-serif;
+  }
   * {
     @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .bg-custom-gradient {
+    background: rgb(211, 100, 102);
+    background: linear-gradient(
+      120deg,
+      rgba(211, 100, 102, 1) 0%,
+      rgba(78, 33, 33, 1) 100%
+    );
+  }
+}
+
+@media (min-width: 768px) {
+  .bg-custom-gradient-dsktp {
+    background: rgb(211, 100, 102);
+    background: linear-gradient(
+      180deg,
+      rgba(211, 100, 102, 1) 0%,
+      rgba(180, 75, 77, 1) 50%
+    );
   }
 }
