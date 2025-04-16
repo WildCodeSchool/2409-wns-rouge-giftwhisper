@@ -24,23 +24,23 @@ export class Group extends BaseEntity {
   @Field()
   name!: string;
 
-  @Column({ type: "timestamp", nullable: true })
+  @Column()
   @Field({ nullable: true })
   end_date?: Date;
 
-  @Column({ type: "boolean", nullable: false })
+  @Column({ nullable: false })
   @Field()
   is_secret_santa!: boolean;
 
-  @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
+  @CreateDateColumn()
   @Field()
   created_at!: Date;
 
-  @UpdateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
+  @UpdateDateColumn()
   @Field({ nullable: true })
   updated_at!: Date;
 
-  @Column({ type: "boolean", default: false })
+  @Column({ default: false })
   @Field()
   is_active!: boolean;
 

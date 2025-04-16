@@ -5,12 +5,15 @@ import { expressMiddleware } from "@apollo/server/express4";
 import express from "express";
 import http from 'http';
 import { getSchema } from "./utils/server/schema";
+import { seedAll } from "./seeds/index.seed";
 import { Server } from "socket.io";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
 
 async function initialize() {
-  await datasource.initialize();
+  const dataSource = await datasource.initialize();
   console.log("Datasource is connected");
+
+  await seedAll(dataSource);
 
   const schema = await getSchema();
 

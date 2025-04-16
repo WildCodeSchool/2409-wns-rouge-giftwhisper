@@ -25,14 +25,11 @@ export class Chat extends BaseEntity {
   @Column({nullable: true})
   name?: string;
 
-  @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
+  @CreateDateColumn()
   @Field()
   createdAt!: Date;
 
-  @UpdateDateColumn({
-    type: "timestamp",
-    default: () => "CURRENT_TIMESTAMP",
-  })
+  @UpdateDateColumn()
   @Field({ nullable: true })
   updatedAt!: Date;
 
