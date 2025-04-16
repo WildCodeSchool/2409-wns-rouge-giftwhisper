@@ -108,6 +108,17 @@ export class UsersResolver {
     }
   }
 
+  // Logout
+  @Mutation(() => Boolean)
+  async logout(
+    @Ctx() context: any
+  ) {
+    const { req, res } = context;
+    const cookies = new Cookies(req, res);
+    cookies.set('giftwhisper', "", { maxAge: 0 });
+    return true;
+  }
+
   // Get user from jwt
   @Query(() => User, { nullable: true })
   async whoami(@Ctx() context: any) {
