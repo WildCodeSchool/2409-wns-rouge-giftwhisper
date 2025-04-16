@@ -16,6 +16,7 @@ export default defineConfig({
       usePolling: true,
     },
     allowedHosts: ["front"],
+    hmr: { path: "hmr" },
   },
 });
 
