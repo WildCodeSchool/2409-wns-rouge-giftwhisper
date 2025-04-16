@@ -39,7 +39,8 @@ export class User extends BaseEntity {
   @Field()
   date_of_birth!: Date;
 
-  @Column({ default: false })
+  //TODO: set default at false, set at true for testing purposes
+  @Column({ default: true })
   @Field()
   is_verified!: boolean;
 
