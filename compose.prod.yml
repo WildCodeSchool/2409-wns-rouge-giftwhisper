@@ -1,0 +1,63 @@
+services:
+  front:
+    image: giftwhisper/giftwhisper-front
+    ports:
+      - 5173:5173
+
+  back:
+    image: giftwhisper/giftwhisper
+    ports:
+      - 5500:5500
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    env_file:
+      - .env
+
+  nginx:
+    image: nginx
+    volumes:
+      - ./nginx:/etc/nginx
+    ports:
+      - ${GATEWAY_PORT:-8000}:80
+    depends_on:
+      - back
+      - front
+
+  db:
+    image: postgres
+    ports:
+      - 3001:5432
+    env_file:
+      - .env
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+
+  db-test:
+    image: postgres
+    ports:
+      - 3002:5432
+    environment:
+      - POSTGRES_USER=test
+      - POSTGRES_PASSWORD=test
+      - POSTGRES_DB=giftwhisper_test
+    volumes:
+      - db_test_data:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - db
+volumes:
+  dbdata:
+    driver: local
+  db_test_data:
+    driver: local
+  pgadmin_data:
+    driver: local
