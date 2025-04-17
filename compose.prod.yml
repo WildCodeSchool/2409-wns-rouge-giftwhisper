@@ -1,11 +1,11 @@
 services:
   front:
-    image: giftwhisper/giftwhisper-front
+    image: giftwhisper/giftwhisper-front-staging
     ports:
       - 5173:5173
 
   back:
-    image: giftwhisper/giftwhisper
+    image: giftwhisper/giftwhisper-server-staging
     ports:
       - 5500:5500
     environment:
