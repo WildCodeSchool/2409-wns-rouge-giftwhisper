@@ -1,7 +1,9 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { FaLocationArrow } from "react-icons/fa6";
 import { IoAdd } from "react-icons/io5";
+import { io } from "socket.io-client";
 import { IoArrowDownCircle } from "react-icons/io5";
+
 import ChatSelect from "./ChatSelect";
 
 const baseMessages = [
@@ -24,6 +26,12 @@ const elementIsVisibleInViewport = (el: HTMLDivElement, partiallyVisible = false
     ((left > 0 && left < innerWidth) || (right > 0 && right < innerWidth))
     : top >= 0 && left >= 0 && bottom <= innerHeight && right <= innerWidth;
 };
+
+const socket = io("", {
+  path: "/api/socket.io",
+  hostname: ""
+});
+
 
 function ChatWindow() {
   //TODO: Deal with color per user instead of hardcoded colors
@@ -55,6 +63,7 @@ function ChatWindow() {
       const messagesCopy = structuredClone(e);
       const nextId = e[e.length - 1].id + 1;
       messagesCopy.push({ id: nextId, author: "me", text: message });
+      socket.emit("message", message);
       return messagesCopy;
     });
     setMessage('');

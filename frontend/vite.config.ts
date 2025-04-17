@@ -19,6 +19,7 @@ export default defineConfig({
     proxy: {
       "/api": {
         target: "http://back:5500",
+        ws: true
       },
     },
   },

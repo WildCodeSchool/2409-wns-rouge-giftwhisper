@@ -8,6 +8,7 @@ import { getSchema } from "./utils/server/schema";
 import { seedAll } from "./seeds/index.seed";
 import { Server } from "socket.io";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
+import { socketInit } from "./socket";
 
 async function initialize() {
   const dataSource = await datasource.initialize();
@@ -20,14 +21,7 @@ async function initialize() {
   const app = express();
   const httpServer = http.createServer(app);
 
-  const io: Server = new Server(httpServer, {
-    path: "api/socker.io"
-  });
-
-  io.on('connection', (socket) => {
-    console.log("A user is connected");
-    socket.emit("Hello to the gift whisper app !")
-  });
+  socketInit(httpServer);
 
   const server = new ApolloServer({
     schema,
