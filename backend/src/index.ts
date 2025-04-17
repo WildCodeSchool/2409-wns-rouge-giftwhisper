@@ -44,7 +44,7 @@ async function initialize() {
     httpServer.listen({ port: 5500 }, resolve);
   });
 
-  console.log("Server ready http://localhost:5000");
+  console.log("Server ready http://localhost:5500");
 }
 
 initialize();
