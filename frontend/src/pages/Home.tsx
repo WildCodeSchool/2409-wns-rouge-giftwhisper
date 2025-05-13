@@ -29,7 +29,7 @@ export function HomePage() {
         <p className="text-xl font-bold pb-4">Alors, rejoignez-nous !</p>
         <div className="flex flex-col items-center gap-4 md:flex-row">
           <Button variant="primary" size="xl">
-            <Link to={"/sign-in"}>S'inscrire</Link>
+            <Link to={"/sign-up"}>S'inscrire</Link>
           </Button>
           <div className="flex flex-row items-center gap-2 w-full md:flex-col md:items-center md:justify-center">
             <div className="h-[1px] w-full bg-primary md:h-3 md:w-[1px]" />
@@ -37,7 +37,7 @@ export function HomePage() {
             <div className="h-[1px] w-full bg-primary md:h-3 md:w-[1px]" />
           </div>
           <Button variant="outline" size="sm">
-            <Link to={"/sign-up"}>Se connecter</Link>
+            <Link to={"/sign-in"}>Se connecter</Link>
           </Button>
         </div>
       </section>

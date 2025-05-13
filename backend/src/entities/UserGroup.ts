@@ -25,7 +25,7 @@ export class UserGroup extends BaseEntity {
   @Field(() => Group)
   group!: Group;
 
-  @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
+  @CreateDateColumn()
   @Field()
   join_at!: Date;
 }
