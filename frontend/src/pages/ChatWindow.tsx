@@ -67,11 +67,11 @@ function ChatWindow() {
 
   return (
     <>
-      <div className="flex">
+      <div className="flex h-screen overflow-hidden">
         <aside className="bg-[#FAFAFA] px-4 hidden md:flex md:flex-col">
           <ChatSelect />
         </aside>
-        <article className="h-screen flex flex-col w-full overflow-hidden">
+        <article className=" flex flex-col w-full">
           {/* <header className="bg-gradient-to-r from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB] h-10 flex items-center px-4 justify-between">
           <div className="flex items-center gap-4 max-w-[90%]">
             <Link to="/">

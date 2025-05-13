@@ -35,23 +35,24 @@ export class User extends BaseEntity {
   @Column()
   hashedPassword!: string;
 
-  @Column({ type: "date" })
+  @Column()
   @Field()
   date_of_birth!: Date;
 
-  @Column({ default: false })
+  //TODO: set default at false, set at true for testing purposes
+  @Column({ default: true })
   @Field()
   is_verified!: boolean;
 
-  @UpdateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
+  @UpdateDateColumn()
   @Field()
   last_login!: Date;
 
-  @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
+  @CreateDateColumn()
   @Field()
   created_at!: Date;
 
-  @UpdateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
+  @UpdateDateColumn()
   @Field()
   updated_at!: Date;
 
@@ -82,9 +83,6 @@ export class UserCreateInput {
 
   @Field()
   date_of_birth!: Date;
-
-  @Field()
-  is_verified!: boolean;
 }
 
 @InputType()
@@ -105,8 +103,14 @@ export class UserUpdateInput {
   date_of_birth?: Date;
 
   @Field({ nullable: true })
-  is_verified?: boolean;
-
-  @Field({ nullable: true })
   last_login?: Date;
+}
+
+@InputType()
+export class UserLoginInput {
+  @Field()
+  email?: string;
+
+  @Field()
+  password?: string;
 }
