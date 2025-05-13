@@ -6,16 +6,16 @@ import { IoArrowDownCircle } from "react-icons/io5";
 
 import ChatSelect from "./ChatSelect";
 
-const baseMessages = [
-  { id: 1, author: 'me', text: 'Hi, our first message on this awesome app :) !' },
-  { id: 2, author: 'jean-claude', text: "Pourquoi qu'il parle en anglais lui" },
-  { id: 3, author: 'me', text: 'Oooooh, sacré Jean-Claude haha' },
-  { id: 4, author: 'murielle', text: "Est ce que c'est ça google ?" },
-  { id: 5, author: 'murielle', text: "recette tarte citron meringuée" },
-  { id: 6, author: 'me', text: "Seigneur, à l'aide" },
-  { id: 7, author: 'jean-claude', text: "Apéro !" },
-  { id: 8, author: 'jean-claude', text: "Apéro !" },
-];
+// const baseMessages = [
+//   { id: 1, author: 'me', text: 'Hi, our first message on this awesome app :) !' },
+//   { id: 2, author: 'jean-claude', text: "Pourquoi qu'il parle en anglais lui" },
+//   { id: 3, author: 'me', text: 'Oooooh, sacré Jean-Claude haha' },
+//   { id: 4, author: 'murielle', text: "Est ce que c'est ça google ?" },
+//   { id: 5, author: 'murielle', text: "recette tarte citron meringuée" },
+//   { id: 6, author: 'me', text: "Seigneur, à l'aide" },
+//   { id: 7, author: 'jean-claude', text: "Apéro !" },
+//   { id: 8, author: 'jean-claude', text: "Apéro !" },
+// ];
 
 const elementIsVisibleInViewport = (el: HTMLDivElement, partiallyVisible = false) => {
   const { top, left, bottom, right } = el.getBoundingClientRect();
@@ -37,9 +37,20 @@ function ChatWindow() {
   //TODO: Deal with color per user instead of hardcoded colors
   // const giftReceiver = 'Fabriceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
   const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState<{ id: number, text: string, author: string }[]>(baseMessages);
+  const [messages, setMessages] = useState<{ id: number, content: string, createdBy: { first_name: string } }[]>([]);
   const [displayAutoScrollDown, setDisplayAutoScrollDown] = useState(false);
   const bottomChat = useRef<HTMLDivElement>(null);
+
+  socket.on('messages-history', (messages) => {
+    setMessages(messages);
+  });
+
+
+  useEffect(() => {
+    return () => {
+      socket.disconnect();
+    }
+  }, []);
 
 
   useEffect(() => {
@@ -57,12 +68,13 @@ function ChatWindow() {
     }
   };
 
+  //TODO: Remove js hardcoded values for messages
   const submit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setMessages((e) => {
       const messagesCopy = structuredClone(e);
       const nextId = e[e.length - 1].id + 1;
-      messagesCopy.push({ id: nextId, author: "me", text: message });
+      messagesCopy.push({ id: nextId, createdBy: { first_name: 'me' }, content: message });
       socket.emit("message", message);
       return messagesCopy;
     });
@@ -96,13 +108,13 @@ function ChatWindow() {
             <section onScroll={handleScroll} className="overflow-y-auto flex flex-col flex-1 overflow-x-auto p-2 space-y-2">
               {messages.map((message) => {
                 return (
-                  <div key={message.id} className={`flex flex-col max-w-[70%] ${message.author !== 'me' ? '' : 'self-end'}`}>
-                    <div className={`flex items-center gap-1 ${message.author !== 'me' ? '' : 'flex-row-reverse'}`}>
+                  <div key={message.id} className={`flex flex-col max-w-[70%] ${message.createdBy.first_name !== 'me' ? '' : 'self-end'}`}>
+                    <div className={`flex items-center gap-1 ${message.createdBy.first_name !== 'me' ? '' : 'flex-row-reverse'}`}>
                       <div className="w-3 h-3 bg-gradient-to-r from-[#FF9A9E] to-[#FECFEF] rounded-full"></div>
-                      <p className={`pb-1 ${message.author !== 'me' ? '' : 'text-right'}`}>{message.author}</p>
+                      <p className={`pb-1 ${message.createdBy.first_name !== 'me' ? '' : 'text-right'}`}>{message.createdBy.first_name}</p>
                     </div>
-                    <p className={`bg-gradient-to-r break-words w-fit max-w-[100%] from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB] rounded-[19px] px-4 py-2 text-sm text-white ${message.author !== 'me' ? '' : 'self-end'}`}>
-                      {message.text}
+                    <p className={`bg-gradient-to-r break-words w-fit max-w-[100%] from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB] rounded-[19px] px-4 py-2 text-sm text-white ${message.createdBy.first_name !== 'me' ? '' : 'self-end'}`}>
+                      {message.content}
                     </p>
                   </div>
                 );

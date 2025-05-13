@@ -13,7 +13,7 @@ export class Message extends BaseEntity {
   @Field()
   content!: string;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, user => user.id)
   @Field(() => User)
   createdBy!: User;
 
