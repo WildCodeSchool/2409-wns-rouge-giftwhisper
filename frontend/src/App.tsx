@@ -16,6 +16,7 @@ import SignUp from "./pages/SignUp";
 import ChatSelect from "./pages/ChatSelect";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Toaster } from "./components/ui/sonner";
 
 const client = new ApolloClient({
   uri: "/api",
@@ -61,6 +62,7 @@ function App() {
   return (
     <ApolloProvider client={client}>
       <BrowserRouter>
+        <Toaster richColors />
         <Routes>
           <Route Component={PageLayout}>
             <Route path="/" Component={HomePage} />
