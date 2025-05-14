@@ -11,7 +11,7 @@ import {
 } from "typeorm";
 import { UserGroup } from "./UserGroup";
 import { Chat } from "./Chat";
-
+import { Invitation } from "./Invitation";
 @Entity()
 @ObjectType()
 export class Group extends BaseEntity {
@@ -24,7 +24,7 @@ export class Group extends BaseEntity {
   @Field()
   name!: string;
 
-  @Column()
+  @Column({ type: "timestamp", nullable: true })
   @Field({ nullable: true })
   end_date?: Date;
 
@@ -51,6 +51,10 @@ export class Group extends BaseEntity {
   @OneToMany(() => Chat, (chat) => chat.group)
   @Field(() => [Chat])
   chats!: Chat[];
+
+  @OneToMany(() => Invitation, (invitation) => invitation.group)
+  @Field(() => [Invitation])
+  invitations!: Invitation[];
 }
 
 @InputType()
