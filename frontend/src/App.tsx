@@ -22,8 +22,7 @@ const client = new ApolloClient({
   cache: new InMemoryCache(),
   credentials: "same-origin",
   headers: {
-    "Content-Type": "application/json",
-    "x-apollo-operation-name": "default"
+    'Apollo-Require-Preflight': 'true'
   }
 });
 
