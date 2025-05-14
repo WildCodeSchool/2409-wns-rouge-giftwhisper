@@ -4,7 +4,6 @@ import { getUserFromContext } from './auth';
 import { User } from './entities/User';
 import { Message } from './entities/Message';
 
-//TODO : fix issues with socket path since the vite proxy is not in use anymore
 export function socketInit(httpServer: HttpServer) {
   const io: Server = new Server(httpServer, {
     path: "/api/socket.io"
