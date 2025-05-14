@@ -40,7 +40,7 @@ export function socketInit(httpServer: HttpServer) {
       const user = (socket.request as any).user as User;
       Object.assign(newMessage, { createdBy: { id: user.id } }, { content });
       await newMessage.save();
-      socket.emit('new-message', { ...newMessage, createdBy: { id: user.id, first_name: user.first_name } });
+      io.emit('new-message', { ...newMessage, createdBy: { id: user.id, first_name: user.first_name } });
     });
   });
 }
