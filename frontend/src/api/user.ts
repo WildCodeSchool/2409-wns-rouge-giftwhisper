@@ -1,6 +1,7 @@
 import { gql } from "@apollo/client";
 
-export const WHOAMI = gql`#graphql
+export const WHOAMI = gql`
+  #graphql
   query whoami {
     whoami {
       id
@@ -14,4 +15,15 @@ export const WHOAMI = gql`#graphql
       updated_at
     }
   }
-`
+`;
+
+export const CREATE_USER = gql`
+  mutation CreateUser($data: UserCreateInput!) {
+    createUser(data: $data) {
+      id
+      email
+      first_name
+      last_name
+    }
+  }
+`;

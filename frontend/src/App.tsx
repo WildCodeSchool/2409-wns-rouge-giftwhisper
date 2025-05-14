@@ -16,6 +16,7 @@ import SignUp from "./pages/SignUp";
 import ChatSelect from "./pages/ChatSelect";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Toaster } from "sonner";
 
 const client = new ApolloClient({
   uri: "/api",
@@ -56,27 +57,30 @@ function MobileChatSelect() {
 
 function App() {
   return (
-    <ApolloProvider client={client}>
-      <BrowserRouter>
-        <Routes>
-          <Route Component={PageLayout}>
-            <Route path="/" Component={HomePage} />
-            <Route path="/sign-in" Component={SignIn} />
-            <Route path="/sign-up" Component={SignUp} />
-            <Route path="/dashboard" Component={Dashboard} />
-            <Route path="/about" Component={About} />
-            <Route path="/profile" Component={Profile} />
-            <Route path="/settings" Component={Settings} />
-            <Route path="/group" Component={Group} />
-            <Route path="/group-creation" Component={GroupCreation} />
-            <Route path="/group-settings" Component={GroupSettings} />
-            <Route path="/chat-window" Component={ChatWindow} />
-            <Route path="/chat-select" Component={MobileChatSelect} />
-            <Route path="*" Component={() => <Navigate to="/" />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </ApolloProvider>
+    <>
+      <Toaster richColors position="top-center" />
+      <ApolloProvider client={client}>
+        <BrowserRouter>
+          <Routes>
+            <Route Component={PageLayout}>
+              <Route path="/" Component={HomePage} />
+              <Route path="/sign-in" Component={SignIn} />
+              <Route path="/sign-up" Component={SignUp} />
+              <Route path="/dashboard" Component={Dashboard} />
+              <Route path="/about" Component={About} />
+              <Route path="/profile" Component={Profile} />
+              <Route path="/settings" Component={Settings} />
+              <Route path="/group" Component={Group} />
+              <Route path="/group-creation" Component={GroupCreation} />
+              <Route path="/group-settings" Component={GroupSettings} />
+              <Route path="/chat-window" Component={ChatWindow} />
+              <Route path="/chat-select" Component={MobileChatSelect} />
+              <Route path="*" Component={() => <Navigate to="/" />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </ApolloProvider>
+    </>
   );
 }
 

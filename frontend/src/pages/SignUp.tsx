@@ -10,9 +10,22 @@ import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useMutation } from "@apollo/client";
+import { CREATE_USER } from "@/api/user";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { signUpSchema } from "@/schemas/auth.schema";
+import type { z } from "zod";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+
+type SignUpFormData = z.infer<typeof signUpSchema>;
 
 export default function SignUp() {
-  const form = useForm({
+  const navigate = useNavigate();
+  const [createUser] = useMutation(CREATE_USER);
+
+  const form = useForm<SignUpFormData>({
+    resolver: zodResolver(signUpSchema),
     defaultValues: {
       firstName: "",
       lastName: "",
@@ -22,8 +35,38 @@ export default function SignUp() {
     },
   });
 
-  const onSubmit = (data: any) => {
-    console.log("signup submitted:", data);
+  const onSubmit = async (data: SignUpFormData) => {
+    try {
+      const response = await createUser({
+        variables: {
+          data: {
+            email: data.email,
+            password: data.password,
+            first_name: data.firstName,
+            last_name: data.lastName,
+            date_of_birth: new Date(data.birthdate),
+          },
+        },
+      });
+
+      if (response.data?.createUser) {
+        toast.success("Compte créé avec succès !");
+        setTimeout(() => {
+          navigate("/sign-in");
+        }, 2000);
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message.includes("duplicate")) {
+          form.setError("email", {
+            message: "Cette adresse email est déjà utilisée",
+          });
+          toast.error("Cette adresse email est déjà utilisée");
+        } else {
+          toast.error("Une erreur est survenue lors de la création du compte");
+        }
+      }
+    }
   };
 
   return (
@@ -104,6 +147,20 @@ export default function SignUp() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Mot de passe</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="••••••••" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Confirmer le mot de passe</FormLabel>
                   <FormControl>
                     <Input type="password" placeholder="••••••••" {...field} />
                   </FormControl>
