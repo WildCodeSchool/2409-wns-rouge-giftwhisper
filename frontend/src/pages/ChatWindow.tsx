@@ -3,19 +3,10 @@ import { FaLocationArrow } from "react-icons/fa6";
 import { IoAdd } from "react-icons/io5";
 import { IoArrowDownCircle } from "react-icons/io5";
 import ChatSelect from "./ChatSelect";
+import { useSocket } from "@/hooks/socket";
 
-const baseMessages = [
-  { id: 1, author: 'me', text: 'Hi, our first message on this awesome app :) !' },
-  { id: 2, author: 'jean-claude', text: "Pourquoi qu'il parle en anglais lui" },
-  { id: 3, author: 'me', text: 'Oooooh, sacré Jean-Claude haha' },
-  { id: 4, author: 'murielle', text: "Est ce que c'est ça google ?" },
-  { id: 5, author: 'murielle', text: "recette tarte citron meringuée" },
-  { id: 6, author: 'me', text: "Seigneur, à l'aide" },
-  { id: 7, author: 'jean-claude', text: "Apéro !" },
-  { id: 8, author: 'jean-claude', text: "Apéro !" },
-];
-
-const elementIsVisibleInViewport = (el: HTMLDivElement, partiallyVisible = false) => {
+const elementIsVisibleInViewport = (el: Element, partiallyVisible = false) => {
+  if (!el) return null;
   const { top, left, bottom, right } = el.getBoundingClientRect();
   const { innerHeight, innerWidth } = window;
   return partiallyVisible
@@ -29,19 +20,45 @@ function ChatWindow() {
   //TODO: Deal with color per user instead of hardcoded colors
   // const giftReceiver = 'Fabriceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
   const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState<{ id: number, text: string, author: string }[]>(baseMessages);
+  const [messages, setMessages] = useState<{ id?: number, content: string, createdBy: { first_name: string } }[]>([]);
   const [displayAutoScrollDown, setDisplayAutoScrollDown] = useState(false);
-  const bottomChat = useRef<HTMLDivElement>(null);
-
+  const lastMessageRef = useRef<HTMLDivElement>(null);
+  const { disconnectSocket, getSocket } = useSocket();
 
   useEffect(() => {
-    const isLastMessageVisible = elementIsVisibleInViewport(bottomChat.current!);
-    if (isLastMessageVisible) bottomChat.current?.scrollIntoView({ behavior: 'instant' });
+    const socket = getSocket();
+    socket.on('messages-history', (messages) => {
+      setMessages(messages);
+    });
+    socket.on('new-message', (message) => {
+      setMessages((e) => {
+        const clone = structuredClone(e);
+        clone.push(message);
+        //We have to setTimeout before scrolling because sometimes the scroll happens before the dom is refreshed
+        //with the new message, thus scrolling only to the top of the message
+        const timeout = setTimeout(() => {
+          lastMessageRef.current?.scrollIntoView({ behavior: 'instant' });
+        }, 0);
+        clearTimeout(timeout);
+        return clone;
+      });
+    });
+    return () => {
+      disconnectSocket();
+    }
+  }, []);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      const isLastMessageVisible = elementIsVisibleInViewport(lastMessageRef.current!);
+      if (!isLastMessageVisible) lastMessageRef.current?.scrollIntoView({ behavior: 'instant' });
+    }, 0);
+    return () => clearTimeout(timeout);
   }, [messages]);
 
 
   const handleScroll = () => {
-    const isLastMessageVisible = elementIsVisibleInViewport(bottomChat.current!);
+    const isLastMessageVisible = elementIsVisibleInViewport(lastMessageRef.current!);
     if (!isLastMessageVisible && !displayAutoScrollDown) {
       setDisplayAutoScrollDown(true);
     } else if (isLastMessageVisible && displayAutoScrollDown) {
@@ -51,18 +68,9 @@ function ChatWindow() {
 
   const submit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setMessages((e) => {
-      const messagesCopy = structuredClone(e);
-      const nextId = e[e.length - 1].id + 1;
-      messagesCopy.push({ id: nextId, author: "me", text: message });
-      return messagesCopy;
-    });
+    const socket = getSocket();
+    socket.emit("message", message);
     setMessage('');
-    //We have to setTimeout before scrolling because sometimes the scroll happens before the dom is refreshed
-    //with the new message, thus scrolling only to the top of the message
-    setTimeout(() => {
-      bottomChat.current?.scrollIntoView({ behavior: 'instant' });
-    }, 0);
   };
 
   return (
@@ -72,36 +80,30 @@ function ChatWindow() {
           <ChatSelect />
         </aside>
         <article className=" flex flex-col w-full">
-          {/* <header className="bg-gradient-to-r from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB] h-10 flex items-center px-4 justify-between">
-          <div className="flex items-center gap-4 max-w-[90%]">
-            <Link to="/">
-              <FaArrowLeft color="white" />
-            </Link>
-            <h1 className="text-white text-lg truncate">{`Pour ${giftReceiver}`}</h1>
-          </div>
-          <button>
-            <IoIosInformationCircleOutline color="white" size={30} />
-          </button>
-        </header> */}
           <div className="flex flex-col flex-1 overflow-hidden">
             <section onScroll={handleScroll} className="overflow-y-auto flex flex-col flex-1 overflow-x-auto p-2 space-y-2">
-              {messages.map((message) => {
+              {messages.map((message, i) => {
+                const isLastItem = i === messages.length - 1;
                 return (
-                  <div key={message.id} className={`flex flex-col max-w-[70%] ${message.author !== 'me' ? '' : 'self-end'}`}>
-                    <div className={`flex items-center gap-1 ${message.author !== 'me' ? '' : 'flex-row-reverse'}`}>
+                  <div
+                    ref={isLastItem ? lastMessageRef : null}
+                    key={message.id}
+                    className={`flex flex-col max-w-[70%] 
+                    ${message.createdBy.first_name !== 'me' ? '' : 'self-end'}`}
+                  >
+                    <div className={`flex items-center gap-1 ${message.createdBy.first_name !== 'me' ? '' : 'flex-row-reverse'}`}>
                       <div className="w-3 h-3 bg-gradient-to-r from-[#FF9A9E] to-[#FECFEF] rounded-full"></div>
-                      <p className={`pb-1 ${message.author !== 'me' ? '' : 'text-right'}`}>{message.author}</p>
+                      <p className={`pb-1 ${message.createdBy.first_name !== 'me' ? '' : 'text-right'}`}>{message.createdBy.first_name}</p>
                     </div>
-                    <p className={`bg-gradient-to-r break-words w-fit max-w-[100%] from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB] rounded-[19px] px-4 py-2 text-sm text-white ${message.author !== 'me' ? '' : 'self-end'}`}>
-                      {message.text}
+                    <p className={`bg-gradient-to-r break-words w-fit max-w-[100%] from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB] rounded-[19px] px-4 py-2 text-sm text-white ${message.createdBy.first_name !== 'me' ? '' : 'self-end'}`}>
+                      {message.content}
                     </p>
                   </div>
                 );
               })}
-              <div ref={bottomChat}></div>
             </section>
             <button
-              onClick={() => bottomChat.current?.scrollIntoView({ behavior: 'instant' })}
+              onClick={() => lastMessageRef.current?.scrollIntoView({ behavior: 'instant' })}
               className={`
               absolute bottom-20 left-1/2 transform -translate-x-1/2
               'translate-y-5 opacity-0 pointer-events-none'
