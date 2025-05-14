@@ -33,7 +33,6 @@ function ChatWindow() {
       setMessages(messages);
     });
     socket.on('new-message', (message) => {
-      console.log("hello");
       setMessages((e) => {
         const clone = structuredClone(e);
         clone.push(message);
