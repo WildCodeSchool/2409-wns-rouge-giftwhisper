@@ -4,6 +4,7 @@ import { IoAdd } from "react-icons/io5";
 import { IoArrowDownCircle } from "react-icons/io5";
 import ChatSelect from "./ChatSelect";
 import { useSocket } from "@/hooks/socket";
+import { useCurrentUser } from "@/hooks/currentUser";
 
 const elementIsVisibleInViewport = (el: Element, partiallyVisible = false) => {
   if (!el) return null;
@@ -24,6 +25,7 @@ function ChatWindow() {
   const [displayAutoScrollDown, setDisplayAutoScrollDown] = useState(false);
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const { disconnectSocket, getSocket } = useSocket();
+  const user = useCurrentUser();
 
   useEffect(() => {
     const socket = getSocket();
@@ -36,10 +38,9 @@ function ChatWindow() {
         clone.push(message);
         //We have to setTimeout before scrolling because sometimes the scroll happens before the dom is refreshed
         //with the new message, thus scrolling only to the top of the message
-        const timeout = setTimeout(() => {
+        setTimeout(() => {
           lastMessageRef.current?.scrollIntoView({ behavior: 'instant' });
         }, 0);
-        clearTimeout(timeout);
         return clone;
       });
     });
@@ -68,10 +69,16 @@ function ChatWindow() {
 
   const submit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!message.length) return;
     const socket = getSocket();
     socket.emit("message", message);
     setMessage('');
   };
+
+  //TODO: Create a complete page (if not connected) and route guards
+  if (!user) {
+    return <p>You must be logged in to chat !</p>
+  }
 
   return (
     <>
@@ -89,13 +96,13 @@ function ChatWindow() {
                     ref={isLastItem ? lastMessageRef : null}
                     key={message.id}
                     className={`flex flex-col max-w-[70%] 
-                    ${message.createdBy.first_name !== 'me' ? '' : 'self-end'}`}
+                    ${message.createdBy.first_name !== user.first_name ? '' : 'self-end'}`}
                   >
-                    <div className={`flex items-center gap-1 ${message.createdBy.first_name !== 'me' ? '' : 'flex-row-reverse'}`}>
+                    <div className={`flex items-center gap-1 ${message.createdBy.first_name !== user.first_name ? '' : 'flex-row-reverse'}`}>
                       <div className="w-3 h-3 bg-gradient-to-r from-[#FF9A9E] to-[#FECFEF] rounded-full"></div>
-                      <p className={`pb-1 ${message.createdBy.first_name !== 'me' ? '' : 'text-right'}`}>{message.createdBy.first_name}</p>
+                      <p className={`pb-1 ${message.createdBy.first_name !== user.first_name ? '' : 'text-right'}`}>{message.createdBy.first_name}</p>
                     </div>
-                    <p className={`bg-gradient-to-r break-words w-fit max-w-[100%] from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB] rounded-[19px] px-4 py-2 text-sm text-white ${message.createdBy.first_name !== 'me' ? '' : 'self-end'}`}>
+                    <p className={`bg-gradient-to-r break-words w-fit max-w-[100%] from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB] rounded-[19px] px-4 py-2 text-sm text-white ${message.createdBy.first_name !== user.first_name ? '' : 'self-end'}`}>
                       {message.content}
                     </p>
                   </div>

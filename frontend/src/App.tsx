@@ -22,6 +22,9 @@ const client = new ApolloClient({
   uri: "/api",
   cache: new InMemoryCache(),
   credentials: "same-origin",
+  headers: {
+    'Apollo-Require-Preflight': 'true'
+  }
 });
 
 // On veut créer une page qui n'est visible que sur téléphone
