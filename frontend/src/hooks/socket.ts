@@ -14,7 +14,9 @@ export function useSocket() {
     if (!socketRef.current || !socketRef.current.connected) {
       socketRef.current = io("", {
         path: "/api/socket.io",
-        hostname: ""
+        extraHeaders: {
+          'Apollo-Require-Preflight': 'true',
+        }
       });
     }
     return socketRef.current;
