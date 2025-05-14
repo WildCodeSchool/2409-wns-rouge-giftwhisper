@@ -23,8 +23,8 @@ const client = new ApolloClient({
   cache: new InMemoryCache(),
   credentials: "same-origin",
   headers: {
-    'Apollo-Require-Preflight': 'true'
-  }
+    "Apollo-Require-Preflight": "true",
+  },
 });
 
 // On veut créer une page qui n'est visible que sur téléphone
