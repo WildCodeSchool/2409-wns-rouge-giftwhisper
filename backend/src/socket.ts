@@ -1,4 +1,4 @@
-import { Server as HttpServer, IncomingMessage } from 'http';
+import { Server as HttpServer } from 'http';
 import { Server } from "socket.io";
 import { getUserFromContext } from './auth';
 import { User } from './entities/User';
@@ -19,10 +19,8 @@ export function socketInit(httpServer: HttpServer) {
     next();
   });
 
-  //TODO: Deal with a way to send back new messages to front when new one appears
   io.on('connection', async (socket) => {
-    const user = (socket.request as any).user as User;
-    //Use query builder for selective field from user, and avoid having to manually remove
+    //Use query builder for selective field from users, and avoid having to manually remove
     //data like the user password before sending it back
     const messages = await Message.createQueryBuilder("message")
       .leftJoinAndSelect("message.createdBy", "user")
@@ -34,15 +32,14 @@ export function socketInit(httpServer: HttpServer) {
         "user.first_name",
       ])
       .getMany();
-    console.log("aled", messages)
     if (messages.length) socket.emit('messages-history', messages);
 
-    socket.on('message', (content) => {
+    socket.on('message', async (content) => {
       const newMessage = new Message();
+      const user = (socket.request as any).user as User;
       Object.assign(newMessage, { createdBy: { id: user.id } }, { content });
-      console.log("Message received from", user.email, content);
-      newMessage.save();
+      await newMessage.save();
+      socket.emit('new-message', { ...newMessage, createdBy: { id: user.id, first_name: user.first_name } });
     });
-
   });
 }
