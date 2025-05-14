@@ -12,7 +12,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
+import { Trash2 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { HelpCircle } from "lucide-react";
+import { toast } from "sonner";
 
 const membersList = [
   { id: 1, firstName: "Murielle", lastName: "Dupont", email: "murielle@gmail.com" },
@@ -40,6 +49,9 @@ export default function GroupSettings() {
     };
 
     console.log("Groupe modifié :", groupData);
+    toast("Modifications enregistrées", {
+      description: "Les paramètres ont bien été mis à jour.",
+    });
   };
 
   const removeMember = (id: number) => {
@@ -52,8 +64,8 @@ export default function GroupSettings() {
         <h1 className="text-3xl text-primary">PARAMÈTRES DU GROUPE</h1>
       </header>
 
-      <section className="flex flex-col items-center mt-8 space-y-6 w-full max-w-sm mx-auto">
-        <div className="w-full">
+      <section className="flex flex-col items-center mt-8 space-y-6 w-full max-w-4xl px-4 mx-auto">
+        <div className="w-full max-w-md">
           <label className="block mb-1 font-medium">Nom du groupe</label>
           <Input
             value={groupName}
@@ -62,7 +74,7 @@ export default function GroupSettings() {
           />
         </div>
 
-        <div className="w-full">
+        <div className="w-full max-w-md">
           <label className="block mb-1 font-medium">Date de fin</label>
           <Input
             type="date"
@@ -71,21 +83,33 @@ export default function GroupSettings() {
           />
         </div>
 
-        <div className="w-full flex items-center justify-between">
+        <div className="w-full max-w-md flex items-center justify-between">
           <label htmlFor="is-actif-switch" className="cursor-pointer">
             Groupe actif
           </label>
           <Switch id="is-actif-switch" className="cursor-pointer" checked={isActive} onCheckedChange={setIsActive} />
         </div>
 
-        <div className="w-full flex items-center justify-between">
-          <label htmlFor="secret-santa-switch" className="cursor-pointer">
-            Mode Secret Santa
-          </label>
+        <div className="w-full max-w-md flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <label htmlFor="secret-santa-switch" className="cursor-pointer">
+              Mode Secret Santa
+            </label>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="w-4 h-4 text-gray-500 cursor-pointer" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Les participants sont tirés au sort pour s'offrir un cadeau anonymement.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
           <Switch id="secret-santa-switch" className="cursor-pointer" checked={isSecretSanta} onCheckedChange={setIsSecretSanta} />
         </div>
 
-        <section className="mt-10 max-w-5xl mx-auto">
+        <section className="mt-10 mx-auto">
           <h2 className="text-xl font-semibold mb-4 text-center">Membres du groupe</h2>
           <div className="flex justify-end mb-4">
             <Button className="cursor-pointer" size="sm">
@@ -93,13 +117,13 @@ export default function GroupSettings() {
             </Button>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse border border-gray-200">
+            <table className="min-w-full sm:min-w-[500px] md:min-w-[600px] lg:min-w-[700px] border-collapse border border-gray-200 text-sm">
               <thead>
-                <tr className="bg-gray-100 text-left text-sm text-gray-600">
-                  <th className="px-4 py-2 border">Prénom</th>
-                  <th className="px-4 py-2 border">Nom</th>
-                  <th className="px-4 py-2 border">Email</th>
-                  <th className="px-4 py-2 border"></th>
+                <tr className="bg-gray-100 text-center text-sm text-gray-600">
+                  <th className="px-1 py-1 border">Prénom</th>
+                  <th className="px-1 py-1 border">Nom</th>
+                  <th className="px-1 py-1 border">Email</th>
+                  <th className="px-1 py-1 border"></th>
                 </tr>
               </thead>
               <tbody>
@@ -112,19 +136,20 @@ export default function GroupSettings() {
                 )}
                 {members.map((member) => (
                   <tr key={member.id} className="text-sm">
-                    <td className="px-4 py-2 border">{member.firstName}</td>
-                    <td className="px-4 py-2 border">{member.lastName}</td>
-                    <td className="px-4 py-2 border">{member.email}</td>
-                    <td className="px-4 py-2 border text-center">
+                    <td className="px-2 sm:px-4 py-1 sm:py-2 border">{member.firstName}</td>
+                    <td className="px-2 sm:px-4 py-1 sm:py-2 border">{member.lastName}</td>
+                    <td className="px-2 sm:px-4 py-1 sm:py-2 border">{member.email}</td>
+                    <td className="px-2 sm:px-4 py-1 sm:py-2 border text-center flex justify-center items-center">
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
-                            className="cursor-pointer"
+                            className="cursor-pointer justify-center"
                             variant="outline"
                             size="sm"
                             onClick={() => setMemberToDelete(member)}
                           >
-                            Supprimer
+                            <span className="hidden sm:inline">Supprimer</span>
+                            <Trash2 className="sm:hidden w-4 h-4" />
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
@@ -132,12 +157,12 @@ export default function GroupSettings() {
                             <AlertDialogTitle>Supprimer ce membre ?</AlertDialogTitle>
                             <AlertDialogDescription>
                               Cette action est irréversible. Le membre suivant sera supprimé :
-                              <div className="mt-2 font-medium">
+                              <span className="block mt-2 font-medium">
                                 {memberToDelete?.firstName} {memberToDelete?.lastName} ({memberToDelete?.email})
-                              </div>
+                              </span>
                             </AlertDialogDescription>
                           </AlertDialogHeader>
-                          <AlertDialogFooter>
+                          <AlertDialogFooter className="flex gap-2 justify-end">
                             <AlertDialogCancel className="cursor-pointer normal-case">Annuler</AlertDialogCancel>
                             <AlertDialogAction className="cursor-pointer"
                               onClick={() => {
@@ -160,7 +185,7 @@ export default function GroupSettings() {
           </div>
         </section>
 
-        <Button onClick={handleSubmit} className="px-8 cursor-pointer" size="xl">
+        <Button onClick={handleSubmit} className="px-8 cursor-pointer mb-6">
           Enregistrer
         </Button>
       </section>
