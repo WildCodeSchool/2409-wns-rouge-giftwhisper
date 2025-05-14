@@ -17,6 +17,7 @@ services:
     image: nginx
     volumes:
       - ./nginx:/etc/nginx
+      - ./logs:/var/log/nginx
     ports:
       - ${GATEWAY_PORT:-8000}:80
     depends_on:
@@ -31,18 +32,6 @@ services:
       - .env
     volumes:
       - dbdata:/var/lib/postgresql/data
-
-  db-test:
-    image: postgres
-    ports:
-      - 3002:5432
-    environment:
-      - POSTGRES_USER=test
-      - POSTGRES_PASSWORD=test
-      - POSTGRES_DB=giftwhisper_test
-    volumes:
-      - db_test_data:/var/lib/postgresql/data
-
   pgadmin:
     image: dpage/pgadmin4
     environment:
