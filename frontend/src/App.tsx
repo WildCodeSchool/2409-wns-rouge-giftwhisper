@@ -21,6 +21,10 @@ const client = new ApolloClient({
   uri: "/api",
   cache: new InMemoryCache(),
   credentials: "same-origin",
+  headers: {
+    "Content-Type": "application/json",
+    "x-apollo-operation-name": "default"
+  }
 });
 
 // On veut créer une page qui n'est visible que sur téléphone
