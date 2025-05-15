@@ -10,6 +10,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { WHOAMI } from "@/api/user";
+import { useQuery } from "@apollo/client";
 
 //TODO: Récupérer les données du profil depuis l'API
 const profile = {
@@ -29,6 +31,8 @@ function Profile() {
       [e.target.name]: e.target.value,
     });
   };
+
+  const { data: user } = useQuery(WHOAMI);
 
   return (
     <section className="flex flex-col min-h-screen">
@@ -50,7 +54,7 @@ function Profile() {
             {!isEditing ? (
               <>
                 <h1 className="text-4xl font-bold">
-                  {profile.firstname} {profile.lastname}
+                  {user?.whoami.first_name} {user?.whoami.last_name}
                 </h1>
                 <button
                   onClick={() => setIsEditing(true)}
@@ -65,7 +69,7 @@ function Profile() {
                   <input
                     type="text"
                     name="firstname"
-                    value={formData.firstname}
+                    value={user?.whoami.first_name}
                     onChange={handleChange}
                     className="rounded-md border p-2 text-4xl font-bold w-full md:w-48 md:border-2 md:border-primary/20 focus:border-primary/50 outline-none"
                     placeholder="Prénom"
@@ -73,7 +77,7 @@ function Profile() {
                   <input
                     type="text"
                     name="lastname"
-                    value={formData.lastname}
+                    value={user?.whoami.last_name}
                     onChange={handleChange}
                     className="rounded-md border p-2 text-4xl font-bold w-full md:w-48 md:border-2 md:border-primary/20 focus:border-primary/50 outline-none"
                     placeholder="Nom"
@@ -95,13 +99,13 @@ function Profile() {
                 <dt className="text-sm text-muted-foreground md:text-base">
                   Email
                 </dt>
-                <dd className="md:text-lg">{profile.email}</dd>
+                <dd className="md:text-lg">{user?.whoami.email}</dd>
               </div>
               <div>
                 <dt className="text-sm text-muted-foreground md:text-base">
                   Téléphone
                 </dt>
-                <dd className="md:text-lg">{profile.phone}</dd>
+                <dd className="md:text-lg">{user?.whoami.phone}</dd>
               </div>
             </dl>
           ) : (
@@ -114,7 +118,7 @@ function Profile() {
                   <input
                     type="email"
                     name="email"
-                    value={formData.email}
+                    value={user?.whoami.email}
                     onChange={handleChange}
                     className="mt-2 block rounded-md border p-2 text-sm w-full md:w-96 md:border-2 md:border-primary/20 focus:border-primary/50 outline-none md:p-3"
                     placeholder="Email"
@@ -127,7 +131,7 @@ function Profile() {
                   <input
                     type="tel"
                     name="phone"
-                    value={formData.phone}
+                    value={user?.whoami.phone}
                     onChange={handleChange}
                     className="mt-2 block rounded-md border p-2 text-sm w-full md:w-96 md:border-2 md:border-primary/20 focus:border-primary/50 outline-none md:p-3"
                     placeholder="Téléphone"

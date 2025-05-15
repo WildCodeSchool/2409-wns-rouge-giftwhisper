@@ -10,27 +10,56 @@ import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { signInSchema } from "@/schemas/auth.schema";
+import type { z } from "zod";
+import { useMutation } from "@apollo/client";
+import { LOGIN } from "@/api/auth";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 export default function SignIn() {
-  const form = useForm({
+  const navigate = useNavigate();
+  const [login, { loading }] = useMutation(LOGIN);
+
+  const form = useForm<z.infer<typeof signInSchema>>({
+    resolver: zodResolver(signInSchema),
     defaultValues: {
       email: "",
       password: "",
     },
   });
 
-  const onSubmit = (data: any) => {
-    console.log("form submitted:", data);
+  const onSubmit = async (data: z.infer<typeof signInSchema>) => {
+    try {
+      const response = await login({
+        variables: {
+          data: {
+            email: data.email,
+            password: data.password,
+          },
+        },
+      });
+
+      if (response.data?.login) {
+        toast.success("Connexion réussie !");
+        navigate("/dashboard");
+      } else {
+        toast.error("Email ou mot de passe incorrect");
+      }
+    } catch (error) {
+      toast.error("Une erreur est survenue lors de la connexion", {
+        description: error instanceof Error ? error.message : "Erreur inconnue",
+      });
+    }
   };
 
   return (
     <div className="min-h-screen flex flex-col justify-between px-4 py-6">
-      {/* Titre */}
       <header className="flex flex-col items-center gap-4 py-12">
         <h1 className="text-3xl text-primary">CONNEXION</h1>
       </header>
 
-      {/* Formulaire */}
       <main className="flex-1 flex flex-col items-center justify-start">
         <Form {...form}>
           <form
@@ -44,7 +73,11 @@ export default function SignIn() {
                 <FormItem>
                   <FormLabel>Adresse email</FormLabel>
                   <FormControl>
-                    <Input placeholder="votre@email.com" {...field} />
+                    <Input
+                      type="email"
+                      placeholder="votre@email.com"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -73,8 +106,13 @@ export default function SignIn() {
               )}
             />
             <div className="flex flex-col items-center gap-4 w-fit max-w-sm mx-auto">
-              <Button type="submit" variant="primary" size="xl">
-                Se connecter
+              <Button
+                type="submit"
+                variant="primary"
+                size="xl"
+                disabled={loading}
+              >
+                {loading ? "Connexion..." : "Se connecter"}
               </Button>
 
               <div className="flex flex-row items-center gap-4 w-full">
