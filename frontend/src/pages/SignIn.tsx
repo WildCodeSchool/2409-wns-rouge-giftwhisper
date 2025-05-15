@@ -15,15 +15,17 @@ import type { z } from "zod";
 import { useMutation } from "@apollo/client";
 import { LOGIN } from "@/api/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { useEffect } from "react";
+import { getInvitationToken } from "@/utils/helpers/InvitationManager";
+import { useNavigationFlow } from "@/hooks/useNavigationFlow";
 
 export default function SignIn() {
-  const navigate = useNavigate();
   const [login, { loading }] = useMutation(LOGIN);
-  const location = useLocation();
-  const hasPendingInvitation = new URLSearchParams(location.search).get('invitation') === 'pending';
+  const { handlePostAuthRedirection } = useNavigationFlow();
+  
+  // On check si a un token d'invitation dans le sessionStorage
+  const hasInvitation = !!getInvitationToken() 
 
   const form = useForm<z.infer<typeof signInSchema>>({
     resolver: zodResolver(signInSchema),
@@ -33,14 +35,14 @@ export default function SignIn() {
     },
   });
 
-
-  // Vérifions s'il y a une invitation en attente
+  // On affiche un message si on a une invitation en attente
   useEffect(() => {
-    if (hasPendingInvitation) {
-      // Vous pouvez afficher une notification ici pour informer l'utilisateur
-      console.log("Vous avez une invitation en attente. Connectez-vous pour la rejoindre.");
+    if (hasInvitation) {
+      toast.info("Connectez-vous pour rejoindre le groupe", {
+        id: "invitation-pending",
+      });
     }
-  }, [hasPendingInvitation]);
+  }, [hasInvitation]);
 
   const onSubmit = async (data: z.infer<typeof signInSchema>) => {
     try {
@@ -55,17 +57,9 @@ export default function SignIn() {
 
       if (response.data?.login) {
         toast.success("Connexion réussie !");
-        // Stockons un faux token d'authentification pour simuler une connexion
-        localStorage.setItem('authToken', 'fake-auth-token');
         
-        // Après connexion réussie, vérifions s'il y a une invitation en attente
-        if (hasPendingInvitation) {
-          // Redirigeons vers le dashboard avec l'invitation en attente
-          navigate('/dashboard?invitation=pending');
-        } else {
-          // Redirigeons vers le dashboard normalement
-          navigate('/dashboard');
-        }
+        // On redirige vers le dashboard
+        handlePostAuthRedirection();
       } else {
         toast.error("Email ou mot de passe incorrect");
       }
@@ -80,7 +74,7 @@ export default function SignIn() {
     <div className="min-h-screen flex flex-col justify-between px-4 py-6">
       <header className="flex flex-col items-center gap-4 py-12">
         <h1 className="text-3xl text-primary">CONNEXION</h1>
-        {hasPendingInvitation && (
+        {hasInvitation && (
           <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-md text-sm">
             Vous avez une invitation en attente. Connectez-vous pour la rejoindre.
           </div>

@@ -5,13 +5,14 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  ManyToMany,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
-import { UserGroup } from "./UserGroup";
 import { Chat } from "./Chat";
 import { Invitation } from "./Invitation";
+import { User } from "./User";
 @Entity()
 @ObjectType()
 export class Group extends BaseEntity {
@@ -44,9 +45,8 @@ export class Group extends BaseEntity {
   @Field()
   is_active!: boolean;
 
-  @OneToMany(() => UserGroup, (userGroup) => userGroup.group)
-  @Field(() => [UserGroup])
-  userGroups!: UserGroup[];
+  @ManyToMany(() => User, (user) => user.groups)
+  users!: User[];
 
   @OneToMany(() => Chat, (chat) => chat.group)
   @Field(() => [Chat])

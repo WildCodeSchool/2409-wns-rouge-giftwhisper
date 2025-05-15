@@ -43,3 +43,14 @@ export class InvitationCreateInput {
   @Field()
   email!: string;
 }
+
+@InputType()
+export class InvitationAcceptInput {
+  @Field()
+  token!: string;
+
+  @Field(() => ID)
+  userId!: number;
+}
+
+

@@ -4,82 +4,94 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Settings } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-
-// Remplacez cette fonction simulée par votre vraie API
-const validateInvitation = async (token: string) => {
-  // Simulation d'un appel API
-  console.log("Validation du token:", token);
-  // Simulons une réponse d'API
-  return {
-    success: true,
-    groupName: "Groupe d'Amis",
-    groupId: "123"
-  };
-};
+import { useMutation, useLazyQuery } from "@apollo/client";
+import { toast } from "sonner";
+import { useCurrentUser } from "@/hooks/currentUser";
+import { getInvitationToken, clearInvitationToken } from "@/utils/helpers/InvitationManager";
+import { ACCEPT_INVITATION, VALIDATE_INVITATION_TOKEN } from "@/api/invitation";
 
 function Dashboard() {
   const [giftMode, setGiftMode] = useState<"classic" | "secret">("classic");
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useCurrentUser();
   const [invitationDialogOpen, setInvitationDialogOpen] = useState(false);
   const [invitationDetails, setInvitationDetails] = useState<{
     groupName: string;
     groupId: string;
+    token: string;
   } | null>(null);
+  const [validateInvitationToken] = useLazyQuery(VALIDATE_INVITATION_TOKEN);
+  const [acceptInvitationMutation] = useMutation(ACCEPT_INVITATION);
 
-  // Vérifions s'il y a une invitation en attente
+  // On check si on a une invitation en attente
   useEffect(() => {
     const hasPendingInvitation = new URLSearchParams(location.search).get('invitation') === 'pending';
     
-    if (hasPendingInvitation) {
-      // On récupère le token d'invitation depuis le localStorage
-      const token = localStorage.getItem('invitationToken');
+    if (hasPendingInvitation && user) {
+      const token = getInvitationToken();
       
       if (token) {
-        // Validations du token d'invitation
-        validateInvitation(token)
-          .then((response) => {
-            if (response.success) {
-              // Si la validation est réussie, on ouvre la boîte de dialogue
-              setInvitationDetails({
-                groupName: response.groupName,
-                groupId: response.groupId
-              });
-              setInvitationDialogOpen(true);
-            }
-          })
-          .catch((error) => {
-            console.error("Erreur lors de la validation de l'invitation:", error);
-          });
+        // Validation du token d'invitation via GraphQL
+        validateInvitationToken({
+          variables: { token },
+        })
+        .then(response => {
+          if (response.data?.validateInvitationToken) {
+            const group = response.data.validateInvitationToken;
+            setInvitationDetails({
+              groupName: group.name,
+              groupId: group.id,
+              token
+            });
+            setInvitationDialogOpen(true);
+          } else {
+            toast.error("L'invitation n'est plus valide ou a expiré");
+            clearInvitationToken();
+          }
+        })
+        .catch(error => {
+          console.error("Erreur lors de la validation de l'invitation:", error);
+          toast.error("Erreur lors de la validation de l'invitation");
+        });
       }
       
       // On nettoie l'URL pour supprimer le paramètre d'invitation
-      // Cela empêche de retraiter l'invitation lors des rafraîchissements
       navigate('/dashboard', { replace: true });
     }
-  }, [location.search, navigate]);
+  }, [location.search, navigate, user]);
 
   // Fonction pour accepter l'invitation
-  const acceptInvitation = async () => {
-    if (!invitationDetails) return;
+  const handleAcceptInvitation = async () => {
+    if (!invitationDetails || !user) return;
     
     try {
+      const { data } = await acceptInvitationMutation({
+        variables: { 
+          data: {
+            token: invitationDetails.token, 
+            userId: parseInt(user.id.toString(), 10)
+          }
+        }
+      });
 
-      // Todo:  On appelle la méthode back pour ajouter le user au groupe en question
-      console.log(`Acceptation de l'invitation pour rejoindre le groupe ${invitationDetails.groupId}`);
-      
-      // Si réussi on supprimer l'invitation de la table des inviations ou on la marque comme utilisée
+      if (data?.acceptInvitation) {
+        toast.success("Vous avez rejoint le groupe avec succès!");
+        
+        // On ferme la dialog
+        setInvitationDialogOpen(false);
+        
+        // On nettoie le token d'invitation
+        clearInvitationToken();
 
-      // On ferme la dialog
-      setInvitationDialogOpen(false);
-      
-      // On nettoie le token d'invitation
-      localStorage.removeItem('invitationToken');
-      
-      // On redirige vers la page du groupe
-      navigate(`/group?id=${invitationDetails.groupId}`);
+        // // On redirige vers la page du groupe
+        // navigate(`/group?id=${invitationDetails.groupId}`);
+      } else {
+        toast.error("Erreur lors de l'acceptation de l'invitation");
+      }
     } catch (error) {
       console.error("Erreur lors de l'acceptation de l'invitation:", error);
+      toast.error("Erreur lors de l'acceptation de l'invitation");
     }
   };
 
@@ -88,10 +100,10 @@ function Dashboard() {
     // On ferme la dialog
     setInvitationDialogOpen(false);
     
-    // On supprime l'invitation de la table des inviations ou on la marque comme refusée
-    
     // On nettoie le token d'invitation
-    localStorage.removeItem('invitationToken');
+    clearInvitationToken();
+    
+    toast.info("Vous avez refusé l'invitation");
   };
 
   return (
@@ -188,7 +200,7 @@ function Dashboard() {
             <Button variant="outline" onClick={declineInvitation}>
               Refuser
             </Button>
-            <Button onClick={acceptInvitation}>
+            <Button onClick={handleAcceptInvitation}>
               Accepter
             </Button>
           </DialogFooter>

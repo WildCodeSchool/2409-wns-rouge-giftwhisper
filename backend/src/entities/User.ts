@@ -4,14 +4,15 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinTable,
   ManyToMany,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
 import { Chat } from "./Chat";
-import { UserGroup } from "./UserGroup";
 import { IsEmail, IsStrongPassword } from "class-validator";
+import { Group } from "./Group";
 
 @Entity()
 @ObjectType()
@@ -60,9 +61,9 @@ export class User extends BaseEntity {
   @Field(() => [Chat])
   chats!: Chat[];
 
-  @OneToMany(() => UserGroup, (userGroup) => userGroup.user, )
-  @Field(() => [UserGroup])
-  userGroups!: UserGroup[];
+  @ManyToMany(() => Group, (group) => group.users)
+  @JoinTable()
+  groups!: Group[];
 }
 
 @InputType()
