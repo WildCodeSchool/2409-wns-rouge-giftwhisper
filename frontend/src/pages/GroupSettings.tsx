@@ -168,6 +168,9 @@ export default function GroupSettings() {
                               onClick={() => {
                                 if (memberToDelete !== null) {
                                   removeMember(memberToDelete.id);
+                                  toast("Membre supprimé", {
+                                    description: `${memberToDelete.firstName} ${memberToDelete.lastName} a été retiré du groupe.`,
+                                  });
                                   setMemberToDelete(null);
                                 }
                               }}
