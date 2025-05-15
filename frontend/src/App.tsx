@@ -15,7 +15,7 @@ import Settings from "./pages/Settings";
 import SignUp from "./pages/SignUp";
 import { Toaster } from "./components/ui/sonner";
 import { MobileChatSelect } from "./utils/helpers/MobileChatSelect";
-import { AuthChecker } from "./utils/helpers/AuthChecker";
+import { ProtectedRoute } from "./utils/helpers/AuthChecker";
 import { AuthState } from "./utils/types/auth";
 
 const client = new ApolloClient({
@@ -35,7 +35,7 @@ function App() {
             <Route path="/about" Component={About} />
             <Route path="/sign-in" Component={SignIn} />
             <Route path="/sign-up" Component={SignUp} />
-            <Route element={<AuthChecker authState={[AuthState.authenticated]} nestedRoute={true} />}>
+            <Route element={<ProtectedRoute authState={[AuthState.authenticated]} />}>
               <Route path="/dashboard" Component={Dashboard} />
               <Route path="/profile" Component={Profile} />
               <Route path="/settings" Component={Settings} />

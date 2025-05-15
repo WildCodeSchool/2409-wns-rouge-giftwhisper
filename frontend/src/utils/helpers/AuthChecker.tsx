@@ -1,30 +1,31 @@
 import { AuthState } from "../types/auth";
-import { useCurrentUser } from "@/hooks/currentUser";
 import { FC } from "react";
+import { useCurrentUser } from "@/hooks/currentUser";
 import { Navigate, Outlet } from "react-router-dom";
 
 type ProtectedRouteProps = {
   authState: AuthState[],
-  nestedRoute: boolean;
   redirectPath?: string;
-  Component?: FC
 }
 
-export function AuthChecker({ authState, redirectPath = '/', nestedRoute, Component }: ProtectedRouteProps) {
-  const { user, loading } = useCurrentUser();
-  //TODO: Create loading component/page
-  if (loading) return null;
-  const isAuthorized = (
+type CheckAuthProps = ProtectedRouteProps & {
+  Component: FC
+}
+
+export function ProtectedRoute({ authState, redirectPath = '/' }: ProtectedRouteProps) {
+  const { user } = useCurrentUser();
+  if (user === undefined) return undefined;
+  const isAuthorized =
     (user === null && authState.includes(AuthState.unauthenticated)) ||
     (user && authState.includes(AuthState.authenticated))
-  )
-  //TODO: Create "you need to be connected page"
-  let authorizedRoute;
-  if (nestedRoute) {
-    authorizedRoute = <Outlet />
-  } else {
-    if (!Component) throw new Error("You need to provide a component if not using nested checker");
-    authorizedRoute = <Component />
-  }
-  return isAuthorized ? authorizedRoute : <Navigate to={redirectPath} replace />
+  return isAuthorized ? <Outlet /> : <Navigate to={redirectPath} replace />
+}
+
+export function checkAuth({ authState, redirectPath = '/', Component }: CheckAuthProps) {
+  const { user } = useCurrentUser();
+  if (user === undefined) return undefined;
+  const isAuthorized =
+    (user === null && authState.includes(AuthState.unauthenticated)) ||
+    (user && authState.includes(AuthState.authenticated))
+  return isAuthorized ? <Component /> : <Navigate to={redirectPath} replace />
 }
