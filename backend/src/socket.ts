@@ -13,7 +13,7 @@ export function socketInit(httpServer: HttpServer) {
     const isHandShake = req._query.sid === undefined;
     if (isHandShake) {
       const user = await getUserFromContext({ req, res, user: undefined });
-      if (!user) return;
+      if (!user) throw new Error('Unauthorized socket connection');
       req.user = user;
     }
     next();
