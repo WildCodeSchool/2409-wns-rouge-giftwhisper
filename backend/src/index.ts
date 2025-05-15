@@ -36,7 +36,7 @@ console.log(`SMTP_USER: ${process.env.SMTP_USER || "Not set"}`);
   await server.start();
 
   app.use(
-    "/",
+    "/api",
     express.json(),
     expressMiddleware(server, {
       context: async ({ req, res }) => {
