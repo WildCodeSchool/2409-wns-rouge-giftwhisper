@@ -6,7 +6,6 @@ import { Settings } from "lucide-react";
 function Dashboard() {
   const [giftMode, setGiftMode] = useState<"classic" | "secret">("classic");
   const navigate = useNavigate();
-
   return (
     <section className="w-full px-6 md:px-14 lg:px-20 xl:px-16 py-12">
       <div className="flex border-b mb-8">

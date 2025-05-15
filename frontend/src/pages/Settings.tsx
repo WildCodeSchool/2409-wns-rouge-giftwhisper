@@ -1,8 +1,29 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useMutation } from "@apollo/client";
+import { LOGOUT } from "@/api/auth";
+import { toast } from "sonner";
 
 //TODO: AJOUTER LOGIQUE DECONNEXION
 
 function Settings() {
+  const navigate = useNavigate();
+  const [logout, { loading }] = useMutation(LOGOUT);
+
+  const handleLogout = async () => {
+    try {
+      const response = await logout();
+
+      if (response.data?.logout) {
+        toast.success("Vous êtes déconnecté");
+        navigate("/sign-in");
+      }
+    } catch (error) {
+      toast.error("Une erreur est survenue lors de la déconnexion", {
+        description: error instanceof Error ? error.message : "Erreur inconnue",
+      });
+    }
+  };
+
   return (
     <section className="flex flex-col min-h-screen">
       <header className="p-8 md:px-32 border-b bg-white">
@@ -22,8 +43,13 @@ function Settings() {
             </Link>
 
             <hr className="w-full md:w-80 my-4" />
-            <button className="w-full md:w-80 rounded-md border border-destructive p-4 font-semibold text-destructive hover:bg-destructive/5 transition-colors">
-              Déconnexion
+
+            <button
+              onClick={handleLogout}
+              disabled={loading}
+              className="w-full md:w-80 rounded-md border border-destructive p-4 font-semibold text-destructive hover:bg-destructive/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? "Déconnexion en cours..." : "Déconnexion"}
             </button>
           </nav>
         </article>

@@ -32,3 +32,8 @@ export const signUpSchema = z
     message: "Les mots de passe ne correspondent pas",
     path: ["confirmPassword"],
   });
+
+export const signInSchema = z.object({
+  email: z.string().email("Format d'email invalide"),
+  password: z.string().min(1, "Le mot de passe est requis"),
+});
