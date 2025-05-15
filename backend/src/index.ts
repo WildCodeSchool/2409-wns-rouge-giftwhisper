@@ -6,7 +6,6 @@ import express from "express";
 import http from 'http';
 import { getSchema } from "./utils/server/schema";
 import { seedAll } from "./seeds/index.seed";
-import { Server } from "socket.io";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
 import { socketInit } from "./socket";
 
@@ -37,7 +36,7 @@ console.log(`SMTP_USER: ${process.env.SMTP_USER || "Not set"}`);
   await server.start();
 
   app.use(
-    "/",
+    "/api",
     express.json(),
     expressMiddleware(server, {
       context: async ({ req, res }) => {
