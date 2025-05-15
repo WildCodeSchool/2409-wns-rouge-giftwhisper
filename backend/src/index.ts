@@ -11,11 +11,6 @@ import { socketInit } from "./socket";
 
 async function initialize() {
 
-  // Vérification des variables d'environnement SMTP
-console.log("Checking SMTP environment variables:");
-console.log(`SMTP_HOST: ${process.env.SMTP_HOST || "Not set"}`);
-console.log(`SMTP_USER: ${process.env.SMTP_USER || "Not set"}`);
-
   const dataSource = await datasource.initialize();
   console.log("Datasource is connected");
 

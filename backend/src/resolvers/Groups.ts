@@ -4,7 +4,7 @@ import { validate } from "class-validator";
 import { User } from "../entities/User";
 import { In } from "typeorm";
 import { UserGroup } from "../entities/UserGroup";
-import { InvitationResolver } from "./Invitation";
+import { invitationService } from "../services/Invitation";
 
 @Resolver()
 export class GroupsResolver {
@@ -153,13 +153,17 @@ export class GroupsResolver {
     @Arg("emails", () => [String]) emails: string[],
     @Arg("groupId", () => ID) groupId: number
   ): Promise<Group> {
+    // On récupère le groupe avec ses relations
     const group = await Group.findOne({
       where: { id: groupId },
       relations: { userGroups: { user: true }, invitations: true },
     });
     if (!group) throw new Error("Group not found");
 
-    const emailPromises = emails.map(async (email) => {
+    // Suppression des doublons dans la liste d'emails
+    const uniqueEmails = [...new Set(emails)];
+
+    const emailPromises = uniqueEmails.map(async (email) => {
       const user = await User.findOneBy({ email });
 
       // Si l'utilisateur existe et n'est pas déjà dans le groupe
@@ -169,10 +173,9 @@ export class GroupsResolver {
         group.userGroups.push(userGroup);
       }
 
-      // boucler sur createInvitation
+      // Créer l'invitation via le service
       try {
-        const invitationResolver = new InvitationResolver();
-        await invitationResolver.createInvitationInternally(email, groupId);
+        await invitationService.createInvitation(email, groupId);
       } catch (err) {
         console.error(`Erreur lors de l'invitation de ${email} : ${err}`);
       }

@@ -2,12 +2,10 @@ export const queryGroup = `#graphql
   query group($id: ID!) {
     group(id: $id) {
       id
-      userGroups {
-        user {
-          id
-          first_name
-          last_name
-        }
+      users {
+        id
+        first_name
+        last_name
       }
     }
   }
