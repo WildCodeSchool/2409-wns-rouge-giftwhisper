@@ -1,6 +1,14 @@
 import { ID, InputType, ObjectType } from "type-graphql";
 import { Field } from "type-graphql";
-import { BaseEntity, Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import {
+  BaseEntity,
+  Column,
+  CreateDateColumn,
+  Entity,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from "typeorm";
 import { Group } from "./Group";
 
 @Entity()
@@ -13,6 +21,10 @@ export class Invitation extends BaseEntity {
   @Column()
   @Field()
   token!: string;
+
+  @Column() // Ajout ici
+  @Field()
+  email!: string;
 
   @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
   @Field()
