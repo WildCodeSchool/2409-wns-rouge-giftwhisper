@@ -25,7 +25,7 @@ function ChatWindow() {
   const [displayAutoScrollDown, setDisplayAutoScrollDown] = useState(false);
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const { disconnectSocket, getSocket } = useSocket();
-  const user = useCurrentUser();
+  const { user } = useCurrentUser();
 
   useEffect(() => {
     const socket = getSocket();

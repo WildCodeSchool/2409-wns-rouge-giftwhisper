@@ -3,6 +3,6 @@ import { User } from "@/utils/types/user";
 import { useQuery } from "@apollo/client";
 
 export function useCurrentUser() {
-  const { data } = useQuery<{ whoami: User }>(WHOAMI);
-  return data?.whoami;
+  const { data, loading, refetch } = useQuery<{ whoami: User }>(WHOAMI);
+  return {user: data?.whoami, loading, refetch };
 }
