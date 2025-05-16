@@ -48,9 +48,9 @@ export function chatResolverTest(testArgs: TestArgsType) {
       assert(response?.body.kind === "single");
       expect(response.body.singleResult.errors).toBeUndefined();
 
-      const users = response.body.singleResult.data?.group.userGroups.map(
-        (userGroup) => {
-          const { first_name, last_name, id } = userGroup.user;
+      const users = response.body.singleResult.data?.group.users.map(
+        (user: any) => {
+          const { first_name, last_name, id } = user;
           return `${id}_${first_name} ${last_name}`;
         }
       );
