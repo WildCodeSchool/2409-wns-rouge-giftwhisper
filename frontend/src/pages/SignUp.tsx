@@ -51,9 +51,7 @@ export default function SignUp() {
 
       if (response.data?.createUser) {
         toast.success("Compte créé avec succès !");
-        setTimeout(() => {
-          navigate("/sign-in");
-        }, 2000);
+        navigate("/sign-in");
       }
     } catch (error) {
       if (error instanceof Error) {
