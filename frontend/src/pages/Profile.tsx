@@ -72,13 +72,8 @@ function Profile() {
 
   const handleSave = async (formData: FormData) => {
     try {
-      if (!userData?.whoami?.id) {
-        throw new Error("ID utilisateur non trouvé");
-      }
-
       await updateUser({
         variables: {
-          id: userData.whoami.id,
           data: {
             first_name: formData.first_name,
             last_name: formData.last_name,
