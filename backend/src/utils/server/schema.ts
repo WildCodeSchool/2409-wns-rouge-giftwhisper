@@ -5,10 +5,18 @@ import { GroupsResolver } from "../../resolvers/Groups";
 import { ChatsResolver } from "../../resolvers/Chats";
 import { InvitationResolver } from "../../resolvers/Invitation";
 import { MessageResolver } from "../../resolvers/Message";
+import { PasswordResetResolver } from "../../resolvers/PasswordReset";
 
 export async function getSchema() {
   const schema = await buildSchema({
-    resolvers: [UsersResolver, GroupsResolver, ChatsResolver, MessageResolver, InvitationResolver],
+    resolvers: [
+      UsersResolver,
+      GroupsResolver,
+      ChatsResolver,
+      MessageResolver,
+      InvitationResolver,
+      PasswordResetResolver,
+    ],
   });
   return schema;
 }
