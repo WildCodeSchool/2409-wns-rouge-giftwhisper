@@ -10,7 +10,6 @@ const elementIsVisibleInViewport = (el: Element, partiallyVisible = false) => {
   if (!el) return null;
   const { top, left, bottom, right } = el.getBoundingClientRect();
   const { innerHeight, innerWidth } = window;
-  console.log({ top, bottom, innerHeight, innerWidth });
   return partiallyVisible
     ? ((top > 0 && top < innerHeight) ||
       (bottom > 0 && bottom < innerHeight)) &&
@@ -20,7 +19,6 @@ const elementIsVisibleInViewport = (el: Element, partiallyVisible = false) => {
 
 function ChatWindow() {
   //TODO: Deal with color per user instead of hardcoded colors
-  // const giftReceiver = 'Fabriceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<{ id?: number, content: string, createdBy: { first_name: string, id: number } }[] | undefined>(undefined);
   const [displayAutoScrollDown, setDisplayAutoScrollDown] = useState(false);
