@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
-import { useLogout } from "@/hooks/useLogout";
+import { useAuth } from "@/hooks/useAuth";
 
 function Settings() {
-  const { handleLogout, loading } = useLogout();
+  const { logout, isLoggingOut } = useAuth();
 
   return (
     <section className="flex flex-col min-h-screen">
@@ -25,11 +25,11 @@ function Settings() {
             <hr className="w-full md:w-80 my-4" />
 
             <button
-              onClick={handleLogout}
-              disabled={loading}
+              onClick={logout}
+              disabled={isLoggingOut}
               className="w-full md:w-80 rounded-md border border-destructive p-4 font-semibold text-destructive hover:bg-destructive/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Déconnexion en cours..." : "Déconnexion"}
+              {isLoggingOut ? "Déconnexion en cours..." : "Déconnexion"}
             </button>
           </nav>
         </article>

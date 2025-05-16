@@ -16,8 +16,8 @@ import SignUp from "./pages/SignUp";
 import InvitationHandler from "./components/InvitationHandler";
 import { Toaster } from "./components/ui/sonner";
 import { MobileChatSelect } from "./utils/helpers/MobileChatSelect";
-import { ProtectedNestedRoutes } from "./utils/helpers/AuthChecker";
-import { AuthState } from "./utils/types/auth";
+import { ProtectedLayout, PublicOnlyLayout } from "./components/auth/RouteGuard";
+import { AuthProvider } from "./components/auth/AuthContext";
 
 const client = new ApolloClient({
   uri: "/api",
@@ -28,16 +28,24 @@ const client = new ApolloClient({
 function App() {
   return (
     <ApolloProvider client={client}>
+      <AuthProvider>
       <BrowserRouter>
         <Toaster richColors />
         <Routes>
           <Route Component={PageLayout}>
             <Route path="/" Component={HomePage} />
             <Route path="/about" Component={About} />
-            <Route path="/sign-in" Component={SignIn} />
-            <Route path="/sign-up" Component={SignUp} />
+            
+            {/* Routes publiques (uniquement accessibles si NON authentifié) */}
+            <Route element={<PublicOnlyLayout />}>
+              <Route path="/sign-in" Component={SignIn} />
+              <Route path="/sign-up" Component={SignUp} />
+            </Route>
+            
             <Route path="/invitation/:token" Component={InvitationHandler} />
-            <Route Component={() => <ProtectedNestedRoutes authState={[AuthState.authenticated]} />}>
+            
+            {/* Routes protégées */}
+            <Route element={<ProtectedLayout />}>
               <Route path="/chat-window" Component={ChatWindow} />
               <Route path="/dashboard" Component={Dashboard} />
               <Route path="/profile" Component={Profile} />
@@ -47,10 +55,12 @@ function App() {
               <Route path="/group-settings" Component={GroupSettings} />
               <Route path="/chat-select" Component={MobileChatSelect} />
             </Route>
+            
             <Route path="*" Component={() => <Navigate to="/" />} />
           </Route>
         </Routes>
       </BrowserRouter>
+      </AuthProvider>
     </ApolloProvider>
   );
 }

@@ -12,19 +12,17 @@ import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { signInSchema } from "@/schemas/auth.schema";
 import type { z } from "zod";
-import { useMutation } from "@apollo/client";
-import { LOGIN } from "@/api/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useEffect } from "react";
-import { getInvitationToken } from "@/utils/helpers/InvitationManager";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function SignIn() {
-  const [login, { loading }] = useMutation(LOGIN);
   const navigate = useNavigate();
+  const { tokenInvitation, login, isLoggingIn } = useAuth();
   
   // On check si a un token d'invitation dans le sessionStorage
-  const hasInvitation = !!getInvitationToken() 
+  const hasInvitation = !!tokenInvitation;
 
   const form = useForm<z.infer<typeof signInSchema>>({
     resolver: zodResolver(signInSchema),
@@ -46,15 +44,11 @@ export default function SignIn() {
   const onSubmit = async (data: z.infer<typeof signInSchema>) => {
     try {
       const response = await login({
-        variables: {
-          data: {
-            email: data.email,
-            password: data.password,
-          },
-        },
+        email: data.email,
+        password: data.password,
       });
 
-      if (response.data?.login) {
+      if (response) {
         toast.success("Connexion réussie !");
         navigate("/dashboard");
       } else {
@@ -128,9 +122,9 @@ export default function SignIn() {
                 type="submit"
                 variant="primary"
                 size="xl"
-                disabled={loading}
+                disabled={isLoggingIn}
               >
-                {loading ? "Connexion..." : "Se connecter"}
+                {isLoggingIn ? "Connexion..." : "Se connecter"}
               </Button>
 
               <div className="flex flex-row items-center gap-4 w-full">
