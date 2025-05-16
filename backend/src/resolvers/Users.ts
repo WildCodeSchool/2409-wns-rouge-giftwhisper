@@ -52,15 +52,16 @@ export class UsersResolver {
   //Update an user
   @Mutation(() => User)
   async updateUser(
-    @Arg("id", () => ID) id: number,
-    @Arg("data", () => UserUpdateInput) data: UserUpdateInput
+    @Arg("data", () => UserUpdateInput) data: UserUpdateInput,
+    @Ctx() context: ContextType
   ): Promise<User> {
-    const user = await User.findOne({ where: { id } });
+    const user = await getUserFromContext(context);
+
     if (!user) {
-      throw new Error(`Utilisateur avec l'ID ${id} non trouvé.`);
+      throw new Error("Non autorisé");
     }
 
-    // 🔹 Mise à jour des champs optionnels
+    // Mise à jour des champs optionnels
     if (data.email !== undefined) user.email = data.email;
     if (data.password) user.hashedPassword = await argon2.hash(data.password);
     if (data.first_name !== undefined) user.first_name = data.first_name;
