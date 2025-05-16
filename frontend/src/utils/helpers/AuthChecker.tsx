@@ -3,12 +3,12 @@ import { Navigate, Outlet } from "react-router-dom";
 import { useCurrentUser } from "@/hooks/currentUser";
 import { FC } from "react";
 
-type ProtectedRoutesProps = {
+type ProtectedNestedRoutesProps = {
   authState: AuthState[],
   redirectPath?: string;
 }
 
-type ProtectedRouteProps = ProtectedRoutesProps & {
+type ProtectedSingleRouteProps = ProtectedNestedRoutesProps & {
   Component: FC;
 }
 
@@ -22,12 +22,12 @@ function useAuthorized(authState: AuthState[]) {
   return isAuthorized;
 }
 
-export function ProtectedNestedRoutes({ authState, redirectPath = '/' }: ProtectedRoutesProps) {
+export function ProtectedNestedRoutes({ authState, redirectPath = '/' }: ProtectedNestedRoutesProps) {
   const isAuthorized = useAuthorized(authState);
   return isAuthorized ? <Outlet /> : <Navigate to={redirectPath} replace />
 }
 
-export function ProtectedSingleRoute({ authState, Component, redirectPath = '/', }: ProtectedRouteProps) {
+export function ProtectedSingleRoute({ authState, Component, redirectPath = '/', }: ProtectedSingleRouteProps) {
   const isAuthorized = useAuthorized(authState);
   return isAuthorized ? <Component /> : <Navigate to={redirectPath} replace />;
 }
