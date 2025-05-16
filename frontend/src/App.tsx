@@ -18,6 +18,8 @@ import { Toaster } from "./components/ui/sonner";
 import { MobileChatSelect } from "./utils/helpers/MobileChatSelect";
 import { ProtectedNestedRoutes } from "./utils/helpers/AuthChecker";
 import { AuthState } from "./utils/types/auth";
+import { ResetPassword } from "./pages/ResetPassword";
+import { ForgotPassword } from "./pages/ForgotPassword";
 
 const client = new ApolloClient({
   uri: "/api",
@@ -37,8 +39,14 @@ function App() {
             <Route path="/sign-in" Component={SignIn} />
             <Route path="/sign-up" Component={SignUp} />
             <Route path="/invitation/:token" Component={InvitationHandler} />
-            <Route Component={() => <ProtectedNestedRoutes authState={[AuthState.authenticated]} />}>
+            <Route
+              Component={() => (
+                <ProtectedNestedRoutes authState={[AuthState.authenticated]} />
+              )}
+            >
               <Route path="/chat-window" Component={ChatWindow} />
+              <Route path="/reset-password" Component={ResetPassword} />
+              <Route path="/forgot-password" Component={ForgotPassword} />
               <Route path="/dashboard" Component={Dashboard} />
               <Route path="/profile" Component={Profile} />
               <Route path="/settings" Component={Settings} />

@@ -25,9 +25,9 @@ export class PasswordResetToken extends BaseEntity {
   created_at!: Date;
 
   @Column()
+  @Field()
   expiresAt!: Date;
 
   @ManyToOne(() => User, (user) => user.resetTokens, { onDelete: "CASCADE" })
-  @Field(() => User)
-  user!: User;
+  user?: User;
 }
