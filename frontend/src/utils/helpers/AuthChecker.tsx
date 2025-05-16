@@ -8,10 +8,6 @@ type ProtectedRouteProps = {
   redirectPath?: string;
 }
 
-type CheckAuthProps = ProtectedRouteProps & {
-  Component: FC
-}
-
 export function ProtectedRoute({ authState, redirectPath = '/' }: ProtectedRouteProps) {
   const { user } = useCurrentUser();
   if (user === undefined) return undefined;
@@ -21,7 +17,7 @@ export function ProtectedRoute({ authState, redirectPath = '/' }: ProtectedRoute
   return isAuthorized ? <Outlet /> : <Navigate to={redirectPath} replace />
 }
 
-export function checkAuth({ authState, redirectPath = '/', Component }: CheckAuthProps) {
+export function checkAuth(authState: AuthState[], Component: FC, redirectPath = '/') {
   const { user } = useCurrentUser();
   if (user === undefined) return undefined;
   const isAuthorized =

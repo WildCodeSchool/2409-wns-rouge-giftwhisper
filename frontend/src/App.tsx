@@ -36,13 +36,13 @@ function App() {
             <Route path="/sign-in" Component={SignIn} />
             <Route path="/sign-up" Component={SignUp} />
             <Route element={<ProtectedRoute authState={[AuthState.authenticated]} />}>
+              <Route path="/chat-window" Component={ChatWindow} />
               <Route path="/dashboard" Component={Dashboard} />
               <Route path="/profile" Component={Profile} />
               <Route path="/settings" Component={Settings} />
               <Route path="/group" Component={Group} />
               <Route path="/group-creation" Component={GroupCreation} />
               <Route path="/group-settings" Component={GroupSettings} />
-              <Route path="/chat-window" Component={ChatWindow} />
               <Route path="/chat-select" Component={MobileChatSelect} />
             </Route>
             <Route path="*" Component={() => <Navigate to="/" />} />
