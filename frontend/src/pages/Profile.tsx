@@ -66,10 +66,6 @@ function Profile() {
     }
   }, [userData?.whoami, form]);
 
-  const handleStartEditing = () => {
-    setIsEditing(true);
-  };
-
   const handleSave = async (formData: FormData) => {
     try {
       await updateUser({
@@ -81,6 +77,7 @@ function Profile() {
             date_of_birth: new Date(formData.date_of_birth),
           },
         },
+        refetchQueries: [WHOAMI],
       });
 
       setIsEditing(false);
@@ -138,7 +135,7 @@ function Profile() {
                   {userData.whoami.first_name} {userData.whoami.last_name}
                 </h1>
                 <button
-                  onClick={handleStartEditing}
+                  onClick={() => setIsEditing(true)}
                   className="rounded-md bg-primary p-2 text-sm font-semibold text-white md:px-6"
                 >
                   Modifier
