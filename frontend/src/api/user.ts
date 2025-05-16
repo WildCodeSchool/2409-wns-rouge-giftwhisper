@@ -27,3 +27,21 @@ export const CREATE_USER = gql`
     }
   }
 `;
+
+export const UPDATE_USER = gql`
+  mutation UpdateUser($id: ID!, $data: UserUpdateInput!) {
+    updateUser(id: $id, data: $data) {
+      id
+      email
+      first_name
+      last_name
+      date_of_birth
+    }
+  }
+`;
+
+export const DELETE_ACCOUNT = gql`
+  mutation DeleteAccount {
+    deleteUser
+  }
+`;
