@@ -28,6 +28,7 @@ function ChatWindow() {
   const { user } = useCurrentUser();
 
   useEffect(() => {
+    if(!user) return;
     const socket = getSocket();
     socket.on('messages-history', (messages) => {
       setMessages(messages);
@@ -47,7 +48,7 @@ function ChatWindow() {
     return () => {
       disconnectSocket();
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     const timeout = setTimeout(() => {

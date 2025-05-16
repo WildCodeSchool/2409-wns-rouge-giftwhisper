@@ -9,13 +9,16 @@ export function socketInit(httpServer: HttpServer) {
     path: "/api/socket.io"
   });
 
-  io.engine.use(async (req: any, res: any, next: () => void) => {
+  io.engine.use(async (req: any, res: any, next: (error?: Error) => void) => {
     const isHandShake = req._query.sid === undefined;
-    if (isHandShake) {
-      const user = await getUserFromContext({ req, res, user: undefined });
-      if (!user) throw new Error('Unauthorized socket connection');
-      req.user = user;
+    if (!isHandShake) {
+      return next();
     }
+    const user = await getUserFromContext({ req, res, user: undefined });
+    if (!user) {
+      return next(new Error('Unauthorized user'))
+    }
+    req.user = user;
     next();
   });
 
