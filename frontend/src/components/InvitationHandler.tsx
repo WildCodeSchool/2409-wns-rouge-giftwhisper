@@ -1,8 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { saveInvitationToken } from '@/utils/helpers/InvitationManager';
-import { useNavigationFlow } from '@/hooks/useNavigationFlow';
+import { useAuth } from '@/hooks/useAuth';
 
 /**
  * Composant qui intercepte les liens d'invitation sur la route /invitation/:token
@@ -10,7 +9,7 @@ import { useNavigationFlow } from '@/hooks/useNavigationFlow';
 const InvitationHandler = () => {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
-  const { handleInvitationToken } = useNavigationFlow();
+  const { handleInvitationToken, isAuthenticated } = useAuth();
 
   useEffect(() => {
     if (!token) {
@@ -19,10 +18,16 @@ const InvitationHandler = () => {
       return;
     }
 
-    saveInvitationToken(token);
-    
+    //Persister le token dans l'auth context
     handleInvitationToken(token);
-  }, [token, navigate, handleInvitationToken]);
+
+    if (isAuthenticated) {
+      navigate('/dashboard', { replace: true });
+    } else {
+      navigate('/sign-in', { replace: true });
+    }
+
+  }, [token, navigate, handleInvitationToken, isAuthenticated]);
 
   return (
     <div className="flex flex-col gap-4 justify-center items-center h-screen">

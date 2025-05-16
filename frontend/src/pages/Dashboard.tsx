@@ -6,14 +6,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { useMutation, useLazyQuery } from "@apollo/client";
 import { toast } from "sonner";
-import { useCurrentUser } from "@/hooks/currentUser";
-import { getInvitationToken, clearInvitationToken } from "@/utils/helpers/InvitationManager";
 import { ACCEPT_INVITATION, VALIDATE_INVITATION_TOKEN } from "@/api/invitation";
+import { useAuth } from "@/hooks/useAuth";
 
 function Dashboard() {
   const [giftMode, setGiftMode] = useState<"classic" | "secret">("classic");
   const navigate = useNavigate();
-  const { user } = useCurrentUser();
+  const { tokenInvitation, clearInvitationToken, isAuthenticated, user } = useAuth();
   const [invitationDialogOpen, setInvitationDialogOpen] = useState(false);
   const [invitationDetails, setInvitationDetails] = useState<{
     groupName: string;
@@ -25,41 +24,36 @@ function Dashboard() {
 
   // On check si on a une invitation à un groupe en attente
   useEffect(() => {
-    
-    if (user) {
-      const token = getInvitationToken();
-      
-      if (token) {
-        // Validation du token d'invitation via GraphQL
-        validateInvitationToken({
-          variables: { token },
-        })
-        .then(response => {
-          if (response.data?.validateInvitationToken) {
-            const group = response.data.validateInvitationToken;
-            setInvitationDetails({
-              groupName: group.name,
-              groupId: group.id,
-              token
-            });
-            setInvitationDialogOpen(true);
-          } else {
-            toast.error("L'invitation n'est plus valide ou a expiré");
-            clearInvitationToken();
-          }
-        })
-        .catch(error => {
-          console.error("Erreur lors de la validation de l'invitation:", error);
-          toast.error("Erreur lors de la validation de l'invitation");
-        });
-      }
-      
+    if (tokenInvitation) {
+      // Validation du token d'invitation via GraphQL
+      validateInvitationToken({
+        variables: { token: tokenInvitation },
+      })
+      .then(response => {
+        if (response.data?.validateInvitationToken) {
+          const group = response.data.validateInvitationToken;
+          setInvitationDetails({
+            groupName: group.name,
+            groupId: group.id,
+            token: tokenInvitation
+          });
+          setInvitationDialogOpen(true);
+        } else {
+          toast.error("L'invitation n'est plus valide ou a expiré");
+          clearInvitationToken();
+        }
+      })
+      .catch(error => {
+        console.error("Erreur lors de la validation de l'invitation:", error);
+        toast.error("Erreur lors de la validation de l'invitation");
+      });
     }
-  }, [user]);
+  }, [tokenInvitation]);
+
 
   // Fonction pour accepter l'invitation
   const handleAcceptInvitation = async () => {
-    if (!invitationDetails || !user) return;
+    if (!invitationDetails || !isAuthenticated || !user) return;
     
     try {
       const { data } = await acceptInvitationMutation({
@@ -79,9 +73,6 @@ function Dashboard() {
         
         // On nettoie le token d'invitation
         clearInvitationToken();
-
-        // // On redirige vers la page du groupe
-        // navigate(`/group?id=${invitationDetails.groupId}`);
       } else {
         toast.error("Erreur lors de l'acceptation de l'invitation");
       }
