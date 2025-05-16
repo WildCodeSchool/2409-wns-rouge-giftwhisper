@@ -1,7 +1,7 @@
 import { useNavigate} from "react-router-dom";
 import { useCurrentUser } from "./currentUser";
 import { toast } from "sonner";
-import { getInvitationToken } from "@/utils/helpers/InvitationManager";
+//import { getInvitationToken } from "@/utils/helpers/InvitationManager";
 
 /**
  * Hook pour centraliser la gestion des flux de navigation dans l'application
@@ -13,17 +13,17 @@ export const useNavigationFlow = () => {
   // Redirection après authentification réussie
   const handlePostAuthRedirection = () => {
     // On check si on a une invitation en attente
-    const invitationToken = getInvitationToken();
-    console.log("invitationToken", invitationToken);
-    if (invitationToken) {
-      // Si nous avons un token d'invitation, aller au dashboard avec le paramètre
-      navigate("/dashboard?invitation=pending", { replace: true });
-      return true;
-    } else {
+    //const invitationToken = getInvitationToken();
+    //console.log("invitationToken", invitationToken);
+    // if (invitationToken) {
+    //   // Si nous avons un token d'invitation, aller au dashboard avec le paramètre
+    //   navigate("/dashboard?invitation=pending", { replace: true });
+    //   return true;
+    // } else {
       // Par défaut, rediriger vers le dashboard
       navigate("/dashboard", { replace: true });
       return true;
-    }
+    //}
   };
 
   // Traitement d'un token d'invitation

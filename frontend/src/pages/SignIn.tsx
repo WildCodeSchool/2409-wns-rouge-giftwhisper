@@ -9,7 +9,7 @@ import {
 import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { signInSchema } from "@/schemas/auth.schema";
 import type { z } from "zod";
 import { useMutation } from "@apollo/client";
@@ -18,11 +18,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useEffect } from "react";
 import { getInvitationToken } from "@/utils/helpers/InvitationManager";
-import { useNavigationFlow } from "@/hooks/useNavigationFlow";
 
 export default function SignIn() {
   const [login, { loading }] = useMutation(LOGIN);
-  const { handlePostAuthRedirection } = useNavigationFlow();
+  const navigate = useNavigate();
   
   // On check si a un token d'invitation dans le sessionStorage
   const hasInvitation = !!getInvitationToken() 
@@ -57,9 +56,7 @@ export default function SignIn() {
 
       if (response.data?.login) {
         toast.success("Connexion réussie !");
-        
-        // On redirige vers le dashboard
-        handlePostAuthRedirection();
+        navigate("/dashboard");
       } else {
         toast.error("Email ou mot de passe incorrect");
       }

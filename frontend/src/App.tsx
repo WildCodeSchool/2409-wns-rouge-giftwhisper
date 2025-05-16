@@ -18,7 +18,6 @@ import { Toaster } from "./components/ui/sonner";
 import { MobileChatSelect } from "./utils/helpers/MobileChatSelect";
 import { ProtectedNestedRoutes } from "./utils/helpers/AuthChecker";
 import { AuthState } from "./utils/types/auth";
-//import { AuthRedirectHandler } from "./hooks/useNavigationFlow";
 
 const client = new ApolloClient({
   uri: "/api",
@@ -32,8 +31,6 @@ function App() {
       <BrowserRouter>
         <Toaster richColors />
         <Routes>
-          <Route path="/invitation/:token" Component={InvitationHandler} />
-          
           <Route Component={PageLayout}>
             <Route path="/" Component={HomePage} />
             <Route path="/about" Component={About} />
@@ -53,7 +50,6 @@ function App() {
             <Route path="*" Component={() => <Navigate to="/" />} />
           </Route>
         </Routes>
-        {/* <AuthRedirectHandler /> */}
       </BrowserRouter>
     </ApolloProvider>
   );

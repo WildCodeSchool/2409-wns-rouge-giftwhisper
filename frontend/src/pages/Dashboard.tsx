@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Settings } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -13,7 +13,6 @@ import { ACCEPT_INVITATION, VALIDATE_INVITATION_TOKEN } from "@/api/invitation";
 function Dashboard() {
   const [giftMode, setGiftMode] = useState<"classic" | "secret">("classic");
   const navigate = useNavigate();
-  const location = useLocation();
   const { user } = useCurrentUser();
   const [invitationDialogOpen, setInvitationDialogOpen] = useState(false);
   const [invitationDetails, setInvitationDetails] = useState<{
@@ -24,11 +23,10 @@ function Dashboard() {
   const [validateInvitationToken] = useLazyQuery(VALIDATE_INVITATION_TOKEN);
   const [acceptInvitationMutation] = useMutation(ACCEPT_INVITATION);
 
-  // On check si on a une invitation en attente
+  // On check si on a une invitation à un groupe en attente
   useEffect(() => {
-    const hasPendingInvitation = new URLSearchParams(location.search).get('invitation') === 'pending';
     
-    if (hasPendingInvitation && user) {
+    if (user) {
       const token = getInvitationToken();
       
       if (token) {
@@ -56,10 +54,8 @@ function Dashboard() {
         });
       }
       
-      // On nettoie l'URL pour supprimer le paramètre d'invitation
-      navigate('/dashboard', { replace: true });
     }
-  }, [location.search, navigate, user]);
+  }, [user]);
 
   // Fonction pour accepter l'invitation
   const handleAcceptInvitation = async () => {
