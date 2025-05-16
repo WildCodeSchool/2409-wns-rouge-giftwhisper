@@ -61,7 +61,7 @@ export class UsersResolver {
       throw new Error("Non autorisé");
     }
 
-    // �� Mise à jour des champs optionnels
+    // Mise à jour des champs optionnels
     if (data.email !== undefined) user.email = data.email;
     if (data.password) user.hashedPassword = await argon2.hash(data.password);
     if (data.first_name !== undefined) user.first_name = data.first_name;
