@@ -9,18 +9,22 @@ import {
 import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { signInSchema } from "@/schemas/auth.schema";
 import type { z } from "zod";
 import { useMutation } from "@apollo/client";
 import { LOGIN } from "@/api/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useEffect } from "react";
+import { getInvitationToken } from "@/utils/helpers/InvitationManager";
 
 export default function SignIn() {
-  const navigate = useNavigate();
   const [login, { loading }] = useMutation(LOGIN);
+  const navigate = useNavigate();
+  
+  // On check si a un token d'invitation dans le sessionStorage
+  const hasInvitation = !!getInvitationToken() 
 
   const form = useForm<z.infer<typeof signInSchema>>({
     resolver: zodResolver(signInSchema),
@@ -29,6 +33,15 @@ export default function SignIn() {
       password: "",
     },
   });
+
+  // On affiche un message si on a une invitation en attente
+  useEffect(() => {
+    if (hasInvitation) {
+      toast.info("Connectez-vous pour rejoindre le groupe", {
+        id: "invitation-pending",
+      });
+    }
+  }, [hasInvitation]);
 
   const onSubmit = async (data: z.infer<typeof signInSchema>) => {
     try {
@@ -58,6 +71,11 @@ export default function SignIn() {
     <div className="min-h-screen flex flex-col justify-between px-4 py-6">
       <header className="flex flex-col items-center gap-4 py-12">
         <h1 className="text-3xl text-primary">CONNEXION</h1>
+        {hasInvitation && (
+          <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-md text-sm">
+            Vous avez une invitation en attente. Connectez-vous pour la rejoindre.
+          </div>
+        )}
       </header>
 
       <main className="flex-1 flex flex-col items-center justify-start">

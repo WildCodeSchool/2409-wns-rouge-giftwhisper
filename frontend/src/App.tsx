@@ -13,6 +13,7 @@ import GroupSettings from "./pages/GroupSettings";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import SignUp from "./pages/SignUp";
+import InvitationHandler from "./components/InvitationHandler";
 import { Toaster } from "./components/ui/sonner";
 import { MobileChatSelect } from "./utils/helpers/MobileChatSelect";
 import { ProtectedNestedRoutes } from "./utils/helpers/AuthChecker";
@@ -35,6 +36,7 @@ function App() {
             <Route path="/about" Component={About} />
             <Route path="/sign-in" Component={SignIn} />
             <Route path="/sign-up" Component={SignUp} />
+            <Route path="/invitation/:token" Component={InvitationHandler} />
             <Route Component={() => <ProtectedNestedRoutes authState={[AuthState.authenticated]} />}>
               <Route path="/chat-window" Component={ChatWindow} />
               <Route path="/dashboard" Component={Dashboard} />

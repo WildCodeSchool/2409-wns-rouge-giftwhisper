@@ -1,113 +1,25 @@
-import { Arg, Mutation, Query, Resolver } from "type-graphql";
+import { Arg, ID, Int, Mutation, Query, Resolver } from "type-graphql";
 import { Invitation, InvitationCreateInput } from "../entities/Invitation";
 import { Group } from "../entities/Group";
-import { validate } from "class-validator";
-import crypto from "crypto";
-import { emailService } from "../services/emailService";
-import { UserGroup } from "../entities/UserGroup";
-import { datasource } from "../datasource.config";
 import { User } from "../entities/User";
+import { invitationService } from "../services/Invitation";
+import { InvitationAcceptInput } from "../entities/Invitation";
 
 @Resolver()
 export class InvitationResolver {
-  static createInvitation(arg0: { email: string; groupId: number }) {
-    throw new Error("Method not implemented.");
-  }
-  //   @Mutation(() => Invitation)
-  //   async createInvitation(
-  //     @Arg("data", () => InvitationCreateInput) data: InvitationCreateInput
-  //   ): Promise<Invitation> {
-  //     return await datasource.manager.transaction(
-  //       async (transactionalEntityManager) => {
-  //         //1. On récupère le groupe
-  //         const group = await transactionalEntityManager.findOne(Group, {
-  //           where: { id: data.groupId },
-  //         });
-
-  //         if (!group) {
-  //           throw new Error("Group not found");
-  //         }
-
-  //         //on vérifie s'il n'y a pas déjà une invitation pr cet utilisateur
-  //         const existing = await Invitation.findOne({
-  //           where: { email: data.email, group: { id: data.groupId } },
-  //           relations: ["group"],
-  //         });
-  //         if (existing)
-  //           throw new Error("Une invitation existe déjà pour cet email.");
-
-  //         //2. On crée une invitation
-  //         const newInvitation = new Invitation();
-  //         newInvitation.token = crypto.randomBytes(16).toString("hex");
-  //         newInvitation.group = group;
-  //         newInvitation.email = data.email; // ajout pr relier le token à un groupe ET à un destinataire.
-
-  //         //3. On enregistre l'invitation dans la transaction
-  //         const errors = await validate(newInvitation);
-  //         if (errors.length > 0) {
-  //           throw new Error(`Validation error: ${JSON.stringify(errors)}`);
-  //         }
-
-  //         await transactionalEntityManager.save(newInvitation);
-
-  //         try {
-  //           //4. On envoie un mail d'invitation (opération externe à la transaction)
-  //           await emailService.sendInvitationEmail(
-  //             data.email,
-  //             group.name,
-  //             newInvitation.token
-  //           );
-  //         } catch (error: any) {
-  //           // Si l'envoi d'email échoue, on annule la transaction
-  //           throw new Error(
-  //             `Erreur lors de l'envoi de l'email: ${error.message}`
-  //           );
-  //         }
-
-  //         return newInvitation;
-  //       }
-  //     );
-  //   }
-
-  async createInvitationInternally(
-    email: string,
-    groupId: number
-  ): Promise<Invitation> {
-    const group = await Group.findOneBy({ id: groupId });
-    if (!group) throw new Error("Group not found");
-
-    const existing = await Invitation.findOne({
-      where: { email, group: { id: groupId } },
-      relations: ["group"],
-    });
-    if (existing) throw new Error("Une invitation existe déjà pour cet email.");
-
-    const invitation = new Invitation();
-    invitation.token = crypto.randomBytes(16).toString("hex");
-    invitation.email = email;
-    invitation.group = group;
-
-    const errors = await validate(invitation);
-    if (errors.length > 0) throw new Error(JSON.stringify(errors));
-
-    await invitation.save();
-
-    await emailService.sendInvitationEmail(email, group.name, invitation.token);
-
-    return invitation;
-  }
-
   @Mutation(() => Invitation)
   async createInvitation(
     @Arg("data", () => InvitationCreateInput) data: InvitationCreateInput
   ): Promise<Invitation> {
-    return this.createInvitationInternally(data.email, data.groupId);
+    return invitationService.createInvitation(data.email, data.groupId);
   }
 
   @Query(() => Group, { nullable: true })
   async validateInvitationToken(
     @Arg("token") token: string
   ): Promise<Group | null> {
+
+    console.log("validateInvitationToken", token);
     // 1. On récupère l'invitation par son token
     const invitation = await Invitation.findOne({
       where: { token },
@@ -125,12 +37,11 @@ export class InvitationResolver {
 
   @Mutation(() => Boolean)
   async acceptInvitation(
-    @Arg("token") token: string,
-    @Arg("userId") userId: number
+  @Arg("data", () => InvitationAcceptInput) data: InvitationAcceptInput
   ): Promise<boolean> {
     // 1. On récupère l'invitation
     const invitation = await Invitation.findOne({
-      where: { token },
+      where: { token: data.token },
       relations: ["group"],
     });
 
@@ -138,32 +49,54 @@ export class InvitationResolver {
       throw new Error("Invitation invalide ou expirée");
     }
 
-    const user = await User.findOneBy({ email: invitation.email }); //potentiellement user n'a pas encore d'id?
+    const user = await User.findOneBy({ id: data.userId }); 
 
     if (!user)
       throw new Error("Aucun utilisateur trouvé pour cette invitation");
 
     // 2. On vérifie si l'utilisateur est déjà membre du groupe
-    const existingMembership = await UserGroup.findOne({
-      where: {
-        user: { id: userId },
-        group: { id: invitation.group.id },
-      },
+    const groupWithUsers = await Group.findOne({
+      where: { id: invitation.group.id },
+      relations: { users: true },
     });
+    
+    if (!groupWithUsers) {
+      throw new Error("Groupe non trouvé");
+    }
+    
+    const isUserAlreadyMember = groupWithUsers.users.some(u => u.id === data.userId);
 
-    if (existingMembership) {
+    if (isUserAlreadyMember) {
       // L'utilisateur est déjà membre, on supprime quand même l'invitation
       await Invitation.remove(invitation);
       return true;
+    } else {
+
+      const group = await Group.findOne({
+        where: { id: invitation.group.id },
+        relations: { users: true },
+      });
+
+      if (!group) {
+        throw new Error("Groupe non trouvé");
+      }
+  
+      // 3. On ajoute l'utilisateur au groupe 
+      try {
+        // On vérifie si l'utilisateur existe déjà dans le groupe
+        const userExists = group.users.some(u => u.id === user.id);
+        
+        if (!userExists) {
+          group.users.push(user);
+          await group.save();
+        }
+      } catch (error) {
+        console.error("Erreur lors de l'ajout de l'utilisateur au groupe:", error);
+        throw new Error("Erreur lors de l'ajout de l'utilisateur au groupe");
+      }
+
     }
-
-    // 3. On ajoute l'utilisateur au groupe
-    const userGroup = new UserGroup();
-    userGroup.user = user; //on peut ne pas avoir d'id encore à ce moment là?
-    userGroup.group = invitation.group;
-
-    await userGroup.save();
-
+    
     // 4. On supprime l'invitation
     await Invitation.remove(invitation);
 

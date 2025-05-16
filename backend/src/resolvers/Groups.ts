@@ -3,8 +3,7 @@ import { Group, GroupCreateInput, GroupUpdateInput } from "../entities/Group";
 import { validate } from "class-validator";
 import { User } from "../entities/User";
 import { In } from "typeorm";
-import { UserGroup } from "../entities/UserGroup";
-import { InvitationResolver } from "./Invitation";
+import { invitationService } from "../services/Invitation";
 
 @Resolver()
 export class GroupsResolver {
@@ -13,7 +12,7 @@ export class GroupsResolver {
   async groups(): Promise<Group[]> {
     const groups = await Group.find({
       relations: {
-        userGroups: true,
+        users: true,
       },
     });
     return groups;
@@ -25,9 +24,7 @@ export class GroupsResolver {
     const group = await Group.findOne({
       where: { id },
       relations: {
-        userGroups: {
-          user: true,
-        },
+        users: true,
         invitations: true,
       },
     });
@@ -64,7 +61,7 @@ export class GroupsResolver {
     //1.Vérification si le groupe existe
     const group = await Group.findOne({
       where: { id },
-      relations: { userGroups: true },
+      relations: { users: true },
     });
 
     if (!group) {
@@ -80,9 +77,7 @@ export class GroupsResolver {
       }
 
       //2.2.Récupération des utilisateurs existants dans le groupe
-      const existingUserIds = group.userGroups.map(
-        (userGroup) => userGroup.user.id
-      );
+      const existingUserIds = group.users.map(user => user.id);
 
       //2.3. Comparaison des utilisateurs existants et des utilisateurs à ajouter
       const usersAlreadyInGroup = data.userIds.filter((userId) =>
@@ -95,15 +90,13 @@ export class GroupsResolver {
 
       const usersToAdd = await User.findBy({ id: In(data.userIds) });
 
-      //2.4 Ajout des nouveaux utilisateur au groupe
+      //2.4 Ajout des nouveaux utilisateurs au groupe
       for (const user of usersToAdd) {
-        const newUserToAdd = new UserGroup();
-        newUserToAdd.group = group;
-        newUserToAdd.user = user;
-        await newUserToAdd.save();
-        // Ajouter à la collection pour la cohérence
-        group.userGroups.push(newUserToAdd);
+        group.users.push(user);
       }
+      
+      // Enregistrer les modifications
+      await group.save();
     }
 
     //3 Mise à jour des champs du groupe
@@ -153,29 +146,34 @@ export class GroupsResolver {
     @Arg("emails", () => [String]) emails: string[],
     @Arg("groupId", () => ID) groupId: number
   ): Promise<Group> {
+    // On récupère le groupe avec ses relations
     const group = await Group.findOne({
       where: { id: groupId },
-      relations: { userGroups: { user: true }, invitations: true },
+      relations: { users: true, invitations: true },
     });
     if (!group) throw new Error("Group not found");
 
-    const emailPromises = emails.map(async (email) => {
+    // Suppression des doublons dans la liste d'emails
+    const uniqueEmails = [...new Set(emails)];
+
+    const emailPromises = uniqueEmails.map(async (email) => {
       const user = await User.findOneBy({ email });
 
-      // Si l'utilisateur existe et n'est pas déjà dans le groupe
-      if (user && !group.userGroups.some((ug) => ug.user.id === user.id)) {
-        const userGroup = UserGroup.create({ user, group });
-        await userGroup.save();
-        group.userGroups.push(userGroup);
-      }
+      // Vérification si l'utilisateur existe
+      if (user) {
+        // Vérification si l'utilisateur n'est pas déjà dans le groupe
+        const userAlreadyInGroup = group.users.some((existingUser) => existingUser.id === user.id);
 
-      // boucler sur createInvitation
-      try {
-        const invitationResolver = new InvitationResolver();
-        await invitationResolver.createInvitationInternally(email, groupId);
-      } catch (err) {
-        console.error(`Erreur lors de l'invitation de ${email} : ${err}`);
-      }
+        if (!userAlreadyInGroup) {
+
+          // Créer l'invitation via le service
+          try {
+            await invitationService.createInvitation(email, groupId);
+          } catch (err) {
+            console.error(`Erreur lors de l'invitation de ${email} : ${err}`);
+          }
+        }
+      }   
     });
 
     await Promise.all(emailPromises);
