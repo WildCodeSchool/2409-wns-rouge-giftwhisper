@@ -1,10 +1,16 @@
 import { Resolver, Query, Mutation, Arg, Ctx, ID } from "type-graphql";
-import { User, UserCreateInput, UserLoginInput, UserUpdateInput } from "../entities/User";
+import {
+  User,
+  UserCreateInput,
+  UserLoginInput,
+  UserUpdateInput,
+} from "../entities/User";
 import { validate } from "class-validator";
 import { sign } from "jsonwebtoken";
 import Cookies from "cookies";
 import * as argon2 from "argon2";
 import { getUserFromContext } from "../auth";
+import { ContextType } from "../auth";
 
 @Resolver()
 export class UsersResolver {
@@ -68,37 +74,39 @@ export class UsersResolver {
   }
 
   @Mutation(() => Boolean)
-  async deleteUser(@Arg("id", () => ID) id: number): Promise<boolean> {
-    const user = await User.findOne({ where: { id } });
+  async deleteUser(@Ctx() context: ContextType): Promise<boolean> {
+    const user = await getUserFromContext(context);
+
     if (!user) {
-      throw new Error(`Utilisateur avec l'ID ${id} non trouvé.`);
+      throw new Error("Non autorisé");
     }
 
     await user.remove();
     return true;
   }
 
-  // Login 
+  // Login
   @Mutation(() => User, { nullable: true })
-  async login(
-    @Arg("data") data: UserLoginInput,
-    @Ctx() context: any,
-  ) {
+  async login(@Arg("data") data: UserLoginInput, @Ctx() context: any) {
     const { req, res } = context;
     const { email, password } = data;
     const user = await User.findOne({
-      where: { email }
+      where: { email },
     });
     if (!user || !email || !password) return null;
     const isVerified = await argon2.verify(user.hashedPassword, password);
     if (isVerified) {
       const jwtPrivateKey = process.env.JWT_SECRET_KEY;
-      if (!jwtPrivateKey) throw new Error('JWT private key is missing from env variables');
-      const token = sign({
-        id: user.id
-      }, jwtPrivateKey);
+      if (!jwtPrivateKey)
+        throw new Error("JWT private key is missing from env variables");
+      const token = sign(
+        {
+          id: user.id,
+        },
+        jwtPrivateKey
+      );
       const cookie = new Cookies(req, res);
-      cookie.set('giftwhisper', token, {
+      cookie.set("giftwhisper", token, {
         httpOnly: true,
         maxAge: 1000 * 60 * 60 * 72,
       });
@@ -110,12 +118,10 @@ export class UsersResolver {
 
   // Logout
   @Mutation(() => Boolean)
-  async logout(
-    @Ctx() context: any
-  ) {
+  async logout(@Ctx() context: any) {
     const { req, res } = context;
     const cookies = new Cookies(req, res);
-    cookies.set('giftwhisper', "", { maxAge: 0 });
+    cookies.set("giftwhisper", "", { maxAge: 0 });
     return true;
   }
 
@@ -125,5 +131,4 @@ export class UsersResolver {
     const user = await getUserFromContext(context);
     return user;
   }
-
 }
