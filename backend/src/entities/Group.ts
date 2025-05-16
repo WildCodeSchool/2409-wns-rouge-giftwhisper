@@ -46,6 +46,7 @@ export class Group extends BaseEntity {
   is_active!: boolean;
 
   @ManyToMany(() => User, (user) => user.groups)
+  @Field(() => [User])
   users!: User[];
 
   @OneToMany(() => Chat, (chat) => chat.group)
