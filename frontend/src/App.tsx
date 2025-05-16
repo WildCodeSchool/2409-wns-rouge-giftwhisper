@@ -38,6 +38,8 @@ function App() {
             <Route path="/about" Component={About} />
             <Route path="/sign-in" Component={SignIn} />
             <Route path="/sign-up" Component={SignUp} />
+            <Route path="/reset-password" Component={ResetPassword} />
+            <Route path="/forgot-password" Component={ForgotPassword} />
             <Route path="/invitation/:token" Component={InvitationHandler} />
             <Route
               Component={() => (
@@ -45,8 +47,6 @@ function App() {
               )}
             >
               <Route path="/chat-window" Component={ChatWindow} />
-              <Route path="/reset-password" Component={ResetPassword} />
-              <Route path="/forgot-password" Component={ForgotPassword} />
               <Route path="/dashboard" Component={Dashboard} />
               <Route path="/profile" Component={Profile} />
               <Route path="/settings" Component={Settings} />
