@@ -6,6 +6,7 @@ import { PasswordResetToken } from "../entities/PasswordResetToken";
 import argon2 from "argon2";
 import { randomBytes } from "crypto";
 import { MoreThan } from "typeorm";
+import { emailService } from "../services/Email";
 
 @Resolver()
 export class PasswordResetResolver {
@@ -37,7 +38,9 @@ export class PasswordResetResolver {
     });
     await resetToken.save();
 
-    // Pour l’instant : afficher dans la console
+    await emailService.sendResetPasswordEmail(user.email, token);
+
+    //Lien affiché en console pour faciliter le dev (utile avec des emails fictifs)
     console.log(
       `Lien de reset : http://localhost:8000/reset-password?token=${token}`
     );
