@@ -1,10 +1,11 @@
 import { AuthContextType, UserSignIn } from "@/utils/types/auth";
 import { User } from "@/utils/types/user";
-import { createContext, useCallback, useMemo, useState } from "react";
+import { createContext, useCallback, useMemo, useState, useEffect } from "react";
 import { useMutation } from "@apollo/client";
 import { LOGIN, LOGOUT } from "@/api/auth";
+import { useCurrentUser } from "@/hooks/currentUser";
 
-const AuthContext = createContext<AuthContextType | undefined> (undefined);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 interface AuthProviderProps {
   children: React.ReactNode;
@@ -18,6 +19,24 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [tokenInvitation, setTokenInvitation] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
+
+  // Utiliser whoami pour récupérer l'utilisateur au démarrage
+  const { user: currentUser, loading: whoamiLoading } = useCurrentUser();
+
+  // Initialiser l'état d'authentification au démarrage
+  useEffect(() => {
+    if (!whoamiLoading) {
+      if (currentUser) {
+        setUser(currentUser);
+        setIsAuthenticated(true);
+      } else {
+        setUser(null);
+        setIsAuthenticated(false);
+      }
+      setIsInitializing(false);
+    }
+  }, [currentUser, whoamiLoading]);
 
   const login = useCallback(async (userInfo: UserSignIn) => {
     setIsLoggingIn(true);
@@ -63,11 +82,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const handleInvitationToken = (token: string) => {
     setTokenInvitation(token);
-  }
+  };
 
   const clearInvitationToken = () => {
     setTokenInvitation(null);
-  }
+  };
 
   const contextValue = useMemo(
     () => ({
@@ -80,6 +99,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       clearInvitationToken,
       isLoggingIn,
       isLoggingOut,
+      isInitializing,
     }),
     [
       user, 
@@ -91,6 +111,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       clearInvitationToken,
       isLoggingIn,
       isLoggingOut,
+      isInitializing,
     ],
   );
 
@@ -99,6 +120,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       {children}
     </AuthContext.Provider>
   );
-}
+};
 
 export { AuthContext };
