@@ -36,6 +36,23 @@ class EmailService {
       `,
     });
   }
+
+  async sendResetPasswordEmail(to: string, token: string): Promise<void> {
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+
+    await this.transporter.sendMail({
+      from: `"GiftWhisper - No Reply" <${process.env.SMTP_USER}>`,
+      to,
+      subject: `Réinitialisation de votre mot de passe`,
+      html: `
+         <h2>Réinitialisation de mot de passe</h2>
+        <p>Vous avez demandé à réinitialiser votre mot de passe.</p>
+        <p>Cliquez sur le lien ci-dessous pour choisir un nouveau mot de passe :</p>
+        <a href="${resetUrl}">${resetUrl}</a>
+        <p><i>Ce lien expirera dans 1 heure.</i></p>
+      `,
+    });
+  }
 }
 
 // Singleton instance
