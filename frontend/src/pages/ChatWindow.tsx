@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FaLocationArrow } from "react-icons/fa6";
 import { IoAdd } from "react-icons/io5";
 import { IoArrowDownCircle } from "react-icons/io5";
@@ -19,29 +19,23 @@ const elementIsVisibleInViewport = (el: Element, partiallyVisible = false) => {
 
 function ChatWindow() {
   //TODO: Deal with color per user instead of hardcoded colors
-  // const giftReceiver = 'Fabriceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
   const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState<{ id?: number, content: string, createdBy: { first_name: string } }[]>([]);
+  const [messages, setMessages] = useState<{ id?: number, content: string, createdBy: { first_name: string, id: number } }[] | undefined>(undefined);
   const [displayAutoScrollDown, setDisplayAutoScrollDown] = useState(false);
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const { disconnectSocket, getSocket } = useSocket();
-  const { user } = useCurrentUser();
+  const { user, loading } = useCurrentUser();
 
   useEffect(() => {
-    if(!user) return;
+    if (!user) return;
     const socket = getSocket();
     socket.on('messages-history', (messages) => {
       setMessages(messages);
     });
     socket.on('new-message', (message) => {
       setMessages((e) => {
-        const clone = structuredClone(e);
+        const clone = e ? structuredClone(e) : [];
         clone.push(message);
-        //We have to setTimeout before scrolling because sometimes the scroll happens before the dom is refreshed
-        //with the new message, thus scrolling only to the top of the message
-        setTimeout(() => {
-          lastMessageRef.current?.scrollIntoView({ behavior: 'instant' });
-        }, 0);
         return clone;
       });
     });
@@ -50,12 +44,9 @@ function ChatWindow() {
     }
   }, [user]);
 
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      const isLastMessageVisible = elementIsVisibleInViewport(lastMessageRef.current!);
-      if (!isLastMessageVisible) lastMessageRef.current?.scrollIntoView({ behavior: 'instant' });
-    }, 0);
-    return () => clearTimeout(timeout);
+
+  useLayoutEffect(() => {
+    lastMessageRef.current?.scrollIntoView({ behavior: 'instant' });
   }, [messages]);
 
 
@@ -76,9 +67,14 @@ function ChatWindow() {
     setMessage('');
   };
 
-  //TODO: Create a complete page (if not connected) and route guards
+  //TODO: Create a loading page / component
+  if (loading) {
+    return <p>Loading ...</p>
+  }
+
+  //Route guard should prevent any unauthorized user from reaching this page
   if (!user) {
-    return <p>You must be logged in to chat !</p>
+    return null;
   }
 
   return (
@@ -90,20 +86,21 @@ function ChatWindow() {
         <article className=" flex flex-col w-full">
           <div className="flex flex-col flex-1 overflow-hidden">
             <section onScroll={handleScroll} className="overflow-y-auto flex flex-col flex-1 overflow-x-auto p-2 space-y-2">
-              {messages.map((message, i) => {
+              {messages && messages.map((message, i) => {
                 const isLastItem = i === messages.length - 1;
+                const currentUserId = Number(user.id);
                 return (
                   <div
                     ref={isLastItem ? lastMessageRef : null}
                     key={message.id}
                     className={`flex flex-col max-w-[70%] 
-                    ${message.createdBy.first_name !== user.first_name ? '' : 'self-end'}`}
+                    ${message.createdBy.id !== currentUserId ? '' : 'self-end'}`}
                   >
-                    <div className={`flex items-center gap-1 ${message.createdBy.first_name !== user.first_name ? '' : 'flex-row-reverse'}`}>
+                    <div className={`flex items-center gap-1 ${message.createdBy.id !== currentUserId ? '' : 'flex-row-reverse'}`}>
                       <div className="w-3 h-3 bg-gradient-to-r from-[#FF9A9E] to-[#FECFEF] rounded-full"></div>
-                      <p className={`pb-1 ${message.createdBy.first_name !== user.first_name ? '' : 'text-right'}`}>{message.createdBy.first_name}</p>
+                      <p className={`pb-1 ${message.createdBy.id !== currentUserId ? '' : 'text-right'}`}>{message.createdBy.first_name}</p>
                     </div>
-                    <p className={`bg-gradient-to-r break-words w-fit max-w-[100%] from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB] rounded-[19px] px-4 py-2 text-sm text-white ${message.createdBy.first_name !== user.first_name ? '' : 'self-end'}`}>
+                    <p className={`bg-gradient-to-r break-words w-fit max-w-[100%] from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB] rounded-[19px] px-4 py-2 text-sm text-white ${message.createdBy.id !== currentUserId ? '' : 'self-end'}`}>
                       {message.content}
                     </p>
                   </div>
