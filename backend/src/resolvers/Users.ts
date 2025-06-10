@@ -46,7 +46,9 @@ export class UsersResolver {
   //Read all users
   @Query(() => [User])
   async getUsers(): Promise<User[]> {
-    return await User.find();
+    return await User.find({
+      relations: ["resetTokens"],
+    });
   }
 
   //Update an user

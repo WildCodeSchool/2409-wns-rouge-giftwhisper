@@ -13,6 +13,7 @@ import {
 import { Chat } from "./Chat";
 import { IsEmail, IsStrongPassword } from "class-validator";
 import { Group } from "./Group";
+import { PasswordResetToken } from "./PasswordResetToken";
 
 @Entity()
 @ObjectType()
@@ -64,6 +65,10 @@ export class User extends BaseEntity {
   @ManyToMany(() => Group, (group) => group.users)
   @JoinTable()
   groups!: Group[];
+
+  @OneToMany(() => PasswordResetToken, (token) => token.user)
+  @Field(() => [PasswordResetToken], { nullable: true })
+  resetTokens?: PasswordResetToken[];
 }
 
 @InputType()

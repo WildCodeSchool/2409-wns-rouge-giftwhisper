@@ -18,6 +18,8 @@ import { Toaster } from "./components/ui/sonner";
 import { MobileChatSelect } from "./utils/helpers/MobileChatSelect";
 import { ProtectedLayout, PublicOnlyLayout } from "./components/auth/RouteGuard";
 import { AuthProvider } from "./components/auth/AuthContext";
+import ResetPassword from "./pages/ResetPassword";
+import ForgotPassword from "./pages/ForgotPassword";
 
 const client = new ApolloClient({
   uri: "/api",
@@ -40,6 +42,8 @@ function App() {
             <Route element={<PublicOnlyLayout />}>
               <Route path="/sign-in" Component={SignIn} />
               <Route path="/sign-up" Component={SignUp} />
+              <Route path="/reset-password" Component={ResetPassword} />
+              <Route path="/forgot-password" Component={ForgotPassword} />
             </Route>
             
             <Route path="/invitation/:token" Component={InvitationHandler} />
@@ -66,3 +70,4 @@ function App() {
 }
 
 export default App;
+
