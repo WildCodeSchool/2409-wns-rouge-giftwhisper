@@ -84,7 +84,7 @@ function ChatWindow() {
 
   const loadMoreMessages = () => {
     const socket = getSocket();
-    socket.emit('more-messages', messages?.length);
+    socket.emit('more-messages', { skip: messages?.length });
   };
 
   const submit = (e: FormEvent<HTMLFormElement>) => {
