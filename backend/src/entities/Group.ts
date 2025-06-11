@@ -57,10 +57,6 @@ export class Group extends BaseEntity {
   @OneToMany(() => Invitation, (invitation) => invitation.group)
   @Field(() => [Invitation])
   invitations!: Invitation[];
-
-  @OneToMany(() => Wishlist, (wishlist) => wishlist.group)
-  @Field(() => [Wishlist], { nullable: true })
-  wishlists?: Wishlist[];
 }
 
 @InputType()
