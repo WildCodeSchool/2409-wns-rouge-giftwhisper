@@ -34,8 +34,28 @@ export function socketInit(httpServer: HttpServer) {
         "user.id",
         "user.first_name",
       ])
+      .orderBy('message.createdAt', 'DESC')
+      .take(25)
       .getMany();
-    if (messages.length) socket.emit('messages-history', messages);
+    if (messages.length) socket.emit('messages-history', messages.reverse());
+
+
+    socket.on('more-messages', async (skipCount: number) => {
+      const messages = await Message.createQueryBuilder("message")
+        .leftJoinAndSelect("message.createdBy", "user")
+        .select([
+          "message.id",
+          "message.content",
+          "message.createdAt",
+          "user.id",
+          "user.first_name",
+        ])
+        .orderBy('message.createdAt', 'DESC')
+        .skip(skipCount)
+        .take(25)
+        .getMany();
+      if (messages.length) socket.emit('more-messages-response', messages.reverse());
+    });
 
     socket.on('message', async (content) => {
       const newMessage = new Message();
