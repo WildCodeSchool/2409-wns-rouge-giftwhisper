@@ -55,6 +55,7 @@ function App() {
               <Route path="/profile" Component={Profile} />
               <Route path="/settings" Component={Settings} />
               <Route path="/group" Component={Group} />
+              <Route path="/group/:id/settings" Component={GroupSettings} />
               <Route path="/group-creation" Component={GroupCreation} />
               <Route path="/group-settings" Component={GroupSettings} />
               <Route path="/chat-select" Component={MobileChatSelect} />
