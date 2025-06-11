@@ -7,7 +7,7 @@ import http from 'http';
 import { getSchema } from "./utils/server/schema";
 import { seedAll } from "./seeds/index.seed";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
-import { socketInit } from "./socket";
+import { socketInit } from "./socket/socket";
 
 async function initialize() {
 
