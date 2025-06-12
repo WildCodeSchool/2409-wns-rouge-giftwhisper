@@ -7,42 +7,32 @@ import { MessagesList } from "./MessagesList";
 import { ScrollToBottomButton } from "./ScrollToBottomButton";
 import { ChatInputForm } from "./ChatInputForm";
 import { useParams } from "react-router-dom";
-
-const elementIsVisibleInViewport = (el: Element, partiallyVisible = false) => {
-  if (!el) return null;
-  const { top, left, bottom, right } = el.getBoundingClientRect();
-  const { innerHeight, innerWidth } = window;
-  return partiallyVisible
-    ? ((top > 0 && top < innerHeight) ||
-        (bottom > 0 && bottom < innerHeight)) &&
-        ((left > 0 && left < innerWidth) || (right > 0 && right < innerWidth))
-    : top >= 0 && left >= 0 && bottom <= innerHeight && right <= innerWidth;
-};
+import { elementIsVisibleInViewport } from "@/utils/helpers/helpers";
 
 function ChatWindow() {
   //TODO: Deal with color per user instead of hardcoded colors
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<
     | {
-        id?: number;
-        content: string;
-        createdBy: { first_name: string; id: number };
-        messageType?: string;
-        poll?: {
+      id?: number;
+      content: string;
+      createdBy: { first_name: string; id: number };
+      messageType?: string;
+      poll?: {
+        id: number;
+        question: string;
+        options: {
           id: number;
-          question: string;
-          options: {
-            id: number;
-            text: string;
-            votes: { id: number; user: { first_name: string; id: number } }[];
-          }[];
-          allowMultipleVotes: boolean;
-          isActive: boolean;
-          createdBy: { first_name: string; id: number };
-          createdAt: string;
-          endDate?: string;
-        };
-      }[]
+          text: string;
+          votes: { id: number; user: { first_name: string; id: number } }[];
+        }[];
+        allowMultipleVotes: boolean;
+        isActive: boolean;
+        createdBy: { first_name: string; id: number };
+        createdAt: string;
+        endDate?: string;
+      };
+    }[]
     | undefined
   >(undefined);
   const [displayAutoScrollDown, setDisplayAutoScrollDown] = useState(false);
@@ -52,12 +42,11 @@ function ChatWindow() {
   const { getSocket } = socketConnection();
   const { user, loading } = useCurrentUser();
   const [showPollModal, setShowPollModal] = useState(false);
-  const [isSending, setIsSending] = useState(false);
   const { chatId } = useParams<{ chatId: string | undefined }>();
+  const socket = getSocket();
 
   useEffect(() => {
     if (!user) return;
-    const socket = getSocket();
     socket.emit("get-messages-history");
     socket.on("messages-history", (messages) => {
       setMessages(messages);
@@ -152,19 +141,15 @@ function ChatWindow() {
   };
 
   const loadMoreMessages = () => {
-    const socket = getSocket();
     socket.emit("more-messages", { skip: messages?.length });
   };
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!message.length || isSending) return;
-
-    setIsSending(true);
+    if (!message.length) return;
     const socket = getSocket();
     socket.emit("message", message);
     setMessage("");
-    setTimeout(() => setIsSending(false), 600);
   };
 
   const handleCreatePoll = (
@@ -172,22 +157,18 @@ function ChatWindow() {
     options: string[],
     allowMultiple: boolean
   ) => {
-    const socket = getSocket();
     socket.emit("create-poll", { question, options, allowMultiple });
   };
 
   const handleVotePoll = (pollId: number, optionId: number) => {
-    const socket = getSocket();
     socket.emit("vote-poll", { pollId, optionId });
   };
 
   const handleRemoveVotePoll = (pollId: number, optionId: number) => {
-    const socket = getSocket();
     socket.emit("remove-vote-poll", { pollId, optionId });
   };
 
   const handleRemoveAllUserVotesPoll = (pollId: number) => {
-    const socket = getSocket();
     socket.emit("remove-all-user-votes-poll", { pollId });
   };
 
@@ -237,7 +218,6 @@ function ChatWindow() {
             onMessageChange={setMessage}
             onSubmit={handleSubmit}
             onCreatePoll={() => setShowPollModal(true)}
-            isSending={isSending}
           />
         </div>
       </article>
