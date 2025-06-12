@@ -59,11 +59,11 @@ function ChatWindow() {
   const { getSocket } = socketConnection();
   const { user, loading } = useCurrentUser();
   const [showPollModal, setShowPollModal] = useState(false);
-  const { chatId } = useParams<{ chatId: string | undefined }>()
+  const { chatId } = useParams<{ chatId: string | undefined }>();
+  const socket = getSocket();
 
   useEffect(() => {
     if (!user) return;
-    const socket = getSocket();
     socket.emit('get-messages-history');
     socket.on("messages-history", (messages) => {
       setMessages(messages);
@@ -158,14 +158,12 @@ function ChatWindow() {
   };
 
   const loadMoreMessages = () => {
-    const socket = getSocket();
     socket.emit("more-messages", { skip: messages?.length });
   };
 
   const submit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!message.length) return;
-    const socket = getSocket();
     socket.emit("message", message);
     setMessage("");
   };
@@ -175,22 +173,18 @@ function ChatWindow() {
     options: string[],
     allowMultiple: boolean
   ) => {
-    const socket = getSocket();
     socket.emit("create-poll", { question, options, allowMultiple });
   };
 
   const handleVotePoll = (pollId: number, optionId: number) => {
-    const socket = getSocket();
     socket.emit("vote-poll", { pollId, optionId });
   };
 
   const handleRemoveVotePoll = (pollId: number, optionId: number) => {
-    const socket = getSocket();
     socket.emit("remove-vote-poll", { pollId, optionId });
   };
 
   const handleRemoveAllUserVotesPoll = (pollId: number) => {
-    const socket = getSocket();
     socket.emit("remove-all-user-votes-poll", { pollId });
   };
 
