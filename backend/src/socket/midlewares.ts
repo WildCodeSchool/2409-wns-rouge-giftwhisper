@@ -11,21 +11,40 @@ export class SocketMidleWares {
   }
   //Use query builder for selective field from users, and avoid having to manually remove
   //data like the user password before sending it back
-  getMessages = async (options?: { skip?: number, take?: number }) => {
+  getMessages = async (options?: { skip?: number; take?: number }) => {
     let messages: Message[] = [];
     const baseQuery = Message.createQueryBuilder("message")
       .leftJoinAndSelect("message.createdBy", "user")
+      .leftJoinAndSelect("message.poll", "poll")
+      .leftJoinAndSelect("poll.options", "options")
+      .leftJoinAndSelect("options.votes", "votes")
+      .leftJoinAndSelect("votes.user", "voteUser")
+      .leftJoinAndSelect("poll.createdBy", "pollCreator")
       .select([
         "message.id",
         "message.content",
+        "message.messageType",
         "message.createdAt",
         "user.id",
         "user.first_name",
+        "poll.id",
+        "poll.question",
+        "poll.allowMultipleVotes",
+        "poll.isActive",
+        "poll.createdAt",
+        "poll.endDate",
+        "pollCreator.id",
+        "pollCreator.first_name",
+        "options.id",
+        "options.text",
+        "votes.id",
+        "voteUser.id",
+        "voteUser.first_name",
       ])
-      .orderBy('message.createdAt', 'DESC');
+      .orderBy("message.createdAt", "DESC");
     if (!options) {
       const messagesHistory = await baseQuery.take(25).getMany();
-      return this.socket.emit('messages-history', messagesHistory.reverse())
+      return this.socket.emit("messages-history", messagesHistory.reverse());
     } else {
       const { skip, take = 25 } = options;
       if (skip && take) {
@@ -35,15 +54,24 @@ export class SocketMidleWares {
       } else if (take) {
         messages = await baseQuery.take(take).getMany();
       }
-      if (messages.length) this.socket.emit('more-messages-response', messages.reverse());
+      if (messages.length)
+        this.socket.emit("more-messages-response", messages.reverse());
     }
-  }
+  };
 
   receiveMessage = async (content: string) => {
     const newMessage = new Message();
     const user = (this.socket.request as any).user as User;
-    Object.assign(newMessage, { createdBy: { id: user.id } }, { content });
+    Object.assign(
+      newMessage,
+      { createdBy: { id: user.id } },
+      { content },
+      { messageType: "text" }
+    );
     await newMessage.save();
-    this.io.emit('new-message', { ...newMessage, createdBy: { id: user.id, first_name: user.first_name } });
-  }
+    this.io.emit("new-message", {
+      ...newMessage,
+      createdBy: { id: user.id, first_name: user.first_name },
+    });
+  };
 }

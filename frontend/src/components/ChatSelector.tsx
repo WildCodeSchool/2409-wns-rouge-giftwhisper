@@ -10,7 +10,7 @@ interface Chat {
 
 function ChatSelector({ chat }: { chat: Chat }) {
   return (
-    <Link to={`/chat/${chat.id}`}>
+    <Link to={`${chat.id}`}>
       <ul className="flex items-center w-full gap-4">
         <li className="flex items-center">
           <p
