@@ -8,6 +8,7 @@ import { MessageResolver } from "../../resolvers/Message";
 import { PasswordResetResolver } from "../../resolvers/PasswordReset";
 import { PollResolver } from "../../resolvers/Poll";
 import { WishlistResolver } from "../../resolvers/Wishlist";
+import { WishlistItemResolver } from "../../resolvers/WishlistItem";
 
 export async function getSchema() {
   const schema = await buildSchema({
@@ -20,6 +21,7 @@ export async function getSchema() {
       PasswordResetResolver,
       PollResolver,
       WishlistResolver,
+      WishlistItemResolver,
     ],
   });
   return schema;

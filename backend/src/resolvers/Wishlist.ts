@@ -12,7 +12,7 @@ export class WishlistResolver {
   @Query(() => [Wishlist])
   async wishlists(): Promise<Wishlist[]> {
     return await Wishlist.find({
-      relations: ["user"],
+      relations: ["user", "items"],
     });
   }
 
@@ -27,7 +27,7 @@ export class WishlistResolver {
     }
 
     const newWishlist = Wishlist.create({
-      text: data.text,
+      description: data.description,
       user,
     });
 
@@ -42,14 +42,14 @@ export class WishlistResolver {
   ): Promise<Wishlist> {
     const wishlist = await Wishlist.findOne({
       where: { id },
-      relations: ["user"],
+      relations: ["user", "items"],
     });
     if (!wishlist) {
       throw new Error(`Wishlist with ID ${id} not found.`);
     }
 
-    if (data.text !== undefined) {
-      wishlist.text = data.text;
+    if (data.description !== undefined) {
+      wishlist.description = data.description;
     }
 
     await wishlist.save();

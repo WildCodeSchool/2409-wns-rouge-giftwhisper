@@ -6,9 +6,11 @@ import {
   UpdateDateColumn,
   ManyToOne,
   BaseEntity,
+  OneToMany,
 } from "typeorm";
 import { ObjectType, Field, ID, InputType } from "type-graphql";
 import { User } from "./User";
+import { WishlistItem } from "./WishlistItem";
 
 @Entity()
 @ObjectType()
@@ -17,9 +19,9 @@ export class Wishlist extends BaseEntity {
   @Field(() => ID)
   id!: number;
 
-  @Column("text")
+  @Column()
   @Field()
-  text!: string;
+  description!: string;
 
   @ManyToOne(() => User, (user) => user.wishlists, { onDelete: "CASCADE" })
   @Field(() => User)
@@ -32,12 +34,16 @@ export class Wishlist extends BaseEntity {
   @UpdateDateColumn()
   @Field()
   updated_at!: Date;
+
+  @OneToMany(() => WishlistItem, (item) => item.wishlist, { cascade: true })
+  @Field(() => [WishlistItem])
+  items!: WishlistItem[];
 }
 
 @InputType()
 export class WishlistCreateInput {
   @Field()
-  text!: string;
+  description!: string;
 
   @Field(() => ID)
   userId!: number;
@@ -46,5 +52,5 @@ export class WishlistCreateInput {
 @InputType()
 export class WishlistUpdateInput {
   @Field({ nullable: true })
-  text?: string;
+  description?: string;
 }
