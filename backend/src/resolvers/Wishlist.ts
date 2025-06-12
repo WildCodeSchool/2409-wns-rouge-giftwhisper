@@ -23,7 +23,7 @@ export class WishlistResolver {
     const user = await User.findOneBy({ id: data.userId });
 
     if (!user) {
-      throw new Error("User or Group not found");
+      throw new Error("User not found");
     }
 
     const newWishlist = Wishlist.create({
@@ -40,7 +40,10 @@ export class WishlistResolver {
     @Arg("id", () => ID) id: number,
     @Arg("data", () => WishlistUpdateInput) data: WishlistUpdateInput
   ): Promise<Wishlist> {
-    const wishlist = await Wishlist.findOneBy({ id });
+    const wishlist = await Wishlist.findOne({
+      where: { id },
+      relations: ["user"],
+    });
     if (!wishlist) {
       throw new Error(`Wishlist with ID ${id} not found.`);
     }

@@ -9,7 +9,6 @@ import {
 } from "typeorm";
 import { ObjectType, Field, ID, InputType } from "type-graphql";
 import { User } from "./User";
-import { Group } from "./Group";
 
 @Entity()
 @ObjectType()
@@ -25,10 +24,6 @@ export class Wishlist extends BaseEntity {
   @ManyToOne(() => User, (user) => user.wishlists, { onDelete: "CASCADE" })
   @Field(() => User)
   user!: User;
-
-  @ManyToOne(() => Group, (group) => group.wishlists, { onDelete: "CASCADE" })
-  @Field(() => Group)
-  group!: Group;
 
   @CreateDateColumn()
   @Field()
@@ -46,9 +41,6 @@ export class WishlistCreateInput {
 
   @Field(() => ID)
   userId!: number;
-
-  @Field(() => ID)
-  groupId!: number;
 }
 
 @InputType()
