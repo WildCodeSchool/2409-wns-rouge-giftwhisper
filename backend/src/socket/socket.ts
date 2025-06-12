@@ -6,6 +6,7 @@ import { User } from "../entities/User";
 import { Poll } from "../entities/Poll";
 import { PollOption } from "../entities/PollOptions";
 import { Message } from "../entities/Message";
+import { PollVote } from "../entities/PollVote";
 
 export function socketInit(httpServer: HttpServer) {
   const io: Server = new Server(httpServer, {
@@ -92,8 +93,133 @@ export function socketInit(httpServer: HttpServer) {
         }
       }
     );
+    socket.on(
+      "vote-poll",
+      async (voteData: { pollId: number; optionId: number }) => {
+        const user = (socket.request as any).user as User;
 
-    // Ajouter les autres gestionnaires de sondage (vote-poll, remove-vote-poll, etc.)
-    // ... copiez le code depuis socket.ts principal
+        try {
+          const existingVote = await PollVote.findOne({
+            where: {
+              user: { id: user.id },
+              poll: { id: voteData.pollId },
+            },
+          });
+
+          const poll = await Poll.findOne({
+            where: { id: voteData.pollId },
+          });
+
+          if (!poll) {
+            return;
+          }
+
+          if (existingVote && !poll.allowMultipleVotes) {
+            return;
+          }
+
+          const vote = new PollVote();
+          vote.user = { id: user.id } as User;
+          vote.poll = { id: voteData.pollId } as Poll;
+          vote.option = { id: voteData.optionId } as PollOption;
+          await vote.save();
+
+          const updatedPoll = await Poll.findOne({
+            where: { id: voteData.pollId },
+            relations: [
+              "options",
+              "options.votes",
+              "options.votes.user",
+              "createdBy",
+            ],
+          });
+
+          if (updatedPoll) {
+            io.emit("poll-updated", {
+              pollId: voteData.pollId,
+              poll: updatedPoll,
+            });
+          }
+        } catch (error) {
+          console.error("Erreur lors du vote:", error);
+        }
+      }
+    );
+
+    socket.on(
+      "remove-vote-poll",
+      async (voteData: { pollId: number; optionId: number }) => {
+        const user = (socket.request as any).user as User;
+
+        try {
+          const voteToRemove = await PollVote.findOne({
+            where: {
+              user: { id: user.id },
+              poll: { id: voteData.pollId },
+              option: { id: voteData.optionId },
+            },
+          });
+
+          if (voteToRemove) {
+            await voteToRemove.remove();
+
+            const updatedPoll = await Poll.findOne({
+              where: { id: voteData.pollId },
+              relations: [
+                "options",
+                "options.votes",
+                "options.votes.user",
+                "createdBy",
+              ],
+            });
+
+            if (updatedPoll) {
+              io.emit("poll-updated", {
+                pollId: voteData.pollId,
+                poll: updatedPoll,
+              });
+            }
+          }
+        } catch (error) {
+          console.error("Erreur lors de la suppression du vote:", error);
+        }
+      }
+    );
+
+    socket.on(
+      "remove-all-user-votes-poll",
+      async (voteData: { pollId: number }) => {
+        const user = (socket.request as any).user as User;
+
+        try {
+          // Supprimer tous les votes de l'utilisateur pour ce sondage
+          await PollVote.delete({
+            user: { id: user.id },
+            poll: { id: voteData.pollId },
+          });
+
+          // Récupérer le sondage mis à jour avec tous les votes
+          const updatedPoll = await Poll.findOne({
+            where: { id: voteData.pollId },
+            relations: [
+              "options",
+              "options.votes",
+              "options.votes.user",
+              "createdBy",
+            ],
+          });
+
+          if (updatedPoll) {
+            // Émettre la mise à jour du sondage à tous les clients
+            io.emit("poll-updated", {
+              pollId: voteData.pollId,
+              poll: updatedPoll,
+            });
+          }
+        } catch (error) {
+          console.error("Erreur lors de la suppression des votes:", error);
+        }
+      }
+    );
   });
 }
