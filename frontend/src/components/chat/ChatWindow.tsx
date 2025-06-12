@@ -2,7 +2,7 @@ import { FormEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FaLocationArrow } from "react-icons/fa6";
 import { IoAdd } from "react-icons/io5";
 import { IoArrowDownCircle } from "react-icons/io5";
-import { useSocket } from "@/hooks/socket";
+import { socketConnection } from "@/hooks/socket";
 import { useCurrentUser } from "@/hooks/currentUser";
 import { CreatePollModal } from "../CreatePollModal";
 import { PollMessage } from "../PollMessage";
@@ -13,6 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useParams } from "react-router-dom";
 
 const elementIsVisibleInViewport = (el: Element, partiallyVisible = false) => {
   if (!el) return null;
@@ -20,8 +21,8 @@ const elementIsVisibleInViewport = (el: Element, partiallyVisible = false) => {
   const { innerHeight, innerWidth } = window;
   return partiallyVisible
     ? ((top > 0 && top < innerHeight) ||
-        (bottom > 0 && bottom < innerHeight)) &&
-        ((left > 0 && left < innerWidth) || (right > 0 && right < innerWidth))
+      (bottom > 0 && bottom < innerHeight)) &&
+    ((left > 0 && left < innerWidth) || (right > 0 && right < innerWidth))
     : top >= 0 && left >= 0 && bottom <= innerHeight && right <= innerWidth;
 };
 
@@ -30,38 +31,40 @@ function ChatWindow() {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<
     | {
-        id?: number;
-        content: string;
-        createdBy: { first_name: string; id: number };
-        messageType?: string;
-        poll?: {
+      id?: number;
+      content: string;
+      createdBy: { first_name: string; id: number };
+      messageType?: string;
+      poll?: {
+        id: number;
+        question: string;
+        options: {
           id: number;
-          question: string;
-          options: {
-            id: number;
-            text: string;
-            votes: { id: number; user: { first_name: string; id: number } }[];
-          }[];
-          allowMultipleVotes: boolean;
-          isActive: boolean;
-          createdBy: { first_name: string; id: number };
-          createdAt: string;
-          endDate?: string;
-        };
-      }[]
+          text: string;
+          votes: { id: number; user: { first_name: string; id: number } }[];
+        }[];
+        allowMultipleVotes: boolean;
+        isActive: boolean;
+        createdBy: { first_name: string; id: number };
+        createdAt: string;
+        endDate?: string;
+      };
+    }[]
     | undefined
   >(undefined);
   const [displayAutoScrollDown, setDisplayAutoScrollDown] = useState(false);
   const [displayMoreMessage, setDisplayMoreMessage] = useState(false);
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const firstMessageRef = useRef<HTMLDivElement>(null);
-  const { disconnectSocket, getSocket } = useSocket();
+  const { getSocket } = socketConnection();
   const { user, loading } = useCurrentUser();
   const [showPollModal, setShowPollModal] = useState(false);
+  const { chatId } = useParams<{ chatId: string | undefined }>()
 
   useEffect(() => {
     if (!user) return;
     const socket = getSocket();
+    socket.emit('get-messages-history');
     socket.on("messages-history", (messages) => {
       setMessages(messages);
     });
@@ -125,9 +128,6 @@ function ChatWindow() {
       //There doesn't appear to be an easy way to do this
       firstMessageRef.current?.scrollIntoView();
     });
-    return () => {
-      disconnectSocket();
-    };
   }, [user]);
 
   useLayoutEffect(() => {
@@ -200,7 +200,7 @@ function ChatWindow() {
   }
 
   //Route guard should prevent any unauthorized user from reaching this page
-  if (!user) {
+  if (!user || !chatId) {
     return null;
   }
 
@@ -228,29 +228,26 @@ function ChatWindow() {
                       isLastItem
                         ? lastMessageRef
                         : i === 0
-                        ? firstMessageRef
-                        : null
+                          ? firstMessageRef
+                          : null
                     }
                     key={message.id}
                     className={`flex flex-col max-w-[70%] 
-                    ${
-                      message.createdBy.id !== currentUserId ? "" : "self-end"
-                    }`}
+                    ${message.createdBy.id !== currentUserId ? "" : "self-end"
+                      }`}
                   >
                     <div
-                      className={`flex items-center gap-1 ${
-                        message.createdBy.id !== currentUserId
-                          ? ""
-                          : "flex-row-reverse"
-                      }`}
+                      className={`flex items-center gap-1 ${message.createdBy.id !== currentUserId
+                        ? ""
+                        : "flex-row-reverse"
+                        }`}
                     >
                       <div className="w-3 h-3 bg-gradient-to-r from-[#FF9A9E] to-[#FECFEF] rounded-full"></div>
                       <p
-                        className={`pb-1 ${
-                          message.createdBy.id !== currentUserId
-                            ? ""
-                            : "text-right"
-                        }`}
+                        className={`pb-1 ${message.createdBy.id !== currentUserId
+                          ? ""
+                          : "text-right"
+                          }`}
                       >
                         {message.createdBy.first_name}
                       </p>
@@ -267,11 +264,10 @@ function ChatWindow() {
                       />
                     ) : (
                       <p
-                        className={`bg-gradient-to-r break-words w-fit max-w-[100%] from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB] rounded-[19px] px-4 py-2 text-sm text-white ${
-                          message.createdBy.id !== currentUserId
-                            ? ""
-                            : "self-end"
-                        }`}
+                        className={`bg-gradient-to-r break-words w-fit max-w-[100%] from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB] rounded-[19px] px-4 py-2 text-sm text-white ${message.createdBy.id !== currentUserId
+                          ? ""
+                          : "self-end"
+                          }`}
                       >
                         {message.content}
                       </p>
@@ -288,10 +284,9 @@ function ChatWindow() {
               absolute bottom-20 left-1/2 transform -translate-x-1/2
               'translate-y-5 opacity-0 pointer-events-none'
               transition-all duration-300 ease-in-out 
-              ${
-                displayAutoScrollDown
-                  ? "translate-y-0 opacity-100"
-                  : "translate-y-5 opacity-0"
+              ${displayAutoScrollDown
+                ? "translate-y-0 opacity-100"
+                : "translate-y-5 opacity-0"
               }
             `}
           >
