@@ -2,7 +2,6 @@ import { Outlet } from "react-router-dom";
 import ChatSelect from "./ChatSelect";
 
 function ChatLayout() {
-  //TODO: Deal with color per user instead of hardcoded colors
   return (
     <>
       <div className="flex h-screen overflow-hidden">
