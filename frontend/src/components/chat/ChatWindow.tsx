@@ -1,18 +1,12 @@
 import { FormEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { FaLocationArrow } from "react-icons/fa6";
-import { IoAdd } from "react-icons/io5";
-import { IoArrowDownCircle } from "react-icons/io5";
-import { useSocket } from "@/hooks/socket";
+import { socketConnection } from "@/hooks/socket";
 import { useCurrentUser } from "@/hooks/currentUser";
 import { CreatePollModal } from "../CreatePollModal";
-import { PollMessage } from "../PollMessage";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { LoadMoreButton } from "./LoadMoreButton";
+import { MessagesList } from "./MessagesList";
+import { ScrollToBottomButton } from "./ScrollToBottomButton";
+import { ChatInputForm } from "./ChatInputForm";
+import { useParams } from "react-router-dom";
 
 const elementIsVisibleInViewport = (el: Element, partiallyVisible = false) => {
   if (!el) return null;
@@ -55,13 +49,16 @@ function ChatWindow() {
   const [displayMoreMessage, setDisplayMoreMessage] = useState(false);
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const firstMessageRef = useRef<HTMLDivElement>(null);
-  const { disconnectSocket, getSocket } = useSocket();
+  const { getSocket } = socketConnection();
   const { user, loading } = useCurrentUser();
   const [showPollModal, setShowPollModal] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const { chatId } = useParams<{ chatId: string | undefined }>();
 
   useEffect(() => {
     if (!user) return;
     const socket = getSocket();
+    socket.emit("get-messages-history");
     socket.on("messages-history", (messages) => {
       setMessages(messages);
     });
@@ -125,9 +122,6 @@ function ChatWindow() {
       //There doesn't appear to be an easy way to do this
       firstMessageRef.current?.scrollIntoView();
     });
-    return () => {
-      disconnectSocket();
-    };
   }, [user]);
 
   useLayoutEffect(() => {
@@ -162,12 +156,15 @@ function ChatWindow() {
     socket.emit("more-messages", { skip: messages?.length });
   };
 
-  const submit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!message.length) return;
+    if (!message.length || isSending) return;
+
+    setIsSending(true);
     const socket = getSocket();
     socket.emit("message", message);
     setMessage("");
+    setTimeout(() => setIsSending(false), 600);
   };
 
   const handleCreatePoll = (
@@ -196,183 +193,52 @@ function ChatWindow() {
 
   //TODO: Create a loading page / component
   if (loading) {
-    return <p>Loading ...</p>;
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="animate-spin w-6 h-6 border-2 border-[#A18CD1] border-t-transparent rounded-full"></div>
+      </div>
+    );
   }
 
   //Route guard should prevent any unauthorized user from reaching this page
-  if (!user) {
+  if (!user || !chatId) {
     return null;
   }
 
   return (
     <>
-      <article className=" flex flex-col w-full">
-        <div className="flex flex-col flex-1 overflow-hidden">
-          <button
+      <article className="flex flex-col w-full h-full bg-white">
+        <div className="flex flex-col flex-1 overflow-hidden relative">
+          <LoadMoreButton
             onClick={loadMoreMessages}
-            className={`${!displayMoreMessage ? "hidden" : ""}`}
-          >
-            Load more
-          </button>
-          <section
+            isVisible={displayMoreMessage}
+          />
+
+          <MessagesList
+            messages={messages || []}
+            currentUserId={Number(user.id)}
             onScroll={handleScroll}
-            className="overflow-y-auto flex flex-col flex-1 overflow-x-auto p-2 space-y-2"
-          >
-            {messages &&
-              messages.map((message, i) => {
-                const isLastItem = i === messages.length - 1;
-                const currentUserId = Number(user.id);
-                return (
-                  <div
-                    ref={
-                      isLastItem
-                        ? lastMessageRef
-                        : i === 0
-                        ? firstMessageRef
-                        : null
-                    }
-                    key={message.id}
-                    className={`flex flex-col max-w-[70%] 
-                    ${
-                      message.createdBy.id !== currentUserId ? "" : "self-end"
-                    }`}
-                  >
-                    <div
-                      className={`flex items-center gap-1 ${
-                        message.createdBy.id !== currentUserId
-                          ? ""
-                          : "flex-row-reverse"
-                      }`}
-                    >
-                      <div className="w-3 h-3 bg-gradient-to-r from-[#FF9A9E] to-[#FECFEF] rounded-full"></div>
-                      <p
-                        className={`pb-1 ${
-                          message.createdBy.id !== currentUserId
-                            ? ""
-                            : "text-right"
-                        }`}
-                      >
-                        {message.createdBy.first_name}
-                      </p>
-                    </div>
+            lastMessageRef={lastMessageRef}
+            firstMessageRef={firstMessageRef}
+            onVote={handleVotePoll}
+            onRemoveVote={handleRemoveVotePoll}
+            onRemoveAllVotes={handleRemoveAllUserVotesPoll}
+          />
 
-                    {/* Affichage conditionnel selon le type de message */}
-                    {message.messageType === "poll" && message.poll ? (
-                      <PollMessage
-                        poll={message.poll}
-                        currentUserId={currentUserId}
-                        onVote={handleVotePoll}
-                        onRemoveVote={handleRemoveVotePoll}
-                        onRemoveAllVotes={handleRemoveAllUserVotesPoll}
-                      />
-                    ) : (
-                      <p
-                        className={`bg-gradient-to-r break-words w-fit max-w-[100%] from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB] rounded-[19px] px-4 py-2 text-sm text-white ${
-                          message.createdBy.id !== currentUserId
-                            ? ""
-                            : "self-end"
-                        }`}
-                      >
-                        {message.content}
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
-          </section>
-          <button
+          <ScrollToBottomButton
             onClick={() =>
-              lastMessageRef.current?.scrollIntoView({ behavior: "instant" })
+              lastMessageRef.current?.scrollIntoView({ behavior: "smooth" })
             }
-            className={`
-              absolute bottom-20 left-1/2 transform -translate-x-1/2
-              'translate-y-5 opacity-0 pointer-events-none'
-              transition-all duration-300 ease-in-out 
-              ${
-                displayAutoScrollDown
-                  ? "translate-y-0 opacity-100"
-                  : "translate-y-5 opacity-0"
-              }
-            `}
-          >
-            <IoArrowDownCircle size={28} color="#d5d5d5" />
-          </button>
-          <form
-            className="flex items-center gap-3 justify-between p-4"
-            onSubmit={submit}
-          >
-            <div className="flex items-center gap-2 bg-[#F3F3F3] p-0.5 rounded-2xl shadow-md w-[100%] relative">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    className="rounded-full ml-1 p-1 bg-gradient-to-r from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB] hover:scale-105 transition-transform duration-200 focus:outline-none focus:ring-2 focus:ring-[#A18CD1]/50 focus:ring-offset-1"
-                  >
-                    <IoAdd size={22} color="white" />
-                  </button>
-                </DropdownMenuTrigger>
+            isVisible={displayAutoScrollDown}
+          />
 
-                <DropdownMenuContent
-                  side="top"
-                  align="start"
-                  className="w-64 p-2"
-                  sideOffset={8}
-                >
-                  <DropdownMenuItem
-                    onClick={() => setShowPollModal(true)}
-                    className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gradient-to-r hover:from-[#A18CD1]/10 hover:via-[#CEA7DE]/10 hover:to-[#FBC2EB]/10 rounded-lg transition-all duration-200 group"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB] flex items-center justify-center text-white text-lg group-hover:scale-110 transition-transform duration-200">
-                      📊
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="font-semibold text-gray-900 text-sm">
-                        Créer un sondage
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        Demandez l'avis de vos amis
-                      </span>
-                    </div>
-                  </DropdownMenuItem>
-
-                  <DropdownMenuSeparator className="my-2" />
-
-                  <DropdownMenuItem
-                    disabled
-                    className="flex items-center gap-3 p-3 cursor-not-allowed opacity-50 rounded-lg"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white text-lg">
-                      🎁
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="font-semibold text-gray-900 text-sm">
-                        Organisez vos cadeaux
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        Bientôt disponible
-                      </span>
-                    </div>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <input
-                placeholder="Message"
-                value={message}
-                onChange={(e) => setMessage(e.currentTarget.value)}
-                name="chat-message"
-                id="chat-message"
-                type="text"
-                className="w-full h-9 focus:outline-none bg-transparent"
-              />
-            </div>
-            <button
-              type="submit"
-              className="rounded-full p-2 bg-gradient-to-r from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB] shadow-md hover:scale-105 transition-transform duration-200 focus:outline-none focus:ring-2 focus:ring-[#A18CD1]/50 focus:ring-offset-1"
-            >
-              <FaLocationArrow color="white" size={16} />
-            </button>
-          </form>
+          <ChatInputForm
+            message={message}
+            onMessageChange={setMessage}
+            onSubmit={handleSubmit}
+            onCreatePoll={() => setShowPollModal(true)}
+            isSending={isSending}
+          />
         </div>
       </article>
 

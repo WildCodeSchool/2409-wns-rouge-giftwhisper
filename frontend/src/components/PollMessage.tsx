@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { FiCheck, FiEdit3, FiX, FiUsers } from "react-icons/fi";
+import { IoBarChart } from "react-icons/io5";
 
 interface PollOption {
   id: number;
@@ -54,7 +56,6 @@ export function PollMessage({
   };
 
   const handleEditVote = () => {
-    // Pré-sélectionner les options actuellement votées
     const currentVotes = poll.options
       .filter((option) =>
         option.votes.some((vote) => vote.user.id === currentUserId)
@@ -72,7 +73,6 @@ export function PollMessage({
 
   const handleSaveEdit = () => {
     if (onRemoveAllVotes) {
-      // Utiliser la méthode optimisée
       onRemoveAllVotes(poll.id);
       setTimeout(() => {
         selectedOptions.forEach((optionId) => {
@@ -80,7 +80,6 @@ export function PollMessage({
         });
       }, 100);
     } else {
-      // Fallback : supprimer les votes un par un
       poll.options.forEach((option) => {
         const userVote = option.votes.find(
           (vote) => vote.user.id === currentUserId
@@ -113,36 +112,49 @@ export function PollMessage({
   };
 
   return (
-    <div className="bg-gradient-to-br from-white to-slate-50 border border-slate-200 rounded-2xl p-5 max-w-lg mt-3 shadow-sm">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-8 h-8 bg-gradient-to-r from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB] rounded-full flex items-center justify-center shadow-sm">
-          <span className="text-white text-lg">📊</span>
-        </div>
-        <div className="flex-1">
-          <span className="text-sm font-medium text-slate-600">
-            Sondage créé par {poll.createdBy.first_name}
-          </span>
-          {poll.allowMultipleVotes && (
-            <div className="flex items-center gap-1 mt-1">
-              <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-              <span className="text-xs text-green-600 font-medium">
-                Choix multiples
-              </span>
+    <div className="bg-white border border-slate-200 rounded-2xl p-6 w-full shadow-sm hover:shadow-md transition-shadow duration-200">
+      {/* Header */}
+      <div className="flex items-start justify-between mb-5">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-r from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB] rounded-xl flex items-center justify-center shadow-sm">
+            <IoBarChart size={18} className="text-white" />
+          </div>
+          <div>
+            <div className="text-sm font-semibold text-slate-800">Sondage</div>
+            <div className="text-xs text-slate-500">
+              par {poll.createdBy.first_name}
             </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {poll.allowMultipleVotes && (
+            <span className="px-2 py-1 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-md flex items-center gap-1">
+              <FiCheck size={10} />
+              Multi-choix
+            </span>
+          )}
+          {!poll.isActive && (
+            <span className="px-2 py-1 bg-red-100 text-red-600 text-xs font-medium rounded-md">
+              Fermé
+            </span>
+          )}
+          {isEditingVote && (
+            <span className="px-2 py-1 bg-amber-100 text-amber-700 text-xs font-medium rounded-md flex items-center gap-1">
+              <FiEdit3 size={10} />
+              Édition
+            </span>
           )}
         </div>
-        {!poll.isActive && (
-          <span className="px-2 py-1 bg-red-100 text-red-600 text-xs font-medium rounded-full">
-            Fermé
-          </span>
-        )}
       </div>
 
-      <h3 className="font-semibold text-lg text-slate-800 mb-4 leading-6">
+      {/* Question */}
+      <h3 className="font-semibold text-lg text-slate-900 mb-6 leading-6">
         {poll.question}
       </h3>
 
-      <div className="space-y-3 mb-5">
+      {/* Options */}
+      <div className="space-y-3 mb-6">
         {poll.options.map((option) => {
           const voteCount = option.votes.length;
           const percentage =
@@ -155,72 +167,81 @@ export function PollMessage({
             poll.isActive && (!hasUserVoted() || isEditingVote);
 
           return (
-            <div key={option.id} className="relative">
+            <div key={option.id} className="relative group">
               <button
-                className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 ${
+                className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 relative overflow-hidden ${
                   userVoted && !isEditingVote
-                    ? "bg-[#A18CD1]/20 border-[#A18CD1] ring-2 ring-[#A18CD1]/20"
+                    ? "bg-gradient-to-r from-[#A18CD1]/10 to-[#FBC2EB]/10 border-[#A18CD1]/30 ring-1 ring-[#A18CD1]/20"
                     : isSelected
-                    ? "bg-gradient-to-r from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB] border-[#A18CD1] ring-2 ring-[#A18CD1]/20 text-white"
-                    : "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                    ? "bg-gradient-to-r from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB] border-[#A18CD1] text-white shadow-lg"
+                    : "bg-slate-50 border-slate-200 hover:border-slate-300 hover:bg-slate-100"
                 } ${
                   canInteract
-                    ? "cursor-pointer hover:scale-[1.02] hover:shadow-md"
+                    ? "cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
                     : "cursor-default"
                 }`}
                 onClick={() => canInteract && handleOptionToggle(option.id)}
                 disabled={!canInteract}
               >
-                <div className="flex justify-between items-center mb-2">
-                  <span
-                    className={`font-medium pr-4 ${
-                      isSelected ? "text-white" : "text-slate-800"
-                    }`}
-                  >
-                    {option.text}
-                  </span>
-                  <div className="flex items-center gap-3 flex-shrink-0">
-                    {userVoted && !isEditingVote && (
-                      <div className="w-2 h-2 bg-[#A18CD1] rounded-full"></div>
-                    )}
-                    {isSelected && isEditingVote && (
-                      <div className="w-2 h-2 bg-white rounded-full"></div>
-                    )}
-                    <div className="text-right">
-                      <div
-                        className={`text-sm font-semibold ${
-                          isSelected ? "text-white" : "text-slate-700"
-                        }`}
-                      >
-                        {voteCount} vote{voteCount !== 1 ? "s" : ""}
-                      </div>
-                      <div
-                        className={`text-xs ${
-                          isSelected ? "text-white/80" : "text-slate-500"
-                        }`}
-                      >
-                        {percentage.toFixed(0)}%
-                      </div>
+                {/* Background progress bar */}
+                <div
+                  className={`absolute inset-0 transition-all duration-700 ease-out ${
+                    userVoted && !isEditingVote
+                      ? "bg-gradient-to-r from-[#A18CD1]/5 to-[#FBC2EB]/5"
+                      : isSelected
+                      ? "bg-white/10"
+                      : "bg-slate-200/30"
+                  }`}
+                  style={{ width: `${percentage}%` }}
+                />
+
+                <div className="relative flex justify-between items-center">
+                  <div className="flex items-center gap-3 flex-1">
+                    {/* Checkbox/Radio indicator */}
+                    <div
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
+                        userVoted && !isEditingVote
+                          ? "border-[#A18CD1] bg-[#A18CD1]"
+                          : isSelected
+                          ? "border-white bg-white"
+                          : "border-slate-300 group-hover:border-slate-400"
+                      }`}
+                    >
+                      {(userVoted && !isEditingVote) || isSelected ? (
+                        <FiCheck
+                          size={12}
+                          className={
+                            isSelected ? "text-[#A18CD1]" : "text-white"
+                          }
+                        />
+                      ) : null}
+                    </div>
+
+                    <span
+                      className={`font-medium flex-1 ${
+                        isSelected ? "text-white" : "text-slate-800"
+                      }`}
+                    >
+                      {option.text}
+                    </span>
+                  </div>
+
+                  <div className="text-right ml-4">
+                    <div
+                      className={`text-sm font-semibold ${
+                        isSelected ? "text-white" : "text-slate-700"
+                      }`}
+                    >
+                      {voteCount}
+                    </div>
+                    <div
+                      className={`text-xs ${
+                        isSelected ? "text-white/80" : "text-slate-500"
+                      }`}
+                    >
+                      {percentage.toFixed(0)}%
                     </div>
                   </div>
-                </div>
-
-                {/* Barre de progression */}
-                <div
-                  className={`w-full rounded-full h-2 overflow-hidden ${
-                    isSelected ? "bg-white/30" : "bg-slate-300"
-                  }`}
-                >
-                  <div
-                    className={`h-full rounded-full transition-all duration-500 ease-out ${
-                      userVoted && !isEditingVote
-                        ? "bg-gradient-to-r from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB]"
-                        : isSelected
-                        ? "bg-white"
-                        : "bg-gradient-to-r from-slate-400 to-slate-500"
-                    }`}
-                    style={{ width: `${percentage}%` }}
-                  ></div>
                 </div>
               </button>
             </div>
@@ -228,59 +249,65 @@ export function PollMessage({
         })}
       </div>
 
-      {/* Boutons d'action */}
-      <div className="space-y-2">
-        {/* Bouton de vote initial */}
+      {/* Action Buttons */}
+      <div className="space-y-3">
+        {/* Vote initial */}
         {!hasUserVoted() && poll.isActive && selectedOptions.length > 0 && (
           <button
             onClick={handleVote}
-            className="w-full bg-gradient-to-r from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB] text-white py-3 px-4 rounded-xl font-semibold hover:shadow-lg hover:scale-[1.02] transition-all duration-200 active:scale-[0.98]"
+            className="w-full bg-gradient-to-r from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB] text-white py-3 px-4 rounded-xl font-semibold hover:shadow-lg hover:scale-[1.02] transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2"
           >
-            ✓ Voter ({selectedOptions.length} option
-            {selectedOptions.length > 1 ? "s" : ""})
+            <FiCheck size={16} />
+            Voter ({selectedOptions.length} choix)
           </button>
         )}
 
-        {/* Boutons d'édition de vote */}
+        {/* Modifier le vote */}
         {hasUserVoted() && poll.isActive && !isEditingVote && (
           <button
             onClick={handleEditVote}
-            className="w-full bg-slate-100 text-slate-700 py-2 px-4 rounded-xl font-medium hover:bg-slate-200 transition-all duration-200 flex items-center justify-center gap-2"
+            className="w-full bg-slate-100 text-slate-700 py-3 px-4 rounded-xl font-medium hover:bg-slate-200 transition-all duration-200 flex items-center justify-center gap-2"
           >
-            ✏️ Modifier mon vote
+            <FiEdit3 size={16} />
+            Modifier mon vote
           </button>
         )}
 
-        {/* Boutons de sauvegarde/annulation pendant l'édition */}
+        {/* Boutons d'édition */}
         {isEditingVote && (
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <button
               onClick={handleSaveEdit}
-              className="flex-1 bg-gradient-to-r from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB] text-white py-2 px-4 rounded-xl font-medium hover:shadow-lg transition-all duration-200"
+              className="flex-1 bg-gradient-to-r from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB] text-white py-3 px-3 sm:px-4 rounded-xl font-medium hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 text-sm sm:text-base"
             >
-              ✓ Sauvegarder
+              <FiCheck size={16} />
+              <span className="truncate">Sauvegarder</span>
             </button>
             <button
               onClick={handleCancelEdit}
-              className="flex-1 bg-slate-200 text-slate-700 py-2 px-4 rounded-xl font-medium hover:bg-slate-300 transition-all duration-200"
+              className="flex-1 bg-slate-200 text-slate-700 py-3 px-3 sm:px-4 rounded-xl font-medium hover:bg-slate-300 transition-all duration-200 flex items-center justify-center gap-2 text-sm sm:text-base"
             >
-              ✕ Annuler
+              <FiX size={16} />
+              <span className="truncate">Annuler</span>
             </button>
           </div>
         )}
       </div>
 
-      {/* Statistiques */}
-      <div className="mt-4 pt-3 border-t border-slate-200">
-        <div className="flex items-center justify-between text-xs text-slate-500">
-          <span>
-            {getTotalVotes()} vote{getTotalVotes() !== 1 ? "s" : ""} au total
-          </span>
-          {isEditingVote && (
-            <span className="flex items-center gap-1 text-orange-600 font-medium">
-              <div className="w-1.5 h-1.5 bg-orange-600 rounded-full"></div>
-              Mode édition
+      {/* Footer Stats */}
+      <div className="mt-5 pt-4 border-t border-slate-100">
+        <div className="flex items-center justify-between text-sm text-slate-500">
+          <div className="flex items-center gap-2">
+            <FiUsers size={14} />
+            <span>
+              {getTotalVotes()} vote{getTotalVotes() !== 1 ? "s" : ""}
             </span>
+          </div>
+          {hasUserVoted() && !isEditingVote && (
+            <div className="flex items-center gap-1 text-[#A18CD1] font-medium">
+              <div className="w-2 h-2 bg-[#A18CD1] rounded-full"></div>
+              <span>Vous avez voté</span>
+            </div>
           )}
         </div>
       </div>

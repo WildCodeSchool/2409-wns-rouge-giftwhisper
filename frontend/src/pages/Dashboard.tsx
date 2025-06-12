@@ -1,20 +1,32 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
-import { Settings } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Users } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useMutation, useLazyQuery } from "@apollo/client";
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
 import { ACCEPT_INVITATION, VALIDATE_INVITATION_TOKEN } from "@/api/invitation";
 import { useAuth } from "@/hooks/useAuth";
 import SecretGroupTab from "@/components/SecretGroupTab";
+import {
+  CreateGroupCard,
+  GroupCard,
+  HowItWorksSection,
+  GroupGrid,
+} from "@/components/dashboard";
 
 function Dashboard() {
   const [giftMode, setGiftMode] = useState<"classic" | "secret">("classic");
   const navigate = useNavigate();
-  const { tokenInvitation, clearInvitationToken, isAuthenticated, user } = useAuth();
+  const { tokenInvitation, clearInvitationToken, isAuthenticated, user } =
+    useAuth();
   const [invitationDialogOpen, setInvitationDialogOpen] = useState(false);
   const [invitationDetails, setInvitationDetails] = useState<{
     groupName: string;
@@ -31,13 +43,13 @@ function Dashboard() {
       validateInvitationToken({
         variables: { token: tokenInvitation },
       })
-        .then(response => {
+        .then((response) => {
           if (response.data?.validateInvitationToken) {
             const group = response.data.validateInvitationToken;
             setInvitationDetails({
               groupName: group.name,
               groupId: group.id,
-              token: tokenInvitation
+              token: tokenInvitation,
             });
             setInvitationDialogOpen(true);
           } else {
@@ -45,13 +57,12 @@ function Dashboard() {
             clearInvitationToken();
           }
         })
-        .catch(error => {
+        .catch((error) => {
           console.error("Erreur lors de la validation de l'invitation:", error);
           toast.error("Erreur lors de la validation de l'invitation");
         });
     }
   }, [tokenInvitation]);
-
 
   // Fonction pour accepter l'invitation
   const handleAcceptInvitation = async () => {
@@ -62,9 +73,9 @@ function Dashboard() {
         variables: {
           data: {
             token: invitationDetails.token,
-            userId: parseInt(user.id.toString(), 10)
-          }
-        }
+            userId: parseInt(user.id.toString(), 10),
+          },
+        },
       });
 
       if (data?.acceptInvitation) {
@@ -95,100 +106,190 @@ function Dashboard() {
     toast.info("Vous avez refusé l'invitation");
   };
 
+  const groupData = [
+    {
+      title: "Amis",
+      color: "from-[#FF8177] via-[#CF556C] to-[#B12A5B]",
+      route: "/friends",
+      id: "9766da82-1a60-46af-bb8e-fc4e382c034f",
+      members: [
+        { name: "Marie", avatar: "M" },
+        { name: "Paul", avatar: "P" },
+        { name: "Julie", avatar: "J" },
+      ],
+    },
+    {
+      title: "Travail",
+      color: "from-[#BAC8E0] to-[#6A85B6]",
+      route: "/work",
+      id: "4aba6ed4-cead-4710-a393-afa1eb4b4b89",
+      members: [
+        { name: "Alex", avatar: "A" },
+        { name: "Sarah", avatar: "S" },
+        { name: "Tom", avatar: "T" },
+        { name: "Lisa", avatar: "L" },
+      ],
+    },
+    {
+      title: "Famille",
+      color: "from-[#8DDAD5] to-[#00CDAC]",
+      route: "/family",
+      id: "fc3a069e-6061-4191-8d37-e7a4562f59c9",
+      members: [
+        { name: "Maman", avatar: "M" },
+        { name: "Papa", avatar: "P" },
+      ],
+    },
+  ];
+
+  const howItWorksSteps = [
+    {
+      number: 1,
+      title: "Créez un groupe",
+      description: "Ajoutez vos amis, famille ou collègues",
+    },
+    {
+      number: 2,
+      title: "Partagez vos envies",
+      description: "Discutez et partagez vos listes de souhaits",
+    },
+    {
+      number: 3,
+      title: "Échangez des cadeaux",
+      description: "Organisez vos échanges en toute simplicité",
+    },
+  ];
+
   return (
     <>
-      <section className="w-full px-6 md:px-14 lg:px-20 xl:px-16 py-12">
-        <div className="flex border-b mb-8">
-          {/* Selection of a mode (classic or secret)*/}
-          <button
-            onClick={() => setGiftMode("classic")}
-            className={`mr-6 pb-1 text-lg font-medium cursor-pointer ${giftMode === "classic"
-              ? "border-b-2 border-[#D36567] text-gray-900"
-              : "text-gray-500"
-              }`}
-          >
-            Classique
-          </button>
-          <button
-            onClick={() => setGiftMode("secret")}
-            className={`pb-1 text-lg font-medium cursor-pointer ${giftMode === "secret"
-              ? "border-b-2 border-[#D36567] text-gray-900"
-              : "text-gray-500"
-              }`}
-          >
-            Secret
-          </button>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
+        {/* Header avec titre de bienvenue */}
+        <div className="px-6 md:px-14 lg:px-20 xl:px-16 pt-8 pb-4">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
+              Bienvenue {user?.first_name ? `${user.first_name}` : ""} ! 🎁
+            </h1>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Organisez vos échanges de cadeaux avec vos proches et découvrez la
+              magie des surprises
+            </p>
+          </div>
         </div>
 
-        {/* If  "classic" mode is selected*/}
-        {giftMode === "classic" && (
-          <section className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-12">
-            {/* Option + (to create a new group) */}
-            <Card className="bg-[#D36567] rounded-xl h-32 flex items-center justify-center cursor-pointer hover:opacity-90">
-              <CardContent
-                onClick={() => navigate("/group-creation")}
-                className="text-white text-5xl font-bold"
-              >
-                +
-              </CardContent>
-            </Card>
-            {/* Other groups */}
-            {[
-              {
-                title: "Amis",
-                color: "from-[#FF8177] via-[#CF556C] to-[#B12A5B]",
-                route: "/friends",
-                id: "9766da82-1a60-46af-bb8e-fc4e382c034f"
-              },
-              {
-                title: "Travail",
-                color: "from-[#BAC8E0] to-[#6A85B6]",
-                route: "/work",
-                id: "4aba6ed4-cead-4710-a393-afa1eb4b4b89"
-              },
-              {
-                title: "Famille",
-                color: "from-[#8DDAD5] to-[#00CDAC]",
-                route: "/family",
-                id: "fc3a069e-6061-4191-8d37-e7a4562f59c9"
-              },
-            ].map((card) => (
-              <Link key={card.title} to={`/${card.title}/${card.id}/chat-window`}>
-                <Card
-                  className={`relative bg-gradient-to-br ${card.color} rounded-xl h-32 p-4 text-white flex-col justify-center items-center cursor-pointer hover:opacity-90`}
-                  onClick={() => navigate(card.route)}
+        <section className="px-6 md:px-14 lg:px-20 xl:px-16 pb-12">
+          {/* Navigation entre modes avec animation satisfaisante */}
+          <div className="flex justify-center mb-12">
+            <div className="relative bg-white rounded-full p-2 shadow-lg border border-gray-200 overflow-hidden">
+              {/* Indicateur animé avec effet élastique satisfaisant */}
+              <div
+                className={`absolute top-2 bottom-2 rounded-full bg-gradient-to-r from-[#D36567] to-[#B12A5B] shadow-lg transition-all duration-700 ease-out transform-gpu ${
+                  giftMode === "classic"
+                    ? "left-2 w-[calc(50%-4px)]"
+                    : "left-[calc(50%)] w-[calc(50%-8px)]"
+                }`}
+                style={{
+                  transitionTimingFunction: "cubic-bezier(0.34, 1.56, 0.64, 1)",
+                }}
+              ></div>
+
+              {/* Boutons avec déplacement fluide */}
+              <div className="relative flex">
+                <button
+                  onClick={() => setGiftMode("classic")}
+                  className={`relative z-10 px-8 py-3 rounded-full text-base font-semibold transition-all duration-500 flex-1 transform ${
+                    giftMode === "classic"
+                      ? "text-white translate-y-0"
+                      : "text-gray-600 hover:text-gray-900 hover:-translate-y-0.5"
+                  }`}
+                  style={{
+                    transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)",
+                  }}
                 >
-                  <Settings className="absolute top-2 right-2 w-5 h-5 opacity-80" />
-                  <CardContent className="flex-1 text-center text-lg font-semibold mt-8">
-                    {card.title}
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </section>
-        )}
+                  Mode Classique
+                </button>
+                <button
+                  onClick={() => setGiftMode("secret")}
+                  className={`relative z-10 px-8 py-3 rounded-full text-base font-semibold transition-all duration-500 flex-1 transform ${
+                    giftMode === "secret"
+                      ? "text-white translate-y-0"
+                      : "text-gray-600 hover:text-gray-900 hover:-translate-y-0.5"
+                  }`}
+                  style={{
+                    transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)",
+                  }}
+                >
+                  Mode Secret
+                </button>
+              </div>
+            </div>
+          </div>
+          {/* Mode classique avec design amélioré */}
+          {giftMode === "classic" && (
+            <GroupGrid title="Vos groupes d'échange">
+              <CreateGroupCard onClick={() => navigate("/group-creation")} />
 
-        {/* If  "secret" mode is selected*/}
-        {giftMode === "secret" && (
-          <SecretGroupTab />
-        )}
-      </section>
+              {groupData.map((group) => (
+                <GroupCard
+                  key={group.title}
+                  title={group.title}
+                  color={group.color}
+                  route={group.route}
+                  id={group.id}
+                  memberCount={group.members.length}
+                />
+              ))}
 
-      {/* Boîte de dialogue d'invitation */}
-      <Dialog open={invitationDialogOpen} onOpenChange={setInvitationDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Invitation à rejoindre un groupe</DialogTitle>
-            <DialogDescription>
-              Vous avez été invité(e) à rejoindre le groupe "{invitationDetails?.groupName}".
-              Souhaitez-vous accepter cette invitation ?
+              {groupData.length === 0 && (
+                <HowItWorksSection
+                  title="Comment ça marche ?"
+                  steps={howItWorksSteps}
+                />
+              )}
+            </GroupGrid>
+          )}
+
+          {/* Mode secret */}
+          {giftMode === "secret" && (
+            <div className="max-w-7xl mx-auto">
+              <SecretGroupTab />
+            </div>
+          )}
+        </section>
+      </div>
+
+      {/* Dialog d'invitation avec style amélioré */}
+      <Dialog
+        open={invitationDialogOpen}
+        onOpenChange={setInvitationDialogOpen}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="text-center">
+            <div className="w-16 h-16 bg-[#D36567] rounded-full flex items-center justify-center mx-auto mb-4">
+              <Users className="w-8 h-8 text-white" />
+            </div>
+            <DialogTitle className="text-xl font-bold">
+              Invitation à rejoindre un groupe
+            </DialogTitle>
+            <DialogDescription className="text-gray-600">
+              Vous avez été invité(e) à rejoindre le groupe{" "}
+              <span className="font-semibold text-[#D36567]">
+                "{invitationDetails?.groupName}"
+              </span>
+              . Souhaitez-vous accepter cette invitation ?
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={declineInvitation}>
+          <DialogFooter className="flex gap-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={declineInvitation}
+              className="flex-1"
+            >
               Refuser
             </Button>
-            <Button onClick={handleAcceptInvitation}>
+            <Button
+              onClick={handleAcceptInvitation}
+              className="flex-1 bg-[#D36567] hover:bg-[#B12A5B]"
+            >
               Accepter
             </Button>
           </DialogFooter>
