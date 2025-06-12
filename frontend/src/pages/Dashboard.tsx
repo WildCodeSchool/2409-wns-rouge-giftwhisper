@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { useMutation, useLazyQuery } from "@apollo/client";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
 import { ACCEPT_INVITATION, VALIDATE_INVITATION_TOKEN } from "@/api/invitation";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -29,24 +30,24 @@ function Dashboard() {
       validateInvitationToken({
         variables: { token: tokenInvitation },
       })
-      .then(response => {
-        if (response.data?.validateInvitationToken) {
-          const group = response.data.validateInvitationToken;
-          setInvitationDetails({
-            groupName: group.name,
-            groupId: group.id,
-            token: tokenInvitation
-          });
-          setInvitationDialogOpen(true);
-        } else {
-          toast.error("L'invitation n'est plus valide ou a expiré");
-          clearInvitationToken();
-        }
-      })
-      .catch(error => {
-        console.error("Erreur lors de la validation de l'invitation:", error);
-        toast.error("Erreur lors de la validation de l'invitation");
-      });
+        .then(response => {
+          if (response.data?.validateInvitationToken) {
+            const group = response.data.validateInvitationToken;
+            setInvitationDetails({
+              groupName: group.name,
+              groupId: group.id,
+              token: tokenInvitation
+            });
+            setInvitationDialogOpen(true);
+          } else {
+            toast.error("L'invitation n'est plus valide ou a expiré");
+            clearInvitationToken();
+          }
+        })
+        .catch(error => {
+          console.error("Erreur lors de la validation de l'invitation:", error);
+          toast.error("Erreur lors de la validation de l'invitation");
+        });
     }
   }, [tokenInvitation]);
 
@@ -54,12 +55,12 @@ function Dashboard() {
   // Fonction pour accepter l'invitation
   const handleAcceptInvitation = async () => {
     if (!invitationDetails || !isAuthenticated || !user) return;
-    
+
     try {
       const { data } = await acceptInvitationMutation({
-        variables: { 
+        variables: {
           data: {
-            token: invitationDetails.token, 
+            token: invitationDetails.token,
             userId: parseInt(user.id.toString(), 10)
           }
         }
@@ -67,10 +68,10 @@ function Dashboard() {
 
       if (data?.acceptInvitation) {
         toast.success("Vous avez rejoint le groupe avec succès!");
-        
+
         // On ferme la dialog
         setInvitationDialogOpen(false);
-        
+
         // On nettoie le token d'invitation
         clearInvitationToken();
       } else {
@@ -86,10 +87,10 @@ function Dashboard() {
   const declineInvitation = () => {
     // On ferme la dialog
     setInvitationDialogOpen(false);
-    
+
     // On nettoie le token d'invitation
     clearInvitationToken();
-    
+
     toast.info("Vous avez refusé l'invitation");
   };
 
@@ -100,21 +101,19 @@ function Dashboard() {
           {/* Selection of a mode (classic or secret)*/}
           <button
             onClick={() => setGiftMode("classic")}
-            className={`mr-6 pb-1 text-lg font-medium cursor-pointer ${
-              giftMode === "classic"
-                ? "border-b-2 border-[#D36567] text-gray-900"
-                : "text-gray-500"
-            }`}
+            className={`mr-6 pb-1 text-lg font-medium cursor-pointer ${giftMode === "classic"
+              ? "border-b-2 border-[#D36567] text-gray-900"
+              : "text-gray-500"
+              }`}
           >
             Classique
           </button>
           <button
             onClick={() => setGiftMode("secret")}
-            className={`pb-1 text-lg font-medium cursor-pointer ${
-              giftMode === "secret"
-                ? "border-b-2 border-[#D36567] text-gray-900"
-                : "text-gray-500"
-            }`}
+            className={`pb-1 text-lg font-medium cursor-pointer ${giftMode === "secret"
+              ? "border-b-2 border-[#D36567] text-gray-900"
+              : "text-gray-500"
+              }`}
           >
             Secret
           </button>
@@ -132,35 +131,38 @@ function Dashboard() {
                 +
               </CardContent>
             </Card>
-
             {/* Other groups */}
             {[
               {
                 title: "Amis",
                 color: "from-[#FF8177] via-[#CF556C] to-[#B12A5B]",
                 route: "/friends",
+                id: "9766da82-1a60-46af-bb8e-fc4e382c034f"
               },
               {
                 title: "Travail",
                 color: "from-[#BAC8E0] to-[#6A85B6]",
                 route: "/work",
+                id: "4aba6ed4-cead-4710-a393-afa1eb4b4b89"
               },
               {
                 title: "Famille",
                 color: "from-[#8DDAD5] to-[#00CDAC]",
                 route: "/family",
+                id: "fc3a069e-6061-4191-8d37-e7a4562f59c9"
               },
             ].map((card) => (
-              <Card
-                key={card.title}
-                className={`relative bg-gradient-to-br ${card.color} rounded-xl h-32 p-4 text-white flex-col justify-center items-center cursor-pointer hover:opacity-90`}
-                onClick={() => navigate(card.route)}
-              >
-                <Settings className="absolute top-2 right-2 w-5 h-5 opacity-80" />
-                <CardContent className="flex-1 text-center text-lg font-semibold mt-8">
-                  {card.title}
-                </CardContent>
-              </Card>
+              <Link key={card.title} to={`/${card.title}/${card.id}/chat-window`}>
+                <Card
+                  className={`relative bg-gradient-to-br ${card.color} rounded-xl h-32 p-4 text-white flex-col justify-center items-center cursor-pointer hover:opacity-90`}
+                  onClick={() => navigate(card.route)}
+                >
+                  <Settings className="absolute top-2 right-2 w-5 h-5 opacity-80" />
+                  <CardContent className="flex-1 text-center text-lg font-semibold mt-8">
+                    {card.title}
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </section>
         )}

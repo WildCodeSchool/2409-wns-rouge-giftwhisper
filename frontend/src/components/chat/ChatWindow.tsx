@@ -2,7 +2,6 @@ import { FormEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FaLocationArrow } from "react-icons/fa6";
 import { IoAdd } from "react-icons/io5";
 import { IoArrowDownCircle } from "react-icons/io5";
-import ChatSelect from "./ChatSelect";
 import { useSocket } from "@/hooks/socket";
 import { useCurrentUser } from "@/hooks/currentUser";
 
@@ -18,7 +17,6 @@ const elementIsVisibleInViewport = (el: Element, partiallyVisible = false) => {
 };
 
 function ChatWindow() {
-  //TODO: Deal with color per user instead of hardcoded colors
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<{ id?: number, content: string, createdBy: { first_name: string, id: number } }[] | undefined>(undefined);
   const [displayAutoScrollDown, setDisplayAutoScrollDown] = useState(false);
@@ -104,78 +102,70 @@ function ChatWindow() {
   if (!user) {
     return null;
   }
-
   return (
-    <>
-      <div className="flex h-screen overflow-hidden">
-        <aside className="bg-[#FAFAFA] px-4 hidden md:flex md:flex-col">
-          <ChatSelect />
-        </aside>
-        <article className=" flex flex-col w-full">
-          <div className="flex flex-col flex-1 overflow-hidden">
-            <button
-              onClick={loadMoreMessages}
-              className={`
+    <article className=" flex flex-col w-full">
+      <div className="flex flex-col flex-1 overflow-hidden">
+        <button
+          onClick={loadMoreMessages}
+          className={`
               ${!displayMoreMessage ? 'hidden' : ''}`}>
-              Load more
-            </button>
-            <section onScroll={handleScroll} className="overflow-y-auto flex flex-col flex-1 overflow-x-auto p-2 space-y-2">
-              {messages && messages.map((message, i) => {
-                const isLastItem = i === messages.length - 1;
-                const currentUserId = Number(user.id);
-                return (
-                  <div
-                    ref={isLastItem ? lastMessageRef : i === 0 ? firstMessageRef : null}
-                    key={message.id}
-                    className={`flex flex-col max-w-[70%] 
+          Load more
+        </button>
+        <section onScroll={handleScroll} className="overflow-y-auto flex flex-col flex-1 overflow-x-auto p-2 space-y-2">
+          {messages && messages.map((message, i) => {
+            const isLastItem = i === messages.length - 1;
+            const currentUserId = Number(user.id);
+            return (
+              <div
+                ref={isLastItem ? lastMessageRef : i === 0 ? firstMessageRef : null}
+                key={message.id}
+                className={`flex flex-col max-w-[70%] 
                     ${message.createdBy.id !== currentUserId ? '' : 'self-end'}`}
-                  >
-                    <div className={`flex items-center gap-1 ${message.createdBy.id !== currentUserId ? '' : 'flex-row-reverse'}`}>
-                      <div className="w-3 h-3 bg-gradient-to-r from-[#FF9A9E] to-[#FECFEF] rounded-full"></div>
-                      <p className={`pb-1 ${message.createdBy.id !== currentUserId ? '' : 'text-right'}`}>{message.createdBy.first_name}</p>
-                    </div>
-                    <p className={`bg-gradient-to-r break-words w-fit max-w-[100%] from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB] rounded-[19px] px-4 py-2 text-sm text-white ${message.createdBy.id !== currentUserId ? '' : 'self-end'}`}>
-                      {message.content}
-                    </p>
-                  </div>
-                );
-              })}
-            </section>
-            <button
-              onClick={() => lastMessageRef.current?.scrollIntoView({ behavior: 'instant' })}
-              className={`
+              >
+                <div className={`flex items-center gap-1 ${message.createdBy.id !== currentUserId ? '' : 'flex-row-reverse'}`}>
+                  <div className="w-3 h-3 bg-gradient-to-r from-[#FF9A9E] to-[#FECFEF] rounded-full"></div>
+                  <p className={`pb-1 ${message.createdBy.id !== currentUserId ? '' : 'text-right'}`}>{message.createdBy.first_name}</p>
+                </div>
+                <p className={`bg-gradient-to-r break-words w-fit max-w-[100%] from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB] rounded-[19px] px-4 py-2 text-sm text-white ${message.createdBy.id !== currentUserId ? '' : 'self-end'}`}>
+                  {message.content}
+                </p>
+              </div>
+            );
+          })}
+        </section>
+        <button
+          onClick={() => lastMessageRef.current?.scrollIntoView({ behavior: 'instant' })}
+          className={`
               absolute bottom-20 left-1/2 transform -translate-x-1/2
               'translate-y-5 opacity-0 pointer-events-none'
               transition-all duration-300 ease-in-out 
               ${displayAutoScrollDown ? 'translate-y-0 opacity-100' : 'translate-y-5 opacity-0'}
             `}
-            >
-              <IoArrowDownCircle size={28} color="#d5d5d5" />
+        >
+          <IoArrowDownCircle size={28} color="#d5d5d5" />
+        </button>
+        <form className="flex items-center gap-3 justify-between p-4" onSubmit={submit}>
+          <div className="flex items-center gap-2 bg-[#F3F3F3] p-0.5 rounded-2xl shadow-md w-[100%]">
+            <button className="rounded-full ml-2 p-0 bg-gradient-to-r from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB]">
+              <IoAdd size={22} color="white" />
             </button>
-            <form className="flex items-center gap-3 justify-between p-4" onSubmit={submit}>
-              <div className="flex items-center gap-2 bg-[#F3F3F3] p-0.5 rounded-2xl shadow-md w-[100%]">
-                <button className="rounded-full ml-2 p-0 bg-gradient-to-r from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB]">
-                  <IoAdd size={22} color="white" />
-                </button>
-                <input
-                  placeholder="Message"
-                  value={message}
-                  onChange={(e) => setMessage(e.currentTarget.value)}
-                  name="chat-message"
-                  id="chat-message"
-                  type="text"
-                  className="w-full h-9 focus:outline-none"
-                />
-              </div>
-              <button type="submit" className="rounded-full p-2 bg-gradient-to-r from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB] shadow-md">
-                <FaLocationArrow color="white" size={16} />
-              </button>
-            </form>
+            <input
+              placeholder="Message"
+              value={message}
+              onChange={(e) => setMessage(e.currentTarget.value)}
+              name="chat-message"
+              id="chat-message"
+              type="text"
+              className="w-full h-9 focus:outline-none"
+            />
           </div>
-        </article>
+          <button type="submit" className="rounded-full p-2 bg-gradient-to-r from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB] shadow-md">
+            <FaLocationArrow color="white" size={16} />
+          </button>
+        </form>
       </div>
-    </>
-  );
+    </article>
+  )
 }
 
 export default ChatWindow;
