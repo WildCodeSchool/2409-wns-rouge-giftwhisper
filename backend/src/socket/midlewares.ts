@@ -1,6 +1,8 @@
 import { Server, Socket } from "socket.io";
 import { Message } from "../entities/Message";
 import { User } from "../entities/User";
+import { Poll } from "../entities/Poll";
+import { PollOption } from "../entities/PollOptions";
 
 export class SocketMidleWares {
   socket;
@@ -74,4 +76,60 @@ export class SocketMidleWares {
       createdBy: { id: user.id, first_name: user.first_name },
     });
   };
+
+  createPoll = async (pollData: {
+    question: string;
+    options: string[];
+    allowMultiple: boolean;
+  }) => {
+    const user = (this.socket.request as any).user as User;
+    try {
+      const poll = new Poll();
+      poll.question = pollData.question;
+      poll.allowMultipleVotes = pollData.allowMultiple;
+      poll.createdBy = { id: user.id } as User;
+      poll.chat = null as any;
+      await poll.save();
+
+      const savedOptions = [];
+      for (const optionText of pollData.options) {
+        const option = new PollOption();
+        option.text = optionText;
+        option.poll = poll;
+        await option.save();
+        savedOptions.push({
+          id: option.id,
+          text: option.text,
+          votes: [],
+        });
+      }
+
+      const newMessage = new Message();
+      newMessage.content = `Sondage: ${pollData.question}`;
+      newMessage.messageType = "poll";
+      newMessage.createdBy = { id: user.id } as User;
+      newMessage.poll = poll;
+      await newMessage.save();
+
+      const messageWithPoll = {
+        id: newMessage.id,
+        content: newMessage.content,
+        messageType: "poll",
+        createdBy: { id: user.id, first_name: user.first_name },
+        poll: {
+          id: poll.id,
+          question: poll.question,
+          allowMultipleVotes: poll.allowMultipleVotes,
+          isActive: poll.isActive,
+          createdBy: { id: user.id, first_name: user.first_name },
+          createdAt: poll.createdAt,
+          endDate: poll.endDate,
+          options: savedOptions,
+        },
+      };
+      this.io.emit("new-message", messageWithPoll);
+    } catch (error) {
+      console.error("Erreur lors de la création du sondage:", error);
+    }
+  }
 }
