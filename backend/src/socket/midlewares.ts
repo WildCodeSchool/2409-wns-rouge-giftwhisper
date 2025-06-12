@@ -3,13 +3,16 @@ import { Message } from "../entities/Message";
 import { User } from "../entities/User";
 import { Poll } from "../entities/Poll";
 import { PollOption } from "../entities/PollOptions";
+import { PollVote } from "../entities/PollVote";
 
 export class SocketMidleWares {
   socket;
   io;
+  user;
   constructor(socket: Socket, io: Server) {
     this.socket = socket;
     this.io = io;
+    this.user = (this.socket.request as any).user as User;
   }
   //Use query builder for selective field from users, and avoid having to manually remove
   //data like the user password before sending it back
@@ -63,17 +66,16 @@ export class SocketMidleWares {
 
   receiveMessage = async (content: string) => {
     const newMessage = new Message();
-    const user = (this.socket.request as any).user as User;
     Object.assign(
       newMessage,
-      { createdBy: { id: user.id } },
+      { createdBy: { id: this.user.id } },
       { content },
       { messageType: "text" }
     );
     await newMessage.save();
     this.io.emit("new-message", {
       ...newMessage,
-      createdBy: { id: user.id, first_name: user.first_name },
+      createdBy: { id: this.user.id, first_name: this.user.first_name },
     });
   };
 
@@ -82,12 +84,11 @@ export class SocketMidleWares {
     options: string[];
     allowMultiple: boolean;
   }) => {
-    const user = (this.socket.request as any).user as User;
     try {
       const poll = new Poll();
       poll.question = pollData.question;
       poll.allowMultipleVotes = pollData.allowMultiple;
-      poll.createdBy = { id: user.id } as User;
+      poll.createdBy = { id: this.user.id } as User;
       poll.chat = null as any;
       await poll.save();
 
@@ -107,7 +108,7 @@ export class SocketMidleWares {
       const newMessage = new Message();
       newMessage.content = `Sondage: ${pollData.question}`;
       newMessage.messageType = "poll";
-      newMessage.createdBy = { id: user.id } as User;
+      newMessage.createdBy = { id: this.user.id } as User;
       newMessage.poll = poll;
       await newMessage.save();
 
@@ -115,13 +116,13 @@ export class SocketMidleWares {
         id: newMessage.id,
         content: newMessage.content,
         messageType: "poll",
-        createdBy: { id: user.id, first_name: user.first_name },
+        createdBy: { id: this.user.id, first_name: this.user.first_name },
         poll: {
           id: poll.id,
           question: poll.question,
           allowMultipleVotes: poll.allowMultipleVotes,
           isActive: poll.isActive,
-          createdBy: { id: user.id, first_name: user.first_name },
+          createdBy: { id: this.user.id, first_name: this.user.first_name },
           createdAt: poll.createdAt,
           endDate: poll.endDate,
           options: savedOptions,
@@ -130,6 +131,112 @@ export class SocketMidleWares {
       this.io.emit("new-message", messageWithPoll);
     } catch (error) {
       console.error("Erreur lors de la création du sondage:", error);
+    }
+  }
+
+  votePoll = async (voteData: { pollId: number; optionId: number }) => {
+    try {
+      const existingVote = await PollVote.findOne({
+        where: {
+          user: { id: this.user.id },
+          poll: { id: voteData.pollId },
+        },
+      });
+      const poll = await Poll.findOne({
+        where: { id: voteData.pollId },
+      });
+      if (!poll) return;
+      if (existingVote && !poll.allowMultipleVotes) return;
+      const vote = new PollVote();
+      vote.user = { id: this.user.id } as User;
+      vote.poll = { id: voteData.pollId } as Poll;
+      vote.option = { id: voteData.optionId } as PollOption;
+      await vote.save();
+
+      const updatedPoll = await Poll.findOne({
+        where: { id: voteData.pollId },
+        relations: [
+          "options",
+          "options.votes",
+          "options.votes.user",
+          "createdBy",
+        ],
+      });
+
+      if (updatedPoll) {
+        this.io.emit("poll-updated", {
+          pollId: voteData.pollId,
+          poll: updatedPoll,
+        });
+      }
+    } catch (error) {
+      console.error("Erreur lors du vote:", error);
+    }
+  }
+
+  removeVotePoll = async (voteData: { pollId: number; optionId: number }) => {
+    try {
+      const voteToRemove = await PollVote.findOne({
+        where: {
+          user: { id: this.user.id },
+          poll: { id: voteData.pollId },
+          option: { id: voteData.optionId },
+        },
+      });
+
+      if (voteToRemove) {
+        await voteToRemove.remove();
+
+        const updatedPoll = await Poll.findOne({
+          where: { id: voteData.pollId },
+          relations: [
+            "options",
+            "options.votes",
+            "options.votes.user",
+            "createdBy",
+          ],
+        });
+
+        if (updatedPoll) {
+          this.io.emit("poll-updated", {
+            pollId: voteData.pollId,
+            poll: updatedPoll,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Erreur lors de la suppression du vote:", error);
+    }
+  }
+
+  removeAllUserPoll = async (voteData: { pollId: number }) => {
+    try {
+      // Supprimer tous les votes de l'utilisateur pour ce sondage
+      await PollVote.delete({
+        user: { id: this.user.id },
+        poll: { id: voteData.pollId },
+      });
+
+      // Récupérer le sondage mis à jour avec tous les votes
+      const updatedPoll = await Poll.findOne({
+        where: { id: voteData.pollId },
+        relations: [
+          "options",
+          "options.votes",
+          "options.votes.user",
+          "createdBy",
+        ],
+      });
+
+      if (updatedPoll) {
+        // Émettre la mise à jour du sondage à tous les clients
+        this.io.emit("poll-updated", {
+          pollId: voteData.pollId,
+          poll: updatedPoll,
+        });
+      }
+    } catch (error) {
+      console.error("Erreur lors de la suppression des votes:", error);
     }
   }
 }
