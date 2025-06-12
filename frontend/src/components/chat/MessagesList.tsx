@@ -1,0 +1,72 @@
+import { MessageItem } from "./MessageItem";
+
+type Message = {
+  id?: number;
+  content: string;
+  createdBy: { first_name: string; id: number };
+  messageType?: string;
+  poll?: {
+    id: number;
+    question: string;
+    options: {
+      id: number;
+      text: string;
+      votes: { id: number; user: { first_name: string; id: number } }[];
+    }[];
+    allowMultipleVotes: boolean;
+    isActive: boolean;
+    createdBy: { first_name: string; id: number };
+    createdAt: string;
+    endDate?: string;
+  };
+};
+
+interface MessagesListProps {
+  messages: Message[];
+  currentUserId: number;
+  onScroll: () => void;
+  lastMessageRef: React.RefObject<HTMLDivElement | null>;
+  firstMessageRef: React.RefObject<HTMLDivElement | null>;
+  onVote: (pollId: number, optionId: number) => void;
+  onRemoveVote: (pollId: number, optionId: number) => void;
+  onRemoveAllVotes: (pollId: number) => void;
+}
+
+export function MessagesList({
+  messages,
+  currentUserId,
+  onScroll,
+  lastMessageRef,
+  firstMessageRef,
+  onVote,
+  onRemoveVote,
+  onRemoveAllVotes,
+}: MessagesListProps) {
+  return (
+    <section
+      onScroll={onScroll}
+      className="overflow-y-auto flex flex-col flex-1 px-6 py-4 space-y-3"
+    >
+      {messages &&
+        messages.map((message, i) => {
+          const isLastItem = i === messages.length - 1;
+          const isFirstItem = i === 0;
+
+          return (
+            <MessageItem
+              key={message.id}
+              message={message}
+              currentUserId={currentUserId}
+              isLastItem={isLastItem}
+              isFirstItem={isFirstItem}
+              lastMessageRef={isLastItem ? lastMessageRef : undefined}
+              firstMessageRef={isFirstItem ? firstMessageRef : undefined}
+              onVote={onVote}
+              onRemoveVote={onRemoveVote}
+              onRemoveAllVotes={onRemoveAllVotes}
+            />
+          );
+        })}
+    </section>
+  );
+}
