@@ -1,9 +1,10 @@
-import { Resolver, Query, Arg, ID, Mutation } from "type-graphql";
+import { Resolver, Query, Arg, ID, Mutation, Ctx } from "type-graphql";
 import { Group, GroupCreateInput, GroupUpdateInput } from "../entities/Group";
 import { validate } from "class-validator";
 import { User } from "../entities/User";
 import { In } from "typeorm";
 import { invitationService } from "../services/Invitation";
+import { getUserFromContext, ContextType } from "../auth";
 
 @Resolver()
 export class GroupsResolver {
@@ -35,21 +36,54 @@ export class GroupsResolver {
     }
   }
 
+  // Get groups for a specific user
+  @Query(() => [Group])
+  async getUserGroups(@Arg("userId", () => ID) userId: number): Promise<Group[]> {
+    const user = await User.findOne({
+      where: { id: userId },
+      relations: {
+        groups: {
+          users: true,
+        },
+      },
+    });
+    
+    if (!user) {
+      throw new Error("User not found");
+    }
+    
+    return user.groups;
+  }
+
   // Create a new group
   @Mutation(() => Group)
   async createGroup(
-    @Arg("data", () => GroupCreateInput) data: GroupCreateInput
+    @Arg("data", () => GroupCreateInput) data: GroupCreateInput,
+    @Ctx() context: ContextType
   ): Promise<Group> {
+    // Récupérer l'utilisateur authentifié
+    const user = await getUserFromContext(context);
+    
+    if (!user) {
+      throw new Error("Non autorisé - vous devez être connecté pour créer un groupe");
+    }
+
     const newGroup = new Group();
     Object.assign(newGroup, data);
 
     const errors = await validate(newGroup);
     if (errors.length > 0) {
       throw new Error(`Validation error: ${JSON.stringify(errors)}`);
-    } else {
-      await newGroup.save();
-      return newGroup;
     }
+
+    // Sauvegarder le groupe d'abord
+    await newGroup.save();
+
+    // Ensuite, ajouter le créateur comme membre du groupe
+    newGroup.users = [user];
+    await newGroup.save();
+
+    return newGroup;
   }
 
   // Update a group

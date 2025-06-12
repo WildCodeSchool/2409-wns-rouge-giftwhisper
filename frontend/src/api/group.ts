@@ -18,6 +18,24 @@ export const GET_GROUP = gql`
   }
 `;
 
+export const GET_USER_GROUPS = gql`
+  query GetUserGroups($userId: ID!) {
+    getUserGroups(userId: $userId) {
+      id
+      name
+      end_date
+      is_secret_santa
+      is_active
+      created_at
+      users {
+        id
+        first_name
+        last_name
+      }
+    }
+  }
+`;
+
 export const CREATE_GROUP = gql`
   mutation CreateGroup($data: GroupCreateInput!) {
     createGroup(data: $data) {
