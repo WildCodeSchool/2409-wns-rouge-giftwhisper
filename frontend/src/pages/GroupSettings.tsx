@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -22,23 +22,36 @@ import {
 } from "@/components/ui/tooltip"
 import { HelpCircle } from "lucide-react";
 import { toast } from "sonner";
-
-const membersList = [
-  { id: 1, firstName: "Murielle", lastName: "Dupont", email: "murielle@gmail.com" },
-  { id: 2, firstName: "Axel", lastName: "Dupont", email: "axel@gmail.com" },
-  { id: 3, firstName: "Isil", lastName: "Dupont", email: "isil@gmail.com" },
-  { id: 4, firstName: "Jeremy", lastName: "Dupont", email: "jeremy@gmail.com" },
-  { id: 5, firstName: "Priscilla", lastName: "Dupont", email: "axel@gmail.com" },
-  { id: 6, firstName: "Sten", lastName: "Dupont", email: "sten@gmail.com" },
-]
+import { useParams } from "react-router-dom";
+import { useQuery, useMutation } from "@apollo/client";
+import { GET_GROUP, REMOVE_USER_FROM_GROUP } from "@/api/group";
 
 export default function GroupSettings() {
-  const [groupName, setGroupName] = useState("Pour Jean-Claude");
-  const [endDate, setEndDate] = useState(new Date("2025-12-25T00:00:00.545Z"));
+  const { id } = useParams();
+  const { data, loading, error, refetch } = useQuery(GET_GROUP, {
+    variables: { id },
+  });
+
+  const [removeUserFromGroup] = useMutation(REMOVE_USER_FROM_GROUP);
+
+  const [groupName, setGroupName] = useState("");
+  const [endDate, setEndDate] = useState<Date | null>(null);
   const [isSecretSanta, setIsSecretSanta] = useState(false);
   const [isActive, setIsActive] = useState(true);
-  const [members, setMembers] = useState(membersList);
-  const [memberToDelete, setMemberToDelete] = useState<typeof membersList[0] | null>(null);
+  const [memberToDelete, setMemberToDelete] = useState<any | null>(null);
+
+  useEffect(() => {
+    if (data?.group) {
+      setGroupName(data.group.name);
+      setEndDate(data.group.end_date ? new Date(data.group.end_date) : null);
+      setIsSecretSanta(data.group.is_secret_santa);
+      setIsActive(data.group.is_active);
+    }
+  }, [data]);
+
+  if (loading) return <div>Chargement...</div>;
+  if (error) return <div>Erreur lors du chargement du groupe</div>;
+  if (!data?.group) return <div>Groupe non trouvé</div>;
 
   const handleSubmit = () => {
     const groupData = {
@@ -54,8 +67,24 @@ export default function GroupSettings() {
     });
   };
 
-  const removeMember = (id: number) => {
-    setMembers((prev) => prev.filter((member) => member.id !== id));
+  const removeMember = async (userId: number) => {
+    try {
+      await removeUserFromGroup({
+        variables: {
+          groupId: id,
+          userId: userId,
+        },
+      });
+      
+      toast.success("Membre supprimé", {
+        description: `${memberToDelete?.first_name} ${memberToDelete?.last_name} a été retiré du groupe.`,
+      });
+      
+      // Rafraîchir les données du groupe
+      refetch();
+    } catch (error) {
+      toast.error("Erreur lors de la suppression du membre");
+    }
   };
 
   return (
@@ -78,7 +107,7 @@ export default function GroupSettings() {
           <label className="block mb-1 font-medium">Date de fin</label>
           <Input
             type="date"
-            value={endDate.toISOString().substring(0, 10)}
+            value={endDate ? endDate.toISOString().substring(0, 10) : ""}
             onChange={(e) => setEndDate(new Date(e.target.value))}
           />
         </div>
@@ -109,7 +138,7 @@ export default function GroupSettings() {
           <Switch id="secret-santa-switch" className="cursor-pointer" checked={isSecretSanta} onCheckedChange={setIsSecretSanta} />
         </div>
 
-        <section className="mt-10 mx-auto">
+        <div className="w-full">
           <h2 className="text-xl font-semibold mb-4 text-center">Membres du groupe</h2>
           <div className="flex justify-end mb-4">
             <Button className="cursor-pointer" size="sm">
@@ -127,17 +156,17 @@ export default function GroupSettings() {
                 </tr>
               </thead>
               <tbody>
-                {members.length === 0 && (
+                {data.group.users.length === 0 && (
                   <tr>
                     <td colSpan={4} className="text-center text-gray-500 py-4">
                       Aucun membre pour le moment.
                     </td>
                   </tr>
                 )}
-                {members.map((member) => (
+                {data.group.users.map((member: any) => (
                   <tr key={member.id} className="text-sm">
-                    <td className="px-2 sm:px-4 py-1 sm:py-2 border">{member.firstName}</td>
-                    <td className="px-2 sm:px-4 py-1 sm:py-2 border">{member.lastName}</td>
+                    <td className="px-2 sm:px-4 py-1 sm:py-2 border">{member.first_name}</td>
+                    <td className="px-2 sm:px-4 py-1 sm:py-2 border">{member.last_name}</td>
                     <td className="px-2 sm:px-4 py-1 sm:py-2 border">{member.email}</td>
                     <td className="px-2 sm:px-4 py-1 sm:py-2 border text-center flex justify-center items-center">
                       <AlertDialog>
@@ -158,19 +187,17 @@ export default function GroupSettings() {
                             <AlertDialogDescription>
                               Cette action est irréversible. Le membre suivant sera supprimé :
                               <span className="block mt-2 font-medium">
-                                {memberToDelete?.firstName} {memberToDelete?.lastName} ({memberToDelete?.email})
+                                {memberToDelete?.first_name} {memberToDelete?.last_name} ({memberToDelete?.email})
                               </span>
                             </AlertDialogDescription>
                           </AlertDialogHeader>
-                          <AlertDialogFooter className="flex gap-2 justify-end">
+                          <AlertDialogFooter>
                             <AlertDialogCancel className="cursor-pointer normal-case">Annuler</AlertDialogCancel>
-                            <AlertDialogAction className="cursor-pointer"
+                            <AlertDialogAction 
+                              className="cursor-pointer"
                               onClick={() => {
                                 if (memberToDelete !== null) {
                                   removeMember(memberToDelete.id);
-                                  toast("Membre supprimé", {
-                                    description: `${memberToDelete.firstName} ${memberToDelete.lastName} a été retiré du groupe.`,
-                                  });
                                   setMemberToDelete(null);
                                 }
                               }}
@@ -186,7 +213,7 @@ export default function GroupSettings() {
               </tbody>
             </table>
           </div>
-        </section>
+        </div>
 
         <Button onClick={handleSubmit} className="px-8 cursor-pointer mb-6">
           Enregistrer

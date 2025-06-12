@@ -53,7 +53,9 @@ function ChatWindow() {
     | undefined
   >(undefined);
   const [displayAutoScrollDown, setDisplayAutoScrollDown] = useState(false);
+  const [displayMoreMessage, setDisplayMoreMessage] = useState(false);
   const lastMessageRef = useRef<HTMLDivElement>(null);
+  const firstMessageRef = useRef<HTMLDivElement>(null);
   const { disconnectSocket, getSocket } = useSocket();
   const { user, loading } = useCurrentUser();
   const [showPollModal, setShowPollModal] = useState(false);
@@ -114,24 +116,52 @@ function ChatWindow() {
         });
       }
     );
+    socket.on("more-messages-response", (previousMessages) => {
+      setMessages((e) => {
+        const copy = structuredClone(e) ?? [];
+        const messagesFromDb = previousMessages ?? [];
+        const updatedMessages = [...messagesFromDb, ...copy];
+        return updatedMessages;
+      });
+      //TODO: The previous first message should be at the bottom of the container ( not the top )
+      //There doesn't appear to be an easy way to do this
+      firstMessageRef.current?.scrollIntoView();
+    });
     return () => {
       disconnectSocket();
     };
   }, [user]);
 
   useLayoutEffect(() => {
-    lastMessageRef.current?.scrollIntoView({ behavior: "instant" });
+    if (!displayMoreMessage) {
+      lastMessageRef.current?.scrollIntoView({ behavior: "instant" });
+    }
   }, [messages]);
 
   const handleScroll = () => {
     const isLastMessageVisible = elementIsVisibleInViewport(
       lastMessageRef.current!
     );
+    const isFirstMessageVisible = elementIsVisibleInViewport(
+      firstMessageRef.current!
+    );
     if (!isLastMessageVisible && !displayAutoScrollDown) {
       setDisplayAutoScrollDown(true);
     } else if (isLastMessageVisible && displayAutoScrollDown) {
       setDisplayAutoScrollDown(false);
     }
+    //TODO: Add message count to display the message only if there are more messages in DB
+    //But we need the messages to be linked to a chatroom before being able to do so
+    if (isFirstMessageVisible) {
+      setDisplayMoreMessage(true);
+    } else if (!isFirstMessageVisible) {
+      setDisplayMoreMessage(false);
+    }
+  };
+
+  const loadMoreMessages = () => {
+    const socket = getSocket();
+    socket.emit("more-messages", { skip: messages?.length });
   };
 
   const submit = (e: FormEvent<HTMLFormElement>) => {
@@ -185,6 +215,13 @@ function ChatWindow() {
         </aside>
         <article className=" flex flex-col w-full">
           <div className="flex flex-col flex-1 overflow-hidden">
+            <button
+              onClick={loadMoreMessages}
+              className={`
+              ${!displayMoreMessage ? "hidden" : ""}`}
+            >
+              Load more
+            </button>
             <section
               onScroll={handleScroll}
               className="overflow-y-auto flex flex-col flex-1 overflow-x-auto p-2 space-y-2"
@@ -195,7 +232,13 @@ function ChatWindow() {
                   const currentUserId = Number(user.id);
                   return (
                     <div
-                      ref={isLastItem ? lastMessageRef : null}
+                      ref={
+                        isLastItem
+                          ? lastMessageRef
+                          : i === 0
+                          ? firstMessageRef
+                          : null
+                      }
                       key={message.id}
                       className={`flex flex-col max-w-[70%] 
                     ${

@@ -13,6 +13,7 @@ import {
 import { Chat } from "./Chat";
 import { Invitation } from "./Invitation";
 import { User } from "./User";
+import { Wishlist } from "./Wishlist";
 @Entity()
 @ObjectType()
 export class Group extends BaseEntity {

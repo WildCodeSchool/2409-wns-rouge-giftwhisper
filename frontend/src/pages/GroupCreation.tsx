@@ -4,10 +4,15 @@ import Stepper from "@/components/form/StepperForm";
 import StepGroupName from "@/components/createGroupFormSteps/StepGroupName";
 import StepMembers from "@/components/createGroupFormSteps/StepMembers";
 import StepSummary from "@/components/createGroupFormSteps/StepSummary";
+import { useMutation } from "@apollo/client";
+import { ADD_USERS_TO_GROUP, CREATE_GROUP } from "@/api/group";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 // Étapes réutilisables
 
 export default function GroupCreation() {
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
   // const [endDate, setEndDate] = useState("");
   const [email, setEmail] = useState("");
@@ -15,6 +20,8 @@ export default function GroupCreation() {
   const [groupName, setGroupName] = useState("");
   const [groupType, setGroupType] = useState("classic");
   const [maxStepReached, setMaxStepReached] = useState(0);
+  const [createGroup] = useMutation(CREATE_GROUP);
+  const [addUsersToGroup] = useMutation(ADD_USERS_TO_GROUP);
 
   const steps = [
     { title: "Nom du groupe" },
@@ -34,8 +41,56 @@ export default function GroupCreation() {
     setCurrentStep((prev) => Math.max(prev - 1, 0));
   };
 
-  const onSubmit = (data: any) => {
-    console.log("form submitted:", data);
+  const onSubmit = async () => {
+    try {
+      // 1. Creation of the group
+      const response = await createGroup({
+        variables: {
+          data: {
+            name: groupName,
+            is_secret_santa: groupType === "secretSanta",
+          },
+        },
+      });
+
+      const createdGroup = response.data?.createGroup;
+
+      if (!createdGroup) throw new Error("Création du groupe échouée");
+
+      const groupId = createdGroup.id;
+
+      // 2. Add members by their email
+      if (emails.length > 0) {
+        await addUsersToGroup({
+          variables: {
+            emails,
+            groupId,
+          },
+        });
+      }
+
+      // 3. Reset form
+      setGroupName("");
+      setEmails([]);
+      setEmail("");
+      setCurrentStep(0);
+      setMaxStepReached(0);
+
+      if (emails.length > 0) {
+        toast.success("Groupe créé avec succès ! Des invitations ont été envoyées aux membres.");
+      } else {
+        toast.success("Groupe créé avec succès !");
+      }
+
+      // Redirect to the group settings page
+      navigate(`/group/${groupId}/settings`);
+    } catch {
+      if(!groupName) {
+        toast.error("Le nom du groupe est obligatoire");
+      } else {
+        toast.error("Une erreur est survenue lors de la création du groupe");
+      }
+    }
   };
 
   const addEmail = () => {
@@ -78,7 +133,7 @@ export default function GroupCreation() {
           removeEmail={removeEmail}
         />
 
-        <Button onClick={() => onSubmit({})}>Terminer</Button>
+        <Button onClick={() => onSubmit()}>Terminer</Button>
       </div>
 
       {/* VERSION DESKTOP */}
@@ -123,8 +178,9 @@ export default function GroupCreation() {
           </Button>
           <Button
             onClick={
-              currentStep === steps.length - 1 ? () => onSubmit({}) : handleNext
+              currentStep === steps.length - 1 ? () => onSubmit() : handleNext
             }
+            className="cursor-pointer"
           >
             {currentStep === steps.length - 1 ? "Terminer" : "Suivant"}
           </Button>

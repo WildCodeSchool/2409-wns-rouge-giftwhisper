@@ -67,6 +67,40 @@ function App() {
             </Route>
           </Routes>
         </BrowserRouter>
+        <BrowserRouter>
+          <Toaster richColors />
+          <Routes>
+            <Route Component={PageLayout}>
+              <Route path="/" Component={HomePage} />
+              <Route path="/about" Component={About} />
+
+              {/* Routes publiques (uniquement accessibles si NON authentifié) */}
+              <Route element={<PublicOnlyLayout />}>
+                <Route path="/sign-in" Component={SignIn} />
+                <Route path="/sign-up" Component={SignUp} />
+                <Route path="/reset-password" Component={ResetPassword} />
+                <Route path="/forgot-password" Component={ForgotPassword} />
+              </Route>
+
+              <Route path="/invitation/:token" Component={InvitationHandler} />
+
+              {/* Routes protégées */}
+              <Route element={<ProtectedLayout />}>
+                <Route path="/chat-window" Component={ChatWindow} />
+                <Route path="/dashboard" Component={Dashboard} />
+                <Route path="/profile" Component={Profile} />
+                <Route path="/settings" Component={Settings} />
+                <Route path="/group" Component={Group} />
+                <Route path="/group/:id/settings" Component={GroupSettings} />
+                <Route path="/group-creation" Component={GroupCreation} />
+                <Route path="/group-settings" Component={GroupSettings} />
+                <Route path="/chat-select" Component={MobileChatSelect} />
+              </Route>
+
+              <Route path="*" Component={() => <Navigate to="/" />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
       </AuthProvider>
     </ApolloProvider>
   );

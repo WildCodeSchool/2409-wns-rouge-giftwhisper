@@ -14,6 +14,7 @@ import { Chat } from "./Chat";
 import { IsEmail, IsStrongPassword } from "class-validator";
 import { Group } from "./Group";
 import { PasswordResetToken } from "./PasswordResetToken";
+import { Wishlist } from "./Wishlist";
 
 @Entity()
 @ObjectType()
@@ -69,6 +70,10 @@ export class User extends BaseEntity {
   @OneToMany(() => PasswordResetToken, (token) => token.user)
   @Field(() => [PasswordResetToken], { nullable: true })
   resetTokens?: PasswordResetToken[];
+
+  @OneToMany(() => Wishlist, (wishlist) => wishlist.user)
+  @Field(() => [Wishlist], { nullable: true })
+  wishlists?: Wishlist[];
 }
 
 @InputType()
