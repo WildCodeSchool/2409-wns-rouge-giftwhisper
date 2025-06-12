@@ -7,7 +7,6 @@ interface ChatInputFormProps {
   onMessageChange: (message: string) => void;
   onSubmit: (e: FormEvent<HTMLFormElement>) => void;
   onCreatePoll: () => void;
-  isSending: boolean;
 }
 
 export function ChatInputForm({
@@ -15,7 +14,6 @@ export function ChatInputForm({
   onMessageChange,
   onSubmit,
   onCreatePoll,
-  isSending,
 }: ChatInputFormProps) {
   return (
     <div className="border-t border-slate-100 bg-white p-4">
@@ -35,8 +33,7 @@ export function ChatInputForm({
         </div>
 
         <SendButton
-          disabled={!message.trim() || isSending}
-          isSending={isSending}
+          disabled={!message.trim()}
         />
       </form>
     </div>
