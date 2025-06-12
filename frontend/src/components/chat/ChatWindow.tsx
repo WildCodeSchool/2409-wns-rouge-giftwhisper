@@ -1,11 +1,12 @@
 import { FormEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useSocket } from "@/hooks/socket";
+import { socketConnection } from "@/hooks/socket";
 import { useCurrentUser } from "@/hooks/currentUser";
 import { CreatePollModal } from "../CreatePollModal";
 import { LoadMoreButton } from "./LoadMoreButton";
 import { MessagesList } from "./MessagesList";
 import { ScrollToBottomButton } from "./ScrollToBottomButton";
 import { ChatInputForm } from "./ChatInputForm";
+import { useParams } from "react-router-dom";
 
 const elementIsVisibleInViewport = (el: Element, partiallyVisible = false) => {
   if (!el) return null;
@@ -48,14 +49,16 @@ function ChatWindow() {
   const [displayMoreMessage, setDisplayMoreMessage] = useState(false);
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const firstMessageRef = useRef<HTMLDivElement>(null);
-  const { disconnectSocket, getSocket } = useSocket();
+  const { getSocket } = socketConnection();
   const { user, loading } = useCurrentUser();
   const [showPollModal, setShowPollModal] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const { chatId } = useParams<{ chatId: string | undefined }>();
 
   useEffect(() => {
     if (!user) return;
     const socket = getSocket();
+    socket.emit("get-messages-history");
     socket.on("messages-history", (messages) => {
       setMessages(messages);
     });
@@ -119,9 +122,6 @@ function ChatWindow() {
       //There doesn't appear to be an easy way to do this
       firstMessageRef.current?.scrollIntoView();
     });
-    return () => {
-      disconnectSocket();
-    };
   }, [user]);
 
   useLayoutEffect(() => {
@@ -201,7 +201,7 @@ function ChatWindow() {
   }
 
   //Route guard should prevent any unauthorized user from reaching this page
-  if (!user) {
+  if (!user || !chatId) {
     return null;
   }
 

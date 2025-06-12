@@ -9,6 +9,7 @@ import {
 } from "typeorm";
 import { User } from "./User";
 import { Poll } from "./Poll";
+import { Chat } from "./Chat";
 
 @Entity()
 @ObjectType()
@@ -36,6 +37,10 @@ export class Message extends BaseEntity {
   @ManyToOne(() => Poll, { nullable: true })
   @Field(() => Poll, { nullable: true })
   poll?: Poll;
+
+  @ManyToOne(() => Chat, (chat) => chat.id)
+  @Field(() => Chat)
+  chat!: Chat;
 }
 
 @InputType()
