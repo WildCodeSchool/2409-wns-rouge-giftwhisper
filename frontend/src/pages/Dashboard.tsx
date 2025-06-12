@@ -225,27 +225,33 @@ function Dashboard() {
           </div>
           {/* Mode classique avec design amélioré */}
           {giftMode === "classic" && (
-            <GroupGrid title="Vos groupes d'échange">
-              <CreateGroupCard onClick={() => navigate("/group-creation")} />
+            <>
+              {groupData.length > 0 ? (
+                <GroupGrid title="Vos groupes d'échange">
+                  <CreateGroupCard
+                    onClick={() => navigate("/group-creation")}
+                  />
 
-              {groupData.map((group) => (
-                <GroupCard
-                  key={group.title}
-                  title={group.title}
-                  color={group.color}
-                  route={group.route}
-                  id={group.id}
-                  memberCount={group.members.length}
-                />
-              ))}
-
-              {groupData.length === 0 && (
+                  {groupData.map((group) => (
+                    <GroupCard
+                      key={group.title}
+                      title={group.title}
+                      color={group.color}
+                      route={group.route}
+                      id={group.id}
+                      memberCount={group.members.length}
+                    />
+                  ))}
+                </GroupGrid>
+              ) : (
                 <HowItWorksSection
                   title="Comment ça marche ?"
                   steps={howItWorksSteps}
+                  icon={Users}
+                  onCreateGroup={() => navigate("/group-creation")}
                 />
               )}
-            </GroupGrid>
+            </>
           )}
 
           {/* Mode secret */}
