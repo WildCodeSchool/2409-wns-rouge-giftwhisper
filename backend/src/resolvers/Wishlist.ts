@@ -1,19 +1,18 @@
 import { Resolver, Query, Mutation, Arg, ID } from "type-graphql";
-import { Gift } from "../entities/Gift";
+
 import {
   Wishlist,
   WishlistCreateInput,
   WishlistUpdateInput,
 } from "../entities/Wishlist";
 import { User } from "../entities/User";
-import { Group } from "../entities/Group";
 
 @Resolver()
 export class WishlistResolver {
   @Query(() => [Wishlist])
   async wishlists(): Promise<Wishlist[]> {
     return await Wishlist.find({
-      relations: ["user", "group"],
+      relations: ["user"],
     });
   }
 
@@ -22,16 +21,14 @@ export class WishlistResolver {
     @Arg("data") data: WishlistCreateInput
   ): Promise<Wishlist> {
     const user = await User.findOneBy({ id: data.userId });
-    const group = await Group.findOneBy({ id: data.groupId });
 
-    if (!user || !group) {
-      throw new Error("User or Group not found");
+    if (!user) {
+      throw new Error("User not found");
     }
 
     const newWishlist = Wishlist.create({
       text: data.text,
       user,
-      group,
     });
 
     await newWishlist.save();
@@ -43,7 +40,10 @@ export class WishlistResolver {
     @Arg("id", () => ID) id: number,
     @Arg("data", () => WishlistUpdateInput) data: WishlistUpdateInput
   ): Promise<Wishlist> {
-    const wishlist = await Wishlist.findOneBy({ id });
+    const wishlist = await Wishlist.findOne({
+      where: { id },
+      relations: ["user"],
+    });
     if (!wishlist) {
       throw new Error(`Wishlist with ID ${id} not found.`);
     }
