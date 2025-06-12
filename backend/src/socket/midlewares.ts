@@ -17,7 +17,6 @@ export class SocketMidleWares {
   //Use query builder for selective field from users, and avoid having to manually remove
   //data like the user password before sending it back
   getMessages = async (options?: { skip?: number; take?: number }) => {
-    console.log("HEEEEEEEEEEEEEEEEEEEEEEEEEEEERE")
     let messages: Message[] = [];
     const baseQuery = Message.createQueryBuilder("message")
       .leftJoinAndSelect("message.createdBy", "user")
