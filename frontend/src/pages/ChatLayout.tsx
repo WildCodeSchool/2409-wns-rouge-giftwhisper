@@ -1,7 +1,16 @@
 import { Outlet } from "react-router-dom";
 import ChatSelect from "./ChatSelect";
+import { socketConnection } from "@/hooks/socket";
+import { useEffect } from "react";
 
 function ChatLayout() {
+  const { disconnectSocket, getSocket } = socketConnection();
+
+  useEffect(() => {
+    getSocket();
+    return () => disconnectSocket();
+  }, []);
+
   return (
     <>
       <div className="flex h-screen overflow-hidden">

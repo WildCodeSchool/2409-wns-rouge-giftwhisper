@@ -2,11 +2,6 @@ import { Server as HttpServer } from "http";
 import { Server } from "socket.io";
 import { getUserFromContext } from "../auth";
 import { SocketMidleWares } from "../socket/midlewares";
-import { User } from "../entities/User";
-import { Poll } from "../entities/Poll";
-import { PollOption } from "../entities/PollOptions";
-import { Message } from "../entities/Message";
-import { PollVote } from "../entities/PollVote";
 
 export function socketInit(httpServer: HttpServer) {
   const io: Server = new Server(httpServer, {
@@ -28,7 +23,7 @@ export function socketInit(httpServer: HttpServer) {
 
   io.on("connection", async (socket) => {
     const socketMidleWares = new SocketMidleWares(socket, io);
-    socketMidleWares.getMessages();
+    socket.on('get-messages-history', socketMidleWares.getMessages)
     socket.on("more-messages", socketMidleWares.getMessages);
     socket.on("message", socketMidleWares.receiveMessage);
     socket.on("create-poll", socketMidleWares.createPoll);
