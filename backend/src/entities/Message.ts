@@ -1,6 +1,14 @@
 import { Field, ID, InputType, ObjectType } from "type-graphql";
-import { BaseEntity, Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import {
+  BaseEntity,
+  Column,
+  CreateDateColumn,
+  Entity,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from "typeorm";
 import { User } from "./User";
+import { Poll } from "./Poll";
 
 @Entity()
 @ObjectType()
@@ -13,13 +21,21 @@ export class Message extends BaseEntity {
   @Field()
   content!: string;
 
-  @ManyToOne(() => User, user => user.id)
+  @ManyToOne(() => User, (user) => user.id)
   @Field(() => User)
   createdBy!: User;
 
   @CreateDateColumn()
   @Field()
   createdAt!: string;
+
+  @Column({ type: "enum", enum: ["text", "poll"], default: "text" })
+  @Field()
+  messageType!: string;
+
+  @ManyToOne(() => Poll, { nullable: true })
+  @Field(() => Poll, { nullable: true })
+  poll?: Poll;
 }
 
 @InputType()
