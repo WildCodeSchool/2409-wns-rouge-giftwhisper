@@ -1,9 +1,16 @@
 import { useQuery } from "@apollo/client";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
-import { Settings, Users, Calendar } from "lucide-react";
+import { Calendar, Gift } from "lucide-react";
 import { GET_USER_GROUPS } from "@/api/group";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  CreateGroupCard,
+  GroupCard,
+  LoadingState,
+  ErrorState,
+  HowItWorksSection,
+  GroupGrid,
+} from "@/components/dashboard";
 
 interface Group {
   id: string;
@@ -22,104 +29,99 @@ interface Group {
 function SecretGroupTab() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  
+
   const { data, loading, error } = useQuery(GET_USER_GROUPS, {
     variables: { userId: user?.id },
     skip: !user?.id,
   });
 
-  if (loading) return (
-    <section className="text-gray-500 text-center mt-10">
-      <p>Chargement de vos groupes Secret Santa...</p>
-    </section>
-  );
+  if (loading) {
+    return <LoadingState message="Chargement de vos groupes Secret Santa..." />;
+  }
 
-  if (error) return (
-    <section className="text-gray-500 italic text-center mt-10">
-      <p>Aucun groupe Secret Santa trouvé</p>
-    </section>
-  );
-
-  // Filtrer pour ne garder que les groupes Secret Santa
-  const secretSantaGroups = data?.getUserGroups?.filter((group: Group) => group.is_secret_santa) || [];
-
-  if (secretSantaGroups.length === 0) {
+  if (error) {
     return (
-      <section className="text-center mt-10">
-        <div className="space-y-4">
-          <p className="text-gray-500">Vous n'êtes membre d'aucun groupe Secret Santa pour le moment.</p>
-          <section className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-12 justify-center">
-            <Card 
-              className="bg-[#D36567] rounded-xl h-32 flex items-center justify-center cursor-pointer hover:opacity-90"
-              onClick={() => navigate("/group-creation")}
-            >
-              <CardContent className="text-white text-5xl font-bold">
-                +
-              </CardContent>
-            </Card>
-          </section>
-          <p className="text-sm text-gray-500">Créer un nouveau groupe Secret Santa</p>
-        </div>
-      </section>
+      <ErrorState
+        message="Erreur lors du chargement de vos groupes Secret Santa"
+        icon={Gift}
+      />
     );
   }
 
-  return (
-    <section className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-12">
-      {/* Option + (to create a new group) */}
-      <Card className="bg-[#D36567] rounded-xl h-32 flex items-center justify-center cursor-pointer hover:opacity-90">
-        <CardContent
-          onClick={() => navigate("/group-creation")}
-          className="text-white text-5xl font-bold"
-        >
-          +
-        </CardContent>
-      </Card>
+  const secretSantaGroups =
+    data?.getUserGroups?.filter((group: Group) => group.is_secret_santa) || [];
 
-      {/* Secret Santa Groups */}
+  const secretSantaSteps = [
+    {
+      number: 1,
+      title: "Créez un groupe",
+      description: "Ajoutez vos participants et définissez une date limite",
+    },
+    {
+      number: 2,
+      title: "Tirage au sort",
+      description: "Chaque participant tire secrètement le nom d'une personne",
+    },
+    {
+      number: 3,
+      title: "Surprise !",
+      description: "Offrez un cadeau à votre personne mystère",
+    },
+  ];
+
+  return (
+    <GroupGrid title="Vos groupes Secret Santa">
+      <CreateGroupCard onClick={() => navigate("/group-creation")} />
+
       {secretSantaGroups.map((group: Group) => (
-        <Card
+        <GroupCard
           key={group.id}
-          className="relative bg-gradient-to-br from-[#FF8177] via-[#CF556C] to-[#B12A5B] rounded-xl h-32 p-4 text-white cursor-pointer hover:opacity-90 transition-opacity flex flex-col justify-center items-center"
-          onClick={() => navigate(`/group/${group.id}`)}
+          title={group.name}
+          color="from-[#FF6B6B] via-[#FF8E53] to-[#FF6B35]"
+          route=""
+          id={group.id}
+          memberCount={group.users.length}
+          onSettingsClick={(e) => {
+            e.stopPropagation();
+            navigate(`/group/${group.id}/settings`);
+          }}
         >
-          <Settings 
-            className="absolute top-2 right-2 w-5 h-5 opacity-80 hover:opacity-100 cursor-pointer"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/group/${group.id}/settings`);
-            }}
-          />
-          
-          <CardContent className="text-center p-0">
-            <h3 className="text-lg font-semibold mb-1 truncate">{group.name}</h3>
-            <div className="text-xs opacity-90 space-y-1">
-              <div className="flex items-center justify-center gap-1">
-                <Users className="w-3 h-3" />
-                <span>{group.users.length} membre{group.users.length > 1 ? 's' : ''}</span>
+          {/* Informations supplémentaires pour Secret Santa */}
+          <div className="text-center space-y-1">
+            {group.end_date && (
+              <div className="flex items-center justify-center gap-1 text-xs opacity-90">
+                <Calendar className="w-3 h-3" />
+                <span>
+                  {new Date(group.end_date).toLocaleDateString("fr-FR")}
+                </span>
               </div>
-              {group.end_date && (
-                <div className="flex items-center justify-center gap-1">
-                  <Calendar className="w-3 h-3" />
-                  <span>{new Date(group.end_date).toLocaleDateString('fr-FR')}</span>
-                </div>
-              )}
-            </div>
-            
-            <div className="flex items-center justify-center mt-2">
-              <span className={`text-xs px-2 py-1 rounded-full ${
-                group.is_active 
-                  ? 'bg-green-500 bg-opacity-30' 
-                  : 'bg-yellow-500 bg-opacity-30'
-              }`}>
-                {group.is_active ? 'Actif' : 'En attente'}
+            )}
+
+            <div className="flex items-center justify-center">
+              <span
+                className={`text-xs px-3 py-1 rounded-full font-medium ${
+                  group.is_active
+                    ? "bg-green-400/30 text-green-100"
+                    : "bg-yellow-400/30 text-yellow-100"
+                }`}
+              >
+                {group.is_active ? "Actif" : "En attente"}
               </span>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </GroupCard>
       ))}
-    </section>
+
+      {secretSantaGroups.length === 0 && (
+        <HowItWorksSection
+          title="Qu'est-ce qu'un Secret Santa ?"
+          steps={secretSantaSteps}
+          icon={Gift}
+          accentColor="bg-[#8B5CF6]"
+        />
+      )}
+    </GroupGrid>
   );
 }
 
-export default SecretGroupTab; 
+export default SecretGroupTab;
