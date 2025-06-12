@@ -16,7 +16,10 @@ import SignUp from "./pages/SignUp";
 import InvitationHandler from "./components/InvitationHandler";
 import { Toaster } from "./components/ui/sonner";
 import { MobileChatSelect } from "./utils/helpers/MobileChatSelect";
-import { ProtectedLayout, PublicOnlyLayout } from "./components/auth/RouteGuard";
+import {
+  ProtectedLayout,
+  PublicOnlyLayout,
+} from "./components/auth/RouteGuard";
 import { AuthProvider } from "./components/auth/AuthContext";
 import { ResetPassword } from "./pages/ResetPassword";
 import { ForgotPassword } from "./pages/ForgotPassword";
@@ -51,7 +54,10 @@ function App() {
 
               {/* Routes protégées */}
               <Route element={<ProtectedLayout />}>
-                <Route path="/:groupName/:groupId/chat-window" Component={ChatLayout} >
+                <Route
+                  path="/:groupName/:groupId/chat-window"
+                  Component={ChatLayout}
+                >
                   <Route path=":chatId" Component={ChatWindow} />
                 </Route>
                 <Route path="/dashboard" Component={Dashboard} />
@@ -74,4 +80,3 @@ function App() {
 }
 
 export default App;
-

@@ -6,6 +6,7 @@ import { ChatsResolver } from "../../resolvers/Chats";
 import { InvitationResolver } from "../../resolvers/Invitation";
 import { MessageResolver } from "../../resolvers/Message";
 import { PasswordResetResolver } from "../../resolvers/PasswordReset";
+import { PollResolver } from "../../resolvers/Poll";
 import { WishlistResolver } from "../../resolvers/Wishlist";
 
 export async function getSchema() {
@@ -17,6 +18,7 @@ export async function getSchema() {
       MessageResolver,
       InvitationResolver,
       PasswordResetResolver,
+      PollResolver,
       WishlistResolver,
     ],
   });
