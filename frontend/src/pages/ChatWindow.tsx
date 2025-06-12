@@ -217,8 +217,7 @@ function ChatWindow() {
           <div className="flex flex-col flex-1 overflow-hidden">
             <button
               onClick={loadMoreMessages}
-              className={`
-              ${!displayMoreMessage ? "hidden" : ""}`}
+              className={`${!displayMoreMessage ? "hidden" : ""}`}
             >
               Load more
             </button>
