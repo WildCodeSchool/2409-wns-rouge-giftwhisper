@@ -24,6 +24,12 @@ export function groupResolverTest(testArgs: TestArgsType) {
             is_secret_santa: mockGroupData.is_secret_santa,
           },
         },
+      }, {
+        contextValue: {
+          req: { headers: {} },
+          res: {},
+          user: testArgs.testUser
+        }
       });
 
       assert(response?.body.kind === "single");
@@ -49,6 +55,12 @@ export function groupResolverTest(testArgs: TestArgsType) {
           id:  testArgs.data.groupId[0],
           data: mockUpdateGroupData,
         },
+      }, {
+        contextValue: {
+          req: { headers: {} },
+          res: {},
+          user: testArgs.testUser
+        }
       });
 
       assert(response?.body.kind === "single");
@@ -69,8 +81,11 @@ export function groupResolverTest(testArgs: TestArgsType) {
       // Convertir tous les IDs en chaînes de caractères pour la comparaison
       const stringUserIdsInGroup = userIdsInGroup.map((id: number) => String(id));
       const stringCreatedUserIds = testArgs.data.userIds.map((id: string | number) => String(id));
+      
+      // Ajouter l'ID du créateur du groupe (testUser) aux utilisateurs attendus
+      const expectedUserIds = [...stringCreatedUserIds, String(testArgs.testUser?.id)];
 
-      expect(stringUserIdsInGroup.sort()).toEqual(stringCreatedUserIds.sort());
+      expect(stringUserIdsInGroup.sort()).toEqual(expectedUserIds.sort());
 
       //Update du groupe en actif pour simuler le fait que tous les participants ont bien rejoint le groupe (et donc qu'ils sont inscrits sur l'app)
       const update = await testArgs.server?.executeOperation<{
@@ -83,6 +98,12 @@ export function groupResolverTest(testArgs: TestArgsType) {
             is_active: true,
           },
         },
+      }, {
+        contextValue: {
+          req: { headers: {} },
+          res: {},
+          user: testArgs.testUser
+        }
       });
       
       assert(update?.body.kind === "single");

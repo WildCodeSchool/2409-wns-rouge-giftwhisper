@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { ACCEPT_INVITATION, VALIDATE_INVITATION_TOKEN } from "@/api/invitation";
 import { useAuth } from "@/hooks/useAuth";
+import SecretGroupTab from "@/components/SecretGroupTab";
 
 function Dashboard() {
   const [giftMode, setGiftMode] = useState<"classic" | "secret">("classic");
@@ -169,9 +170,7 @@ function Dashboard() {
 
         {/* If  "secret" mode is selected*/}
         {giftMode === "secret" && (
-          <section className="text-gray-500 text-center mt-10">
-            <p>Prochainement un mode "Secret Santa" à venir ! (dans la v12)</p>
-          </section>
+          <SecretGroupTab />
         )}
       </section>
 
