@@ -1,12 +1,4 @@
-import {
-  Resolver,
-  Query,
-  Mutation,
-  Arg,
-  ID,
-  FieldResolver,
-  Root,
-} from "type-graphql";
+import { Resolver, Query, Mutation, Arg, ID } from "type-graphql";
 
 import { WishlistItem } from "../entities/WishlistItem";
 import { Wishlist } from "../entities/Wishlist";
@@ -40,6 +32,7 @@ export class WishlistItemResolver {
     const item = WishlistItem.create({
       label: data.label,
       description: data.description,
+      link: data.link,
       wishlist,
     });
 
@@ -62,6 +55,7 @@ export class WishlistItemResolver {
 
     if (data.label !== undefined) item.label = data.label;
     if (data.description !== undefined) item.description = data.description;
+    if (data.link !== undefined) item.link = data.link;
 
     await item.save();
     return item;
