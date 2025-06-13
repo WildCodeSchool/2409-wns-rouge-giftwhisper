@@ -39,14 +39,21 @@ function ChatWindow() {
   const [displayMoreMessage, setDisplayMoreMessage] = useState(false);
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const firstMessageRef = useRef<HTMLDivElement>(null);
-  const { getSocket } = socketConnection();
   const { user, loading } = useCurrentUser();
   const [showPollModal, setShowPollModal] = useState(false);
-  const { chatId } = useParams<{ chatId: string | undefined }>();
+  const { chatId, groupId } = useParams<{ chatId: string | undefined, groupId: string | undefined }>();
+
+  //Route guard should prevent any unauthorized user from reaching this page
+  if (!user || !chatId || !groupId) {
+    return null;
+  }
+
+  const { getSocket } = socketConnection(groupId);
   const socket = getSocket();
 
   useEffect(() => {
     if (!user) return;
+    socket.emit("join-room", chatId);
     socket.emit("get-messages-history");
     socket.on("messages-history", (messages) => {
       setMessages(messages);
@@ -111,7 +118,12 @@ function ChatWindow() {
       //There doesn't appear to be an easy way to do this
       firstMessageRef.current?.scrollIntoView();
     });
-  }, [user]);
+
+    return () => {
+      socket.emit("leave-room", chatId);
+      socket.removeAllListeners();
+    }
+  }, [user, chatId]);
 
   useLayoutEffect(() => {
     if (!displayMoreMessage) {
@@ -148,7 +160,8 @@ function ChatWindow() {
     e.preventDefault();
     if (!message.length) return;
     const socket = getSocket();
-    socket.emit("message", message);
+    const messageData = { content: message, chatId };
+    socket.emit("message", messageData);
     setMessage("");
   };
 
@@ -179,11 +192,6 @@ function ChatWindow() {
         <div className="animate-spin w-6 h-6 border-2 border-[#A18CD1] border-t-transparent rounded-full"></div>
       </div>
     );
-  }
-
-  //Route guard should prevent any unauthorized user from reaching this page
-  if (!user || !chatId) {
-    return null;
   }
 
   return (
