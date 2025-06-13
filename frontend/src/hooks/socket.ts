@@ -5,7 +5,6 @@ let socket: Socket | null = null;
 export function socketConnection(groupId: string) {
   const getSocket = () => {
     if (!socket) {
-      console.log("In socket init front")
       socket = io("", {
         path: "/api/socket.io",
         extraHeaders: {
