@@ -14,13 +14,16 @@ import { signInSchema } from "@/schemas/auth.schema";
 import type { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function SignIn() {
   const navigate = useNavigate();
   const { tokenInvitation, login, isLoggingIn } = useAuth();
-  
+
+  const [showPassword, setShowPassword] = useState(false);
+
   // On check si a un token d'invitation dans le sessionStorage
   const hasInvitation = !!tokenInvitation;
 
@@ -67,7 +70,8 @@ export default function SignIn() {
         <h1 className="text-3xl text-primary">CONNEXION</h1>
         {hasInvitation && (
           <div className="bg-blue-100 text-blue-800 px-4 py-2 rounded-md text-sm">
-            Vous avez une invitation en attente. Connectez-vous pour la rejoindre.
+            Vous avez une invitation en attente. Connectez-vous pour la
+            rejoindre.
           </div>
         )}
       </header>
@@ -103,7 +107,24 @@ export default function SignIn() {
                 <FormItem>
                   <FormLabel>Mot de passe</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} />
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        {...field}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="w-5 h-5" />
+                        ) : (
+                          <Eye className="w-5 h-5" />
+                        )}
+                      </button>
+                    </div>
                   </FormControl>
                   <FormMessage />
                   <div className="flex justify-end">
