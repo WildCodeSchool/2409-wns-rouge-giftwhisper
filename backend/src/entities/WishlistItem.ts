@@ -34,6 +34,10 @@ export class WishlistItem extends BaseEntity {
   @Field({ nullable: true })
   priceInCents?: number;
 
+  @Column({ default: false })
+  @Field()
+  isFavorite!: boolean;
+
   @CreateDateColumn()
   @Field()
   created_at!: Date;
@@ -63,6 +67,9 @@ export class WishlistItemCreateInput {
 
   @Field({ nullable: true })
   priceInCents?: number;
+
+  @Field({ nullable: true })
+  isFavorite?: boolean;
 }
 
 @InputType()
@@ -79,4 +86,7 @@ export class WishlistItemUpdateInput {
 
   @Field({ nullable: true })
   priceInCents?: number;
+
+  @Field({ nullable: true })
+  isFavorite?: boolean;
 }
