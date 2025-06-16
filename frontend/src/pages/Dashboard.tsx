@@ -106,12 +106,13 @@ function Dashboard() {
     toast.info("Vous avez refusé l'invitation");
   };
 
+  //TODO: Switch id of UUIDs;
   const groupData = [
     {
       title: "Amis",
       color: "from-[#FF8177] via-[#CF556C] to-[#B12A5B]",
       route: "/friends",
-      id: "9766da82-1a60-46af-bb8e-fc4e382c034f",
+      id: 1,
       members: [
         { name: "Marie", avatar: "M" },
         { name: "Paul", avatar: "P" },
@@ -122,7 +123,7 @@ function Dashboard() {
       title: "Travail",
       color: "from-[#BAC8E0] to-[#6A85B6]",
       route: "/work",
-      id: "4aba6ed4-cead-4710-a393-afa1eb4b4b89",
+      id: 2,
       members: [
         { name: "Alex", avatar: "A" },
         { name: "Sarah", avatar: "S" },
@@ -134,7 +135,7 @@ function Dashboard() {
       title: "Famille",
       color: "from-[#8DDAD5] to-[#00CDAC]",
       route: "/family",
-      id: "fc3a069e-6061-4191-8d37-e7a4562f59c9",
+      id: 3,
       members: [
         { name: "Maman", avatar: "M" },
         { name: "Papa", avatar: "P" },
