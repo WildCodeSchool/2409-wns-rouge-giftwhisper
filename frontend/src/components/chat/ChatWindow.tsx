@@ -8,33 +8,12 @@ import { ScrollToBottomButton } from "./ScrollToBottomButton";
 import { ChatInputForm } from "./ChatInputForm";
 import { useParams } from "react-router-dom";
 import { elementIsVisibleInViewport } from "@/utils/helpers/helpers";
+import { Message, Poll } from "@/utils/types/chat";
 
 function ChatWindow() {
   //TODO: Deal with color per user instead of hardcoded colors
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState<
-    | {
-      id?: number;
-      content: string;
-      createdBy: { first_name: string; id: number };
-      messageType?: string;
-      poll?: {
-        id: number;
-        question: string;
-        options: {
-          id: number;
-          text: string;
-          votes: { id: number; user: { first_name: string; id: number } }[];
-        }[];
-        allowMultipleVotes: boolean;
-        isActive: boolean;
-        createdBy: { first_name: string; id: number };
-        createdAt: string;
-        endDate?: string;
-      };
-    }[]
-    | undefined
-  >(undefined);
+  const [messages, setMessages] = useState<Message[] | undefined>(undefined);
   const [displayAutoScrollDown, setDisplayAutoScrollDown] = useState(false);
   const [displayMoreMessage, setDisplayMoreMessage] = useState(false);
   const lastMessageRef = useRef<HTMLDivElement>(null);
@@ -69,20 +48,7 @@ function ChatWindow() {
       "poll-updated",
       (data: {
         pollId: number;
-        poll: {
-          id: number;
-          question: string;
-          allowMultipleVotes: boolean;
-          isActive: boolean;
-          createdBy: { id: number; first_name: string };
-          createdAt: string;
-          endDate?: string;
-          options: {
-            id: number;
-            text: string;
-            votes: { id: number; user: { id: number; first_name: string } }[];
-          }[];
-        };
+        poll: Poll;
       }) => {
         setMessages((prevMessages) => {
           if (!prevMessages) return prevMessages;
