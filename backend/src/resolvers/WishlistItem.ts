@@ -33,6 +33,8 @@ export class WishlistItemResolver {
       label: data.label,
       description: data.description,
       link: data.link,
+      priceInCents: data.priceInCents,
+      isFavorite: data.isFavorite ?? false,
       wishlist,
     });
 
@@ -56,6 +58,8 @@ export class WishlistItemResolver {
     if (data.label !== undefined) item.label = data.label;
     if (data.description !== undefined) item.description = data.description;
     if (data.link !== undefined) item.link = data.link;
+    if (data.priceInCents !== undefined) item.priceInCents = data.priceInCents;
+    if (data.isFavorite !== undefined) item.isFavorite = data.isFavorite;
 
     await item.save();
     return item;

@@ -9,11 +9,23 @@ export class SocketMidleWares {
   socket;
   io;
   user;
+  chatRoomId?: number;
   constructor(socket: Socket, io: Server) {
     this.socket = socket;
     this.io = io;
     this.user = (this.socket.request as any).user as User;
   }
+
+  //TODO: Check if user is part of the chatroom;
+  joinRoom = (chatId: string) => {
+    this.chatRoomId = Number(chatId);
+    this.socket.join(chatId);
+  };
+  leaveRoom = (chatId: string) => {
+    this.chatRoomId = undefined;
+    this.socket.leave(chatId);
+  }
+
   //Use query builder for selective field from users, and avoid having to manually remove
   //data like the user password before sending it back
   getMessages = async (options?: { skip?: number; take?: number }) => {
@@ -25,6 +37,7 @@ export class SocketMidleWares {
       .leftJoinAndSelect("options.votes", "votes")
       .leftJoinAndSelect("votes.user", "voteUser")
       .leftJoinAndSelect("poll.createdBy", "pollCreator")
+      .leftJoinAndSelect("message.chat", "chat")
       .select([
         "message.id",
         "message.content",
@@ -46,6 +59,7 @@ export class SocketMidleWares {
         "voteUser.id",
         "voteUser.first_name",
       ])
+      .where("chat.id = :chatRoomId", { chatRoomId: this.chatRoomId })
       .orderBy("message.createdAt", "DESC");
     if (!options) {
       const messagesHistory = await baseQuery.take(25).getMany();
@@ -64,16 +78,17 @@ export class SocketMidleWares {
     }
   };
 
-  receiveMessage = async (content: string) => {
+  receiveMessage = async ({ content, chatId }: { content: string, chatId: string }) => {
     const newMessage = new Message();
     Object.assign(
       newMessage,
       { createdBy: { id: this.user.id } },
       { content },
-      { messageType: "text" }
+      { messageType: "text" },
+      { chat: { id: Number(chatId) } }
     );
     await newMessage.save();
-    this.io.emit("new-message", {
+    this.socket.emit("new-message", {
       ...newMessage,
       createdBy: { id: this.user.id, first_name: this.user.first_name },
     });
@@ -128,7 +143,7 @@ export class SocketMidleWares {
           options: savedOptions,
         },
       };
-      this.io.emit("new-message", messageWithPoll);
+      this.socket.emit("new-message", messageWithPoll);
     } catch (error) {
       console.error("Erreur lors de la création du sondage:", error);
     }
@@ -164,7 +179,7 @@ export class SocketMidleWares {
       });
 
       if (updatedPoll) {
-        this.io.emit("poll-updated", {
+        this.socket.emit("poll-updated", {
           pollId: voteData.pollId,
           poll: updatedPoll,
         });
@@ -198,7 +213,7 @@ export class SocketMidleWares {
         });
 
         if (updatedPoll) {
-          this.io.emit("poll-updated", {
+          this.socket.emit("poll-updated", {
             pollId: voteData.pollId,
             poll: updatedPoll,
           });
@@ -230,7 +245,7 @@ export class SocketMidleWares {
 
       if (updatedPoll) {
         // Émettre la mise à jour du sondage à tous les clients
-        this.io.emit("poll-updated", {
+        this.socket.emit("poll-updated", {
           pollId: voteData.pollId,
           poll: updatedPoll,
         });

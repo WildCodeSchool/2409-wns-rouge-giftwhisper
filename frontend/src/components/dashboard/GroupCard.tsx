@@ -6,7 +6,7 @@ interface GroupCardProps {
   title: string;
   color: string;
   route: string;
-  id: string;
+  id: number;
   memberCount: number;
   onSettingsClick?: (e: React.MouseEvent) => void;
   settingsRoute?: string;

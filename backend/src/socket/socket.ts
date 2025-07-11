@@ -3,6 +3,9 @@ import { Server } from "socket.io";
 import { getUserFromContext } from "../auth";
 import { SocketMidleWares } from "../socket/midlewares";
 
+//TODO: NB for later => We connect the socket directly to the group instead of the chatroom
+//in order to be able to list the new messages on the left hand side pannel of chat window
+
 export function socketInit(httpServer: HttpServer) {
   const io: Server = new Server(httpServer, {
     path: "/api/socket.io",
@@ -17,13 +20,21 @@ export function socketInit(httpServer: HttpServer) {
     if (!user) {
       return next(new Error("Unauthorized user"));
     }
+    const groupId = req.headers.groupid;
+    //TODO: For now we only check for the groupId, we will also have to check if the user
+    //is part of the group
+    if (!groupId) {
+      return next(new Error('No group id provided for the socket'))
+    }
     req.user = user;
     next();
   });
 
   io.on("connection", async (socket) => {
     const socketMidleWares = new SocketMidleWares(socket, io);
-    socket.on('get-messages-history', socketMidleWares.getMessages)
+    socket.on('join-room', socketMidleWares.joinRoom);
+    socket.on('leave-room', socketMidleWares.leaveRoom);
+    socket.on('get-messages-history', socketMidleWares.getMessages);
     socket.on("more-messages", socketMidleWares.getMessages);
     socket.on("message", socketMidleWares.receiveMessage);
     socket.on("create-poll", socketMidleWares.createPoll);

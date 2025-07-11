@@ -30,6 +30,14 @@ export class WishlistItem extends BaseEntity {
   @Field({ nullable: true })
   link?: string;
 
+  @Column({ nullable: true, type: "int" })
+  @Field({ nullable: true })
+  priceInCents?: number;
+
+  @Column({ default: false })
+  @Field()
+  isFavorite!: boolean;
+
   @CreateDateColumn()
   @Field()
   created_at!: Date;
@@ -56,6 +64,12 @@ export class WishlistItemCreateInput {
   @Field({ nullable: true })
   @IsUrl({}, { message: "Le lien doit être une URL valide." })
   link?: string;
+
+  @Field({ nullable: true })
+  priceInCents?: number;
+
+  @Field({ nullable: true })
+  isFavorite?: boolean;
 }
 
 @InputType()
@@ -69,4 +83,10 @@ export class WishlistItemUpdateInput {
   @Field({ nullable: true })
   @IsUrl({}, { message: "Le lien doit être une URL valide." })
   link?: string;
+
+  @Field({ nullable: true })
+  priceInCents?: number;
+
+  @Field({ nullable: true })
+  isFavorite?: boolean;
 }
