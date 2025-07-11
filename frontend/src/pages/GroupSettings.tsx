@@ -19,12 +19,13 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
+} from "@/components/ui/tooltip";
 import { HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation } from "@apollo/client";
 import { GET_GROUP, REMOVE_USER_FROM_GROUP } from "@/api/group";
+import { User } from "@/utils/types/user";
 
 export default function GroupSettings() {
   const { id } = useParams();
@@ -38,7 +39,7 @@ export default function GroupSettings() {
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [isSecretSanta, setIsSecretSanta] = useState(false);
   const [isActive, setIsActive] = useState(true);
-  const [memberToDelete, setMemberToDelete] = useState<any | null>(null);
+  const [memberToDelete, setMemberToDelete] = useState<User | null>(null);
 
   useEffect(() => {
     if (data?.group) {
@@ -75,14 +76,14 @@ export default function GroupSettings() {
           userId: userId,
         },
       });
-      
+
       toast.success("Membre supprimé", {
         description: `${memberToDelete?.first_name} ${memberToDelete?.last_name} a été retiré du groupe.`,
       });
-      
+
       // Rafraîchir les données du groupe
       refetch();
-    } catch (error) {
+    } catch {
       toast.error("Erreur lors de la suppression du membre");
     }
   };
@@ -116,7 +117,12 @@ export default function GroupSettings() {
           <label htmlFor="is-actif-switch" className="cursor-pointer">
             Groupe actif
           </label>
-          <Switch id="is-actif-switch" className="cursor-pointer" checked={isActive} onCheckedChange={setIsActive} />
+          <Switch
+            id="is-actif-switch"
+            className="cursor-pointer"
+            checked={isActive}
+            onCheckedChange={setIsActive}
+          />
         </div>
 
         <div className="w-full max-w-md flex items-center justify-between">
@@ -130,16 +136,26 @@ export default function GroupSettings() {
                   <HelpCircle className="w-4 h-4 text-gray-500 cursor-pointer" />
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Les participants sont tirés au sort pour s'offrir un cadeau anonymement.</p>
+                  <p>
+                    Les participants sont tirés au sort pour s'offrir un cadeau
+                    anonymement.
+                  </p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
-          <Switch id="secret-santa-switch" className="cursor-pointer" checked={isSecretSanta} onCheckedChange={setIsSecretSanta} />
+          <Switch
+            id="secret-santa-switch"
+            className="cursor-pointer"
+            checked={isSecretSanta}
+            onCheckedChange={setIsSecretSanta}
+          />
         </div>
 
         <div className="w-full">
-          <h2 className="text-xl font-semibold mb-4 text-center">Membres du groupe</h2>
+          <h2 className="text-xl font-semibold mb-4 text-center">
+            Membres du groupe
+          </h2>
           <div className="flex justify-end mb-4">
             <Button className="cursor-pointer" size="sm">
               Ajouter un membre
@@ -163,11 +179,17 @@ export default function GroupSettings() {
                     </td>
                   </tr>
                 )}
-                {data.group.users.map((member: any) => (
+                {data.group.users.map((member: User) => (
                   <tr key={member.id} className="text-sm">
-                    <td className="px-2 sm:px-4 py-1 sm:py-2 border">{member.first_name}</td>
-                    <td className="px-2 sm:px-4 py-1 sm:py-2 border">{member.last_name}</td>
-                    <td className="px-2 sm:px-4 py-1 sm:py-2 border">{member.email}</td>
+                    <td className="px-2 sm:px-4 py-1 sm:py-2 border">
+                      {member.first_name}
+                    </td>
+                    <td className="px-2 sm:px-4 py-1 sm:py-2 border">
+                      {member.last_name}
+                    </td>
+                    <td className="px-2 sm:px-4 py-1 sm:py-2 border">
+                      {member.email}
+                    </td>
                     <td className="px-2 sm:px-4 py-1 sm:py-2 border text-center flex justify-center items-center">
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
@@ -183,17 +205,24 @@ export default function GroupSettings() {
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Supprimer ce membre ?</AlertDialogTitle>
+                            <AlertDialogTitle>
+                              Supprimer ce membre ?
+                            </AlertDialogTitle>
                             <AlertDialogDescription>
-                              Cette action est irréversible. Le membre suivant sera supprimé :
+                              Cette action est irréversible. Le membre suivant
+                              sera supprimé :
                               <span className="block mt-2 font-medium">
-                                {memberToDelete?.first_name} {memberToDelete?.last_name} ({memberToDelete?.email})
+                                {memberToDelete?.first_name}{" "}
+                                {memberToDelete?.last_name} (
+                                {memberToDelete?.email})
                               </span>
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel className="cursor-pointer normal-case">Annuler</AlertDialogCancel>
-                            <AlertDialogAction 
+                            <AlertDialogCancel className="cursor-pointer normal-case">
+                              Annuler
+                            </AlertDialogCancel>
+                            <AlertDialogAction
                               className="cursor-pointer"
                               onClick={() => {
                                 if (memberToDelete !== null) {

@@ -132,7 +132,7 @@ export class SocketMidleWares {
     } catch (error) {
       console.error("Erreur lors de la création du sondage:", error);
     }
-  }
+  };
 
   votePoll = async (voteData: { pollId: number; optionId: number }) => {
     try {
@@ -172,7 +172,7 @@ export class SocketMidleWares {
     } catch (error) {
       console.error("Erreur lors du vote:", error);
     }
-  }
+  };
 
   removeVotePoll = async (voteData: { pollId: number; optionId: number }) => {
     try {
@@ -207,7 +207,7 @@ export class SocketMidleWares {
     } catch (error) {
       console.error("Erreur lors de la suppression du vote:", error);
     }
-  }
+  };
 
   removeAllUserPoll = async (voteData: { pollId: number }) => {
     try {
@@ -238,5 +238,5 @@ export class SocketMidleWares {
     } catch (error) {
       console.error("Erreur lors de la suppression des votes:", error);
     }
-  }
+  };
 }
