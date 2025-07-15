@@ -10,7 +10,6 @@ type VotePollData = { pollId: number; optionId: number; };
 type RemoveVotePollData = VotePollData;
 
 export function useSocket(groupId: string) {
-  if (!groupId) throw new Error('Group id is required for socket connection');
   const { getSocket, disconnectSocket } = socketConnection(groupId);
   const socket = getSocket();
   const emitters = {
