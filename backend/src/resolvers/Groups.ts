@@ -38,7 +38,9 @@ export class GroupsResolver {
 
   // Get groups for a specific user
   @Query(() => [Group])
-  async getUserGroups(@Arg("userId", () => ID) userId: number): Promise<Group[]> {
+  async getUserGroups(
+    @Arg("userId", () => ID) userId: number
+  ): Promise<Group[]> {
     const user = await User.findOne({
       where: { id: userId },
       relations: {
@@ -47,11 +49,11 @@ export class GroupsResolver {
         },
       },
     });
-    
+
     if (!user) {
       throw new Error("User not found");
     }
-    
+
     return user.groups;
   }
 
@@ -61,11 +63,13 @@ export class GroupsResolver {
     @Arg("data", () => GroupCreateInput) data: GroupCreateInput,
     @Ctx() context: ContextType
   ): Promise<Group> {
-    // Récupérer l'utilisateur authentifié
+    // Retrieve the user from the context
     const user = await getUserFromContext(context);
-    
+
     if (!user) {
-      throw new Error("Non autorisé - vous devez être connecté pour créer un groupe");
+      throw new Error(
+        "Non autorisé - vous devez être connecté pour créer un groupe"
+      );
     }
 
     const newGroup = new Group();
@@ -76,11 +80,14 @@ export class GroupsResolver {
       throw new Error(`Validation error: ${JSON.stringify(errors)}`);
     }
 
-    // Sauvegarder le groupe d'abord
+    // Save the group with the creator's ID
+    newGroup.created_by_id = user.id;
     await newGroup.save();
 
-    // Ensuite, ajouter le créateur comme membre du groupe
+    // Add the creator to the group
     newGroup.users = [user];
+
+    // Save the updated group with the creator
     await newGroup.save();
 
     return newGroup;
@@ -90,9 +97,10 @@ export class GroupsResolver {
   @Mutation(() => Group, { nullable: true })
   async updateGroup(
     @Arg("id", () => ID) id: number,
-    @Arg("data", () => GroupUpdateInput) data: GroupUpdateInput
+    @Arg("data", () => GroupUpdateInput) data: GroupUpdateInput,
+    @Ctx() context: ContextType
   ): Promise<Group | null> {
-    //1.Vérification si le groupe existe
+    // Check if the group exists
     const group = await Group.findOne({
       where: { id },
       relations: { users: true },
@@ -102,18 +110,28 @@ export class GroupsResolver {
       throw new Error("Group not found");
     }
 
-    //2.Vérification s'il y a des utilisateurs à ajouter et s'ils ne sont pas déjà présents dans le groupe
+    const user = await getUserFromContext(context);
+
+    if (!user) {
+      throw new Error("Unauthorized");
+    }
+    // Check if the user is the creator of the group
+    if (group.created_by_id !== user.id) {
+      throw new Error("You are not authorized to update this group");
+    }
+
+    //If user IDs are provided, verify and add them if not already in the group
     if (data.userIds && data.userIds.length > 0) {
-      //2.1 Vérification si les utilisateurs existent dans la base de données
+      //Check if users exist in the database
       const existingUsers = await User.findBy({ id: In(data.userIds) });
       if (existingUsers.length !== data.userIds.length) {
         throw new Error("One or more users do not exist");
       }
 
-      //2.2.Récupération des utilisateurs existants dans le groupe
-      const existingUserIds = group.users.map(user => user.id);
+      //Retrieve existing user IDs from the group
+      const existingUserIds = group.users.map((user) => user.id);
 
-      //2.3. Comparaison des utilisateurs existants et des utilisateurs à ajouter
+      //Compare and find duplicates
       const usersAlreadyInGroup = data.userIds.filter((userId) =>
         existingUserIds.includes(userId)
       );
@@ -124,16 +142,15 @@ export class GroupsResolver {
 
       const usersToAdd = await User.findBy({ id: In(data.userIds) });
 
-      //2.4 Ajout des nouveaux utilisateurs au groupe
+      //Add new users
       for (const user of usersToAdd) {
         group.users.push(user);
       }
-      
-      // Enregistrer les modifications
+
       await group.save();
     }
 
-    //3 Mise à jour des champs du groupe
+    //Update group fields
     if (data.name !== undefined) {
       group.name = data.name;
     }
@@ -150,13 +167,13 @@ export class GroupsResolver {
       group.is_active = data.is_active;
     }
 
-    //4. Validation des données mises à jour
+    // Validate updated data
     const errors = await validate(group);
     if (errors.length > 0) {
       throw new Error(`Validation error: ${JSON.stringify(errors)}`);
     }
 
-    //5. Sauvegarde du groupe
+    // Save updated group
     await group.save();
     return group;
   }
@@ -174,40 +191,51 @@ export class GroupsResolver {
     }
   }
 
-  //Ajouter des membres à group déjà existant
+  // Add users to an existing group by email
   @Mutation(() => Group)
   async addUsersToGroupByEmail(
     @Arg("emails", () => [String]) emails: string[],
-    @Arg("groupId", () => ID) groupId: number
+    @Arg("groupId", () => ID) groupId: number,
+    @Ctx() context: ContextType
   ): Promise<Group> {
-    // On récupère le groupe avec ses relations
+    // Retrieve group with its relations
     const group = await Group.findOne({
       where: { id: groupId },
       relations: { users: true, invitations: true },
     });
     if (!group) throw new Error("Group not found");
 
-    // Suppression des doublons dans la liste d'emails
+    const user = await getUserFromContext(context);
+    if (!user) {
+      throw new Error("Unauthorized");
+    }
+
+    if (group.created_by_id !== user.id) {
+      throw new Error("You are not authorized to add users to this group");
+    }
+
+    // Remove duplicate emails
     const uniqueEmails = [...new Set(emails)];
 
     const emailPromises = uniqueEmails.map(async (email) => {
       const user = await User.findOneBy({ email });
 
-      // Vérification si l'utilisateur existe
+      // Check if user exists
       if (user) {
-        // Vérification si l'utilisateur n'est pas déjà dans le groupe
-        const userAlreadyInGroup = group.users.some((existingUser) => existingUser.id === user.id);
+        // Check if user is not already in the group
+        const userAlreadyInGroup = group.users.some(
+          (existingUser) => existingUser.id === user.id
+        );
 
         if (!userAlreadyInGroup) {
-
-          // Créer l'invitation via le service
+          // Create invitation via service
           try {
             await invitationService.createInvitation(email, groupId);
           } catch (err) {
             console.error(`Erreur lors de l'invitation de ${email} : ${err}`);
           }
         }
-      }   
+      }
     });
 
     await Promise.all(emailPromises);
