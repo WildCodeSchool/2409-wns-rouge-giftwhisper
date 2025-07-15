@@ -1,7 +1,7 @@
 import { Server as HttpServer } from "http";
 import { Server } from "socket.io";
 import { getUserFromContext } from "../auth";
-import { SocketMidleWares } from "../socket/midlewares";
+import { SocketMiddleWares } from "../socket/midlewares";
 
 //TODO: NB for later => We connect the socket directly to the group instead of the chatroom
 //in order to be able to list the new messages on the left hand side pannel of chat window
@@ -31,7 +31,7 @@ export function socketInit(httpServer: HttpServer) {
   });
 
   io.on("connection", async (socket) => {
-    const socketMidleWares = new SocketMidleWares(socket, io);
+    const socketMidleWares = new SocketMiddleWares(socket, io);
     socket.on('join-room', socketMidleWares.joinRoom);
     socket.on('leave-room', socketMidleWares.leaveRoom);
     socket.on('get-messages-history', socketMidleWares.getMessages);

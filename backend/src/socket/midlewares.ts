@@ -5,7 +5,14 @@ import { Poll } from "../entities/Poll";
 import { PollOption } from "../entities/PollOptions";
 import { PollVote } from "../entities/PollVote";
 
-export class SocketMidleWares {
+// /!\ Warning : READ BEFORE ADDING NEW MIDDLEWARE //
+// socket.emit() will send information ONLY to the user connected to the socket
+// socket.to().emit() will send information to all users connected to the room EXEPT the user sending the data
+// io.to().emit() will send information to all users connected the the romm INCLUDING the user sending the data
+// ex : - a new message should be shared to all users in the room => io.to().emit()
+// - a message history request is only for the user making the request => socket.emit()
+
+export class SocketMiddleWares {
   socket;
   io;
   user;
