@@ -5,7 +5,14 @@ import { Poll } from "../entities/Poll";
 import { PollOption } from "../entities/PollOptions";
 import { PollVote } from "../entities/PollVote";
 
-export class SocketMidleWares {
+// /!\ Warning : READ BEFORE ADDING NEW MIDDLEWARE //
+// socket.emit() will send information ONLY to the user connected to the socket
+// socket.to().emit() will send information to all users connected to the room EXEPT the user sending the data
+// io.to().emit() will send information to all users connected the the romm INCLUDING the user sending the data
+// ex : - a new message should be shared to all users in the room => io.to().emit()
+// - a message history request is only for the user making the request => socket.emit()
+
+export class SocketMiddleWares {
   socket;
   io;
   user;
@@ -88,7 +95,7 @@ export class SocketMidleWares {
       { chat: { id: Number(chatId) } }
     );
     await newMessage.save();
-    this.socket.emit("new-message", {
+    this.io.to(String(chatId)).emit("new-message", {
       ...newMessage,
       createdBy: { id: this.user.id, first_name: this.user.first_name },
     });
@@ -143,7 +150,7 @@ export class SocketMidleWares {
           options: savedOptions,
         },
       };
-      this.socket.emit("new-message", messageWithPoll);
+      this.io.to(String(this.chatRoomId)).emit("new-message", messageWithPoll);
     } catch (error) {
       console.error("Erreur lors de la création du sondage:", error);
     }
@@ -179,7 +186,7 @@ export class SocketMidleWares {
       });
 
       if (updatedPoll) {
-        this.socket.emit("poll-updated", {
+        this.io.to(String(this.chatRoomId)).emit("poll-updated", {
           pollId: voteData.pollId,
           poll: updatedPoll,
         });
@@ -213,7 +220,7 @@ export class SocketMidleWares {
         });
 
         if (updatedPoll) {
-          this.socket.emit("poll-updated", {
+          this.io.to(String(this.chatRoomId)).emit("poll-updated", {
             pollId: voteData.pollId,
             poll: updatedPoll,
           });
@@ -245,7 +252,7 @@ export class SocketMidleWares {
 
       if (updatedPoll) {
         // Émettre la mise à jour du sondage à tous les clients
-        this.socket.emit("poll-updated", {
+        this.io.to(String(this.chatRoomId)).emit("poll-updated", {
           pollId: voteData.pollId,
           poll: updatedPoll,
         });
