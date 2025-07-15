@@ -24,6 +24,7 @@ import { AuthProvider } from "./components/auth/AuthContext";
 import { ResetPassword } from "./pages/ResetPassword";
 import { ForgotPassword } from "./pages/ForgotPassword";
 import ChatWindow from "./components/chat/ChatWindow";
+import Wishlist from "./pages/Wishlist";
 
 const client = new ApolloClient({
   uri: "/api",
@@ -68,6 +69,7 @@ function App() {
                 <Route path="/group-creation" Component={GroupCreation} />
                 <Route path="/group-settings" Component={GroupSettings} />
                 <Route path="/chat-select" Component={MobileChatSelect} />
+                <Route path="/wishlist" Component={Wishlist} />
               </Route>
 
               <Route path="*" Component={() => <Navigate to="/" />} />
