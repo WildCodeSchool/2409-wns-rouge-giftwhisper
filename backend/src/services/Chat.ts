@@ -6,7 +6,7 @@ import { getRandomPairs } from "../utils/secret_santa/helpers";
 // import { getNoelChatConfigurations } from "../utils/secret_santa/helpers";
 
 export class ChatService {
-  // Génère des chats automatiquement selon le mode du groupe
+  // Automaticly generate chats for a group based on the users in that group
   async generateChatsForGroup(group: Group): Promise<void> {
     const users = group.users;
 
@@ -16,20 +16,20 @@ export class ChatService {
 
     await datasource.manager.transaction(async (manager) => {
       if (group.is_secret_santa) {
-        // 1. Formatage des noms pour le helper
+        //  Format name for the helper function
         const players = users.map(
           (user) => `${user.id}_${user.first_name} ${user.last_name}`
         );
 
-        // 2. Appel de l'algo secret santa
+        //  call the helper function to get random pairs
         const pairs = getRandomPairs(players);
 
         for (const { gifter, receiver } of pairs) {
-          // 3. Extraction des IDs
+          // Extract user IDs from the formatted strings
           const gifterId = parseInt(gifter.split("_")[0], 10);
           const receiverId = parseInt(receiver.split("_")[0], 10);
 
-          // 4. Recherche des objets User correspondants
+          //  Find the corresponding User objects
           const gifterUser = users.find((u) => u.id === gifterId);
           const receiverUser = users.find((u) => u.id === receiverId);
 
@@ -37,7 +37,7 @@ export class ChatService {
             throw new Error("User not found for a generated pair.");
           }
 
-          // 5. Création du chat
+          //  create a new chat for the pair
           const chat = new Chat();
           chat.users = [gifterUser, receiverUser];
           chat.group = group;
@@ -50,7 +50,7 @@ export class ChatService {
           await manager.save(chat);
         }
       } else {
-        //TODO: Implémenter la logique pour les chats normaux
+        //TODO: Implémenter la logique pour les chats noël normaux
         console.log("🎄 Mode noël détecté — génération fictive des chats...");
       }
     });

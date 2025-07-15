@@ -12,7 +12,7 @@ export class ChatsResolver {
     const chats = await Chat.find({
       relations: {
         users: true,
-        group: true, // facultatif si tu veux voir à quel groupe appartient le chat
+        group: true,
       },
     });
 
