@@ -24,7 +24,7 @@ import { HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation } from "@apollo/client";
-import { GET_GROUP, REMOVE_USER_FROM_GROUP } from "@/api/group";
+import { GET_GROUP, REMOVE_USER_FROM_GROUP, UPDATE_GROUP } from "@/api/group";
 import { User } from "@/utils/types/user";
 
 export default function GroupSettings() {
@@ -32,9 +32,8 @@ export default function GroupSettings() {
   const { data, loading, error, refetch } = useQuery(GET_GROUP, {
     variables: { id },
   });
-
+  const [updateGroup] = useMutation(UPDATE_GROUP);
   const [removeUserFromGroup] = useMutation(REMOVE_USER_FROM_GROUP);
-
   const [groupName, setGroupName] = useState("");
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [isSecretSanta, setIsSecretSanta] = useState(false);
@@ -54,18 +53,26 @@ export default function GroupSettings() {
   if (error) return <div>Erreur lors du chargement du groupe</div>;
   if (!data?.group) return <div>Groupe non trouvé</div>;
 
-  const handleSubmit = () => {
-    const groupData = {
-      name: groupName,
-      end_date: endDate,
-      is_secret_santa: isSecretSanta,
-      is_active: isActive,
-    };
-
-    console.log("Groupe modifié :", groupData);
-    toast("Modifications enregistrées", {
-      description: "Les paramètres ont bien été mis à jour.",
-    });
+  const handleSubmit = async () => {
+    try {
+      await updateGroup({
+        variables: {
+          data: {
+            name: groupName,
+            end_date: endDate,
+            is_secret_santa: isSecretSanta,
+            is_active: isActive,
+          },
+          updateGroupId: id,
+        },
+      });
+      toast.success("Modifications enregistrées", {
+        description: "Les paramètres ont bien été mis à jour.",
+      });
+      refetch();
+    } catch (error) {
+      toast.error("Erreur lors de la modification du groupe ");
+    }
   };
 
   const removeMember = async (userId: number) => {

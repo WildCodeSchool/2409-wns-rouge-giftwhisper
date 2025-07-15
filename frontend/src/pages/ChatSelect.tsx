@@ -1,4 +1,5 @@
-import { GoPlus } from "react-icons/go";
+import { Settings } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -63,6 +64,8 @@ const chats: Chat[] = [
 ];
 
 function ChatSelect() {
+  const navigate = useNavigate();
+  const groupId = 1; // À remplacer par le vrai ID du groupe
   return (
     <>
       <header className="pt-10 px-4 flex justify-between items-center">
@@ -70,10 +73,7 @@ function ChatSelect() {
           <BreadcrumbList className="flex flex-col items-start gap-0 leading-none">
             <div className="flex items-center gap-1">
               <BreadcrumbItem>
-                <BreadcrumbLink
-                  href="/"
-                  className="text-primary/60 uppercase hover:text-primary/80 transition-colors duration-200"
-                >
+                <BreadcrumbLink href="/dashboard" className="text-primary/60 uppercase hover:text-primary/80 transition-colors duration-200">
                   Mes groupes
                 </BreadcrumbLink>
               </BreadcrumbItem>
@@ -86,8 +86,11 @@ function ChatSelect() {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-        <button className="bg-primary rounded-full p-2 text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200">
-          <GoPlus size={22} className="rounded-full" />
+        <button
+          className="bg-primary rounded-full p-2 text-white shadow-lg cursor-pointer hover:scale-110 hover:shadow-md"
+          onClick={() => navigate(`/group/${groupId}/settings`)}
+        >
+          <Settings size={25} className="rounded-full spin-once hover:spin-once" />
         </button>
       </header>
       <section className="px-4 flex flex-col gap-4 pt-10">
