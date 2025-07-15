@@ -22,7 +22,6 @@ function ChatWindow() {
   const [showPollModal, setShowPollModal] = useState(false);
   const { chatId, groupId } = useParams<{ chatId: string | undefined, groupId: string | undefined }>();
 
-  //Route guard should prevent any unauthorized user from reaching this page
   if (!user || !chatId || !groupId) {
     return null;
   }
@@ -151,7 +150,6 @@ function ChatWindow() {
     socket.emit("remove-all-user-votes-poll", { pollId });
   };
 
-  //TODO: Create a loading page / component
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
