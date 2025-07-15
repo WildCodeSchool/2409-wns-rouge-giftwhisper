@@ -88,7 +88,7 @@ export class SocketMidleWares {
       { chat: { id: Number(chatId) } }
     );
     await newMessage.save();
-    this.socket.emit("new-message", {
+    this.io.to(String(chatId)).emit("new-message", {
       ...newMessage,
       createdBy: { id: this.user.id, first_name: this.user.first_name },
     });
@@ -143,7 +143,7 @@ export class SocketMidleWares {
           options: savedOptions,
         },
       };
-      this.socket.emit("new-message", messageWithPoll);
+      this.io.to(String(this.chatRoomId)).emit("new-message", messageWithPoll);
     } catch (error) {
       console.error("Erreur lors de la création du sondage:", error);
     }
@@ -179,7 +179,7 @@ export class SocketMidleWares {
       });
 
       if (updatedPoll) {
-        this.socket.emit("poll-updated", {
+        this.io.to(String(this.chatRoomId)).emit("poll-updated", {
           pollId: voteData.pollId,
           poll: updatedPoll,
         });
@@ -213,7 +213,7 @@ export class SocketMidleWares {
         });
 
         if (updatedPoll) {
-          this.socket.emit("poll-updated", {
+          this.io.to(String(this.chatRoomId)).emit("poll-updated", {
             pollId: voteData.pollId,
             poll: updatedPoll,
           });
@@ -245,7 +245,7 @@ export class SocketMidleWares {
 
       if (updatedPoll) {
         // Émettre la mise à jour du sondage à tous les clients
-        this.socket.emit("poll-updated", {
+        this.io.to(String(this.chatRoomId)).emit("poll-updated", {
           pollId: voteData.pollId,
           poll: updatedPoll,
         });

@@ -2,7 +2,7 @@ import type { Message } from "@/utils/types/chat";
 import type { Poll } from "@/utils/types/chat";
 import { socketConnection } from "./socket";
 
-type SetMessagesArgs = Message[] | ((e: Message[]) => void);
+type SetMessagesData = React.Dispatch<React.SetStateAction<Message[] | undefined>>;
 type MessageData = { content: string; chatId: string; };
 type UpdatePollData = { pollId: number; poll: Poll; };
 type CreatePollData = { question: string; options: string[]; allowMultiple: boolean; };
@@ -18,7 +18,7 @@ export function useSocket(groupId: string) {
     leaveChatRoom: (chatId: string) => socket.emit("leave-room", chatId),
     removeAllListeners: () => socket.removeAllListeners(),
     getMessageHistory: () => socket.emit("get-messages-history"),
-    moreMessage: (skip: number) => socket.emit("more-messages", { skip }),
+    moreMessage: (skip: number | undefined) => socket.emit("more-messages", { skip }),
     message: (messageData: MessageData) => socket.emit("message", messageData),
     createPoll: (pollData: CreatePollData) => socket.emit("create-poll", pollData),
     votePoll: (pollData: VotePollData) => socket.emit("vote-poll", pollData),
@@ -26,18 +26,19 @@ export function useSocket(groupId: string) {
     removeAllVotePoll: (pollId: number) => socket.emit("remove-all-user-votes-poll", { pollId })
   }
   const listeners = {
-    onMessageHistory: (setMessages: (messages: SetMessagesArgs) => void) => socket.on("messages-history", (messages: Message[]) => {
+    onMessageHistory: (setMessages: SetMessagesData) => socket.on("messages-history", (messages: Message[]) => {
       setMessages(messages);
     }),
-    onNewMessage: (setMessages: (messages: SetMessagesArgs) => void) => socket.on("new-message", (message: Message) => {
+    onNewMessage: (setMessages: SetMessagesData) => socket.on("new-message", (message: Message) => {
       setMessages((e) => {
         const clone = e ? structuredClone(e) : [];
         clone.push(message);
         return clone;
       });
     }),
-    onPollUpdated: (setMessages: (messages: SetMessagesArgs) => void) => socket.on("poll-updated", (data: UpdatePollData) => {
+    onPollUpdated: (setMessages: SetMessagesData) => socket.on("poll-updated", (data: UpdatePollData) => {
       setMessages((prevMessages) => {
+        if (!prevMessages) return prevMessages;
         const updatedPollMessages = prevMessages.map((message) => {
           if (message.messageType === "poll" && message.poll?.id === data.pollId) {
             const createdBy = {
@@ -53,7 +54,7 @@ export function useSocket(groupId: string) {
         return updatedPollMessages;
       });
     }),
-    onMoreMessageReponse: (setMessages: (messages: SetMessagesArgs) => void) => socket.on("more-messages-response", (previousMessages) => {
+    onMoreMessageReponse: (setMessages: SetMessagesData) => socket.on("more-messages-response", (previousMessages) => {
       setMessages((e) => {
         const copy = structuredClone(e) ?? [];
         const messagesFromDb = previousMessages ?? [];
@@ -64,5 +65,5 @@ export function useSocket(groupId: string) {
 
   }
 
-  return { emitters, listeners, getSocket, disconnectSocket }
+  return { socketEmitters: emitters, socketListeners: listeners, getSocket, disconnectSocket }
 }

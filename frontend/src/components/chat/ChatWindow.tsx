@@ -1,5 +1,4 @@
 import { FormEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { socketConnection } from "@/hooks/socket";
 import { useCurrentUser } from "@/hooks/currentUser";
 import { CreatePollModal } from "../CreatePollModal";
 import { LoadMoreButton } from "./LoadMoreButton";
@@ -8,7 +7,8 @@ import { ScrollToBottomButton } from "./ScrollToBottomButton";
 import { ChatInputForm } from "./ChatInputForm";
 import { useParams } from "react-router-dom";
 import { elementIsVisibleInViewport } from "@/utils/helpers/helpers";
-import { Message, Poll } from "@/utils/types/chat";
+import { Message } from "@/utils/types/chat";
+import { useSocket } from "@/hooks/useSocket";
 
 function ChatWindow() {
   //TODO: Deal with color per user instead of hardcoded colors
@@ -26,72 +26,25 @@ function ChatWindow() {
     return null;
   }
 
-  const { getSocket } = socketConnection(groupId);
-  const socket = getSocket();
+  const { socketEmitters, socketListeners } = useSocket(groupId);
 
   useEffect(() => {
     if (!user) return;
-    socket.emit("join-room", chatId);
-    socket.emit("get-messages-history");
-    socket.on("messages-history", (messages) => {
-      setMessages(messages);
-    });
-    socket.on("new-message", (message) => {
-      setMessages((e) => {
-        const clone = e ? structuredClone(e) : [];
-        clone.push(message);
-        return clone;
-      });
-    });
-    socket.on(
-      "poll-updated",
-      (data: {
-        pollId: number;
-        poll: Poll;
-      }) => {
-        setMessages((prevMessages) => {
-          if (!prevMessages) return prevMessages;
-          return prevMessages.map((message) => {
-            if (
-              message.messageType === "poll" &&
-              message.poll?.id === data.pollId
-            ) {
-              return {
-                ...message,
-                poll: {
-                  ...data.poll,
-                  createdBy: {
-                    first_name: data.poll.createdBy.first_name,
-                    id: data.poll.createdBy.id,
-                  },
-                },
-              };
-            }
-            return message;
-          });
-        });
-      }
-    );
-    socket.on("more-messages-response", (previousMessages) => {
-      setMessages((e) => {
-        const copy = structuredClone(e) ?? [];
-        const messagesFromDb = previousMessages ?? [];
-        const updatedMessages = [...messagesFromDb, ...copy];
-        return updatedMessages;
-      });
-      //TODO: The previous first message should be at the bottom of the container ( not the top )
-      //There doesn't appear to be an easy way to do this
-      firstMessageRef.current?.scrollIntoView();
-    });
+    socketEmitters.joinChatRoom(chatId);
+    socketEmitters.getMessageHistory();
+    socketListeners.onMessageHistory(setMessages)
+    socketListeners.onNewMessage(setMessages)
+    socketListeners.onPollUpdated(setMessages)
+    socketListeners.onMoreMessageReponse(setMessages);
 
     return () => {
-      socket.emit("leave-room", chatId);
-      socket.removeAllListeners();
+      socketEmitters.leaveChatRoom(chatId);
+      socketEmitters.removeAllListeners();
     }
   }, [user, chatId]);
 
   useLayoutEffect(() => {
-    if (!displayMoreMessage) {
+    if (!displayAutoScrollDown) {
       lastMessageRef.current?.scrollIntoView({ behavior: "instant" });
     }
   }, [messages]);
@@ -118,15 +71,14 @@ function ChatWindow() {
   };
 
   const loadMoreMessages = () => {
-    socket.emit("more-messages", { skip: messages?.length });
+    socketEmitters.moreMessage(messages?.length)
   };
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!message.length) return;
-    const socket = getSocket();
     const messageData = { content: message, chatId };
-    socket.emit("message", messageData);
+    socketEmitters.message(messageData);
     setMessage("");
   };
 
@@ -135,19 +87,19 @@ function ChatWindow() {
     options: string[],
     allowMultiple: boolean
   ) => {
-    socket.emit("create-poll", { question, options, allowMultiple });
+    socketEmitters.createPoll({ question, options, allowMultiple })
   };
 
   const handleVotePoll = (pollId: number, optionId: number) => {
-    socket.emit("vote-poll", { pollId, optionId });
+    socketEmitters.votePoll({ pollId, optionId })
   };
 
   const handleRemoveVotePoll = (pollId: number, optionId: number) => {
-    socket.emit("remove-vote-poll", { pollId, optionId });
+    socketEmitters.removeVotePoll({ pollId, optionId })
   };
 
   const handleRemoveAllUserVotesPoll = (pollId: number) => {
-    socket.emit("remove-all-user-votes-poll", { pollId });
+    socketEmitters.removeAllVotePoll(pollId)
   };
 
   if (loading) {
