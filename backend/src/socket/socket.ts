@@ -31,15 +31,15 @@ export function socketInit(httpServer: HttpServer) {
   });
 
   io.on("connection", async (socket) => {
-    const socketMidleWares = new SocketMiddleWares(socket, io);
-    socket.on('join-room', socketMidleWares.joinRoom);
-    socket.on('leave-room', socketMidleWares.leaveRoom);
-    socket.on('get-messages-history', socketMidleWares.getMessages);
-    socket.on("more-messages", socketMidleWares.getMessages);
-    socket.on("message", socketMidleWares.receiveMessage);
-    socket.on("create-poll", socketMidleWares.createPoll);
-    socket.on("vote-poll", socketMidleWares.votePoll);
-    socket.on("remove-vote-poll", socketMidleWares.removeVotePoll);
-    socket.on("remove-all-user-votes-poll", socketMidleWares.removeAllUserPoll);
+    const socketMiddleWares = new SocketMiddleWares(socket, io);
+    socket.on('join-room', socketMiddleWares.joinRoom);
+    socket.on('leave-room', socketMiddleWares.leaveRoom);
+    socket.on('get-messages-history', socketMiddleWares.getMessages);
+    socket.on("more-messages", socketMiddleWares.getMessages);
+    socket.on("message", socketMiddleWares.receiveMessage);
+    socket.on("create-poll", socketMiddleWares.createPoll);
+    socket.on("vote-poll", socketMiddleWares.votePoll);
+    socket.on("remove-vote-poll", socketMiddleWares.removeVotePoll);
+    socket.on("remove-all-user-votes-poll", socketMiddleWares.removeAllUserPoll);
   });
 }
