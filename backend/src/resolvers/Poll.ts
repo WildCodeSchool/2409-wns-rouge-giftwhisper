@@ -38,15 +38,8 @@ export class PollResolver {
     @Arg("optionId", () => ID) optionId: number,
     @Ctx() context: ContextType | ContextUserType
   ): Promise<Poll | null> {
-    let user: User | null | undefined;
-    if ('req' in context && 'req' in context) {
-      user = await getUserFromContext(context)
-    } else if (context.user) {
-      user = context.user;
-    }
-    if (!user) {
-      throw new Error('You need to be authenticated in order to post a message');
-    }
+    const user = await getUserFromContext(context);
+    if (!user) throw new Error('You need to be authenticated in order to post a message');
     const existingVote = await PollVote.findOne({
       where: {
         user: { id: user.id },
@@ -82,15 +75,8 @@ export class PollResolver {
     @Arg("optionId", () => ID) optionId: number,
     @Ctx() context: ContextType | ContextUserType
   ): Promise<Boolean> {
-    let user: User | null | undefined;
-    if ('req' in context && 'req' in context) {
-      user = await getUserFromContext(context)
-    } else if (context.user) {
-      user = context.user;
-    }
-    if (!user) {
-      throw new Error('You need to be authenticated in order to post a message');
-    }
+    const user = await getUserFromContext(context);
+    if (!user) throw new Error('You need to be authenticated in order to post a message');
     const voteToRemove = await PollVote.findOne({
       where: {
         user: { id: user.id },
@@ -110,15 +96,8 @@ export class PollResolver {
     @Arg("pollId", () => ID) pollId: number,
     @Ctx() context: ContextType | ContextUserType
   ): Promise<Boolean> {
-    let user: User | null | undefined;
-    if ('req' in context && 'req' in context) {
-      user = await getUserFromContext(context)
-    } else if (context.user) {
-      user = context.user;
-    }
-    if (!user) {
-      throw new Error('You need to be authenticated in order to post a message');
-    };
+    const user = await getUserFromContext(context);
+    if (!user) throw new Error('You need to be authenticated in order to post a message');
     await PollVote.delete({
       user: { id: user.id },
       poll: { id: pollId },

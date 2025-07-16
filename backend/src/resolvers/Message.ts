@@ -53,15 +53,8 @@ export class MessageResolver {
     @Arg('chatId', () => ID) chatId: number
   ) {
     //TODO: create Authorized decorator iso checking for the user directly in the resolver
-    let user: User | null | undefined;
-    if ('req' in context && 'req' in context) {
-      user = await getUserFromContext(context)
-    } else if (context.user) {
-      user = context.user;
-    }
-    if (!user) {
-      throw new Error('You need to be authenticated in order to post a message');
-    }
+    const user = await getUserFromContext(context);
+    if (!user) throw new Error('You need to be authenticated in order to post a message');
     const newMessage = new Message();
     Object.assign(
       newMessage,
@@ -79,15 +72,8 @@ export class MessageResolver {
     @Arg("data") data: CreatePollInput,
     @Ctx() context: ContextType | ContextUserType
   ): Promise<Message> {
-    let user: User | null | undefined;
-    if ('req' in context && 'req' in context) {
-      user = await getUserFromContext(context)
-    } else if (context.user) {
-      user = context.user;
-    }
-    if (!user) {
-      throw new Error('You need to be authenticated in order to post a message');
-    }
+    const user = await getUserFromContext(context);
+    if (!user) throw new Error('You need to be authenticated in order to post a message');
     const poll = new Poll();
     poll.question = data.question;
     poll.allowMultipleVotes = data.allowMultipleVotes;
