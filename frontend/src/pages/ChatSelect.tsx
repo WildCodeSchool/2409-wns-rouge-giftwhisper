@@ -16,6 +16,7 @@ interface Chat {
   lastMessage: string;
   gradient: string;
 }
+
 const chats: Chat[] = [
   {
     id: 1,
@@ -69,7 +70,10 @@ function ChatSelect() {
           <BreadcrumbList className="flex flex-col items-start gap-0 leading-none">
             <div className="flex items-center gap-1">
               <BreadcrumbItem>
-                <BreadcrumbLink href="/" className="text-primary/60 uppercase">
+                <BreadcrumbLink
+                  href="/"
+                  className="text-primary/60 uppercase hover:text-primary/80 transition-colors duration-200"
+                >
                   Mes groupes
                 </BreadcrumbLink>
               </BreadcrumbItem>
@@ -82,11 +86,11 @@ function ChatSelect() {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-        <button className="bg-primary rounded-full p-1 text-white shadow-lg">
-          <GoPlus size={24} className="rounded-full" />
+        <button className="bg-primary rounded-full p-2 text-white shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200">
+          <GoPlus size={22} className="rounded-full" />
         </button>
       </header>
-      <section className="px-4 flex flex-col gap-6 pt-10">
+      <section className="px-4 flex flex-col gap-4 pt-10">
         {chats.map((chat) => (
           <ChatSelector key={chat.id} chat={chat} />
         ))}

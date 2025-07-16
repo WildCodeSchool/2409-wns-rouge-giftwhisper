@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Home, LifeBuoy, Settings, User, Users, LogOut, ScrollText } from "lucide-react";
+import { Home, LifeBuoy, User, Users, LogOut, ScrollText } from "lucide-react";
 
 import {
   Sidebar as SidebarUI,
@@ -109,7 +109,7 @@ export function Navbar() {
           >
             <span className="text-[#FFFBFF] text-xl">{items[1].title}</span>
           </Link>
-          
+
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center gap-2 hover:text-primary transition-colors cursor-pointer">
               <span className="text-[#FFFBFF] text-xl">Mon compte</span>

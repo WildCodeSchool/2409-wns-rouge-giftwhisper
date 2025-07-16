@@ -3,8 +3,12 @@ name: staging-client
 on:
   push:
     branches: [staging]
+    paths:
+      - "frontend/**"
   pull_request:
     branches: [staging]
+    paths:
+      - "frontend/**"
 
 jobs:
   build:
