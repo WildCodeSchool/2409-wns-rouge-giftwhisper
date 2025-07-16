@@ -35,7 +35,9 @@ export class User extends BaseEntity {
   @Field()
   email!: string;
 
-  @Column()
+  // {select: false} prevents typeorm from querying the column hashedPassword from the DB
+  // so we can safely use relations {user: true} without the password being sent back
+  @Column({ select: false })
   hashedPassword!: string;
 
   @Column()

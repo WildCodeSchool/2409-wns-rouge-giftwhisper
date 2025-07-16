@@ -33,55 +33,26 @@ export class SocketMiddleWares {
     this.socket.leave(chatId);
   }
 
-  //Use query builder for selective field from users, and avoid having to manually remove
-  //data like the user password before sending it back
   getMessages = async (options?: { skip?: number; take?: number }) => {
-    let messages: Message[] = [];
-    const baseQuery = Message.createQueryBuilder("message")
-      .leftJoinAndSelect("message.createdBy", "user")
-      .leftJoinAndSelect("message.poll", "poll")
-      .leftJoinAndSelect("poll.options", "options")
-      .leftJoinAndSelect("options.votes", "votes")
-      .leftJoinAndSelect("votes.user", "voteUser")
-      .leftJoinAndSelect("poll.createdBy", "pollCreator")
-      .leftJoinAndSelect("message.chat", "chat")
-      .select([
-        "message.id",
-        "message.content",
-        "message.messageType",
-        "message.createdAt",
-        "user.id",
-        "user.first_name",
-        "poll.id",
-        "poll.question",
-        "poll.allowMultipleVotes",
-        "poll.isActive",
-        "poll.createdAt",
-        "poll.endDate",
-        "pollCreator.id",
-        "pollCreator.first_name",
-        "options.id",
-        "options.text",
-        "votes.id",
-        "voteUser.id",
-        "voteUser.first_name",
-      ])
-      .where("chat.id = :chatRoomId", { chatRoomId: this.chatRoomId })
-      .orderBy("message.createdAt", "DESC");
+    const messages = await Message.find({
+      relations: {
+        poll: true,
+        createdBy: true,
+        chat: true
+      },
+      where: {
+        chat: {
+          id: this.chatRoomId
+        }
+      },
+      skip: options?.skip ?? 0,
+      take: options?.take ?? 25,
+      order: { createdAt: 'DESC' },
+    });
     if (!options) {
-      const messagesHistory = await baseQuery.take(25).getMany();
-      return this.socket.emit("messages-history", messagesHistory.reverse());
+      this.socket.emit("messages-history", messages.reverse());
     } else {
-      const { skip, take = 25 } = options;
-      if (skip && take) {
-        messages = await baseQuery.skip(skip).take(take).getMany();
-      } else if (skip) {
-        messages = await baseQuery.skip(skip).getMany();
-      } else if (take) {
-        messages = await baseQuery.take(take).getMany();
-      }
-      if (messages.length)
-        this.socket.emit("more-messages-response", messages.reverse());
+      this.socket.emit("more-messages-response", messages.reverse());
     }
   };
 
