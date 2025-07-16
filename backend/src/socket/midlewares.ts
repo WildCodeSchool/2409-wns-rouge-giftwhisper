@@ -2,11 +2,10 @@ import { Server, Socket } from "socket.io";
 import { Message } from "../entities/Message";
 import { User } from "../entities/User";
 import { Poll } from "../entities/Poll";
-import { PollOption } from "../entities/PollOptions";
 import { ApolloServer, BaseContext } from "@apollo/server";
-import { PollVote } from "../entities/PollVote";
 import { GraphQLResponse } from "@apollo/server";
-import { getMessagesByChatId, createMessage } from "../queries/message";
+import { getMessagesByChatId, createMessage, createPollWithMessage } from "../queries/message";
+import { removeUserVote, removeVotePoll, votePoll } from "../queries/poll";
 
 function getDataFromServerReponse<T extends Record<string, any>, K extends keyof T>(response: GraphQLResponse<T>, queryName: K) {
   //TODO: Deal with errors if there are any
@@ -27,7 +26,7 @@ export class SocketMiddleWares {
   socket;
   io;
   user;
-  chatRoomId?: number;
+  chatId?: number;
   server: ApolloServer;
   constructor(socket: Socket, io: Server, apolloServer: ApolloServer<BaseContext>) {
     this.socket = socket;
@@ -38,11 +37,11 @@ export class SocketMiddleWares {
 
   //TODO: Check if user is part of the chatroom;
   joinRoom = (chatId: string) => {
-    this.chatRoomId = Number(chatId);
+    this.chatId = Number(chatId);
     this.socket.join(chatId);
   };
   leaveRoom = (chatId: string) => {
-    this.chatRoomId = undefined;
+    this.chatId = undefined;
     this.socket.leave(chatId);
   }
 
@@ -52,7 +51,7 @@ export class SocketMiddleWares {
     }>({
       query: getMessagesByChatId,
       variables: {
-        chatId: this.chatRoomId,
+        chatId: this.chatId,
         skip: options?.skip,
         take: options?.take
       }
@@ -68,69 +67,31 @@ export class SocketMiddleWares {
   };
 
   createMessage = async ({ content }: { content: string }) => {
-    const response = await this.server.executeOperation<{
-      createMessage: Message
-    }>({
+    const response = await this.server.executeOperation<{ createMessage: Message }>({
       query: createMessage,
       variables: {
-        chatId: this.chatRoomId,
+        chatId: this.chatId,
         content
       }
     }, { contextValue: { user: this.user } });
     const newMessage = getDataFromServerReponse(response, 'createMessage');
-    this.io.to(String(this.chatRoomId)).emit("new-message", newMessage);
+    this.io.to(String(this.chatId)).emit("new-message", newMessage);
   };
 
-  createPoll = async (pollData: {
+  createPollWithMessage = async (pollData: {
     question: string;
     options: string[];
     allowMultiple: boolean;
   }) => {
     try {
-      const poll = new Poll();
-      poll.question = pollData.question;
-      poll.allowMultipleVotes = pollData.allowMultiple;
-      poll.createdBy = { id: this.user.id } as User;
-      poll.chat = null as any;
-      await poll.save();
-
-      const savedOptions = [];
-      for (const optionText of pollData.options) {
-        const option = new PollOption();
-        option.text = optionText;
-        option.poll = poll;
-        await option.save();
-        savedOptions.push({
-          id: option.id,
-          text: option.text,
-          votes: [],
-        });
-      }
-
-      const newMessage = new Message();
-      newMessage.content = `Sondage: ${pollData.question}`;
-      newMessage.messageType = "poll";
-      newMessage.createdBy = { id: this.user.id } as User;
-      newMessage.poll = poll;
-      await newMessage.save();
-
-      const messageWithPoll = {
-        id: newMessage.id,
-        content: newMessage.content,
-        messageType: "poll",
-        createdBy: { id: this.user.id, first_name: this.user.first_name },
-        poll: {
-          id: poll.id,
-          question: poll.question,
-          allowMultipleVotes: poll.allowMultipleVotes,
-          isActive: poll.isActive,
-          createdBy: { id: this.user.id, first_name: this.user.first_name },
-          createdAt: poll.createdAt,
-          endDate: poll.endDate,
-          options: savedOptions,
-        },
-      };
-      this.io.to(String(this.chatRoomId)).emit("new-message", messageWithPoll);
+      const response = await this.server.executeOperation<{ createPollWithMessage: Message }>({
+        query: createPollWithMessage,
+        variables: {
+          data: { ...pollData, chatId: this.chatId }
+        }
+      }, { contextValue: { user: this.user } });
+      const messageWithPoll = getDataFromServerReponse(response, "createPollWithMessage");
+      this.io.to(String(this.chatId)).emit("new-message", messageWithPoll);
     } catch (error) {
       console.error("Erreur lors de la création du sondage:", error);
     }
@@ -138,35 +99,16 @@ export class SocketMiddleWares {
 
   votePoll = async (voteData: { pollId: number; optionId: number }) => {
     try {
-      const existingVote = await PollVote.findOne({
-        where: {
-          user: { id: this.user.id },
-          poll: { id: voteData.pollId },
-        },
+      const response = await this.server.executeOperation<{ votePoll: Poll }>({
+        query: votePoll,
+        variables: {
+          pollId: voteData.pollId,
+          optionId: voteData.optionId
+        }
       });
-      const poll = await Poll.findOne({
-        where: { id: voteData.pollId },
-      });
-      if (!poll) return;
-      if (existingVote && !poll.allowMultipleVotes) return;
-      const vote = new PollVote();
-      vote.user = { id: this.user.id } as User;
-      vote.poll = { id: voteData.pollId } as Poll;
-      vote.option = { id: voteData.optionId } as PollOption;
-      await vote.save();
-
-      const updatedPoll = await Poll.findOne({
-        where: { id: voteData.pollId },
-        relations: [
-          "options",
-          "options.votes",
-          "options.votes.user",
-          "createdBy",
-        ],
-      });
-
+      const updatedPoll = getDataFromServerReponse(response, 'votePoll');
       if (updatedPoll) {
-        this.io.to(String(this.chatRoomId)).emit("poll-updated", {
+        this.io.to(String(this.chatId)).emit("poll-updated", {
           pollId: voteData.pollId,
           poll: updatedPoll,
         });
@@ -178,64 +120,33 @@ export class SocketMiddleWares {
 
   removeVotePoll = async (voteData: { pollId: number; optionId: number }) => {
     try {
-      const voteToRemove = await PollVote.findOne({
-        where: {
-          user: { id: this.user.id },
-          poll: { id: voteData.pollId },
-          option: { id: voteData.optionId },
-        },
-      });
-
-      if (voteToRemove) {
-        await voteToRemove.remove();
-
-        const updatedPoll = await Poll.findOne({
-          where: { id: voteData.pollId },
-          relations: [
-            "options",
-            "options.votes",
-            "options.votes.user",
-            "createdBy",
-          ],
-        });
-
-        if (updatedPoll) {
-          this.io.to(String(this.chatRoomId)).emit("poll-updated", {
-            pollId: voteData.pollId,
-            poll: updatedPoll,
-          });
+      const reponse = await this.server.executeOperation<{ removeVotePoll: Boolean }>({
+        query: removeVotePoll,
+        variables: {
+          pollId: voteData.pollId,
+          optionId: voteData.optionId
         }
+      });
+      const hasBeenDeleted = getDataFromServerReponse(reponse, "removeVotePoll");
+      if (hasBeenDeleted) {
+        this.io.to(String(this.chatId)).emit("poll-updated", hasBeenDeleted);
       }
     } catch (error) {
       console.error("Erreur lors de la suppression du vote:", error);
     }
   }
 
-  removeAllUserPoll = async (voteData: { pollId: number }) => {
+  removeUserVote = async (voteData: { pollId: number }) => {
     try {
-      // Supprimer tous les votes de l'utilisateur pour ce sondage
-      await PollVote.delete({
-        user: { id: this.user.id },
-        poll: { id: voteData.pollId },
+      const response = await this.server.executeOperation<{ removeUserVote: Boolean }>({
+        query: removeUserVote,
+        variables: {
+          pollId: voteData.pollId
+        }
       });
-
-      // Récupérer le sondage mis à jour avec tous les votes
-      const updatedPoll = await Poll.findOne({
-        where: { id: voteData.pollId },
-        relations: [
-          "options",
-          "options.votes",
-          "options.votes.user",
-          "createdBy",
-        ],
-      });
-
-      if (updatedPoll) {
-        // Émettre la mise à jour du sondage à tous les clients
-        this.io.to(String(this.chatRoomId)).emit("poll-updated", {
-          pollId: voteData.pollId,
-          poll: updatedPoll,
-        });
+      const hasBeenDeleted = getDataFromServerReponse(response, 'removeUserVote');
+      if (hasBeenDeleted) {
+        this.io.to(String(this.chatId)).emit("poll-updated", hasBeenDeleted);
       }
     } catch (error) {
       console.error("Erreur lors de la suppression des votes:", error);

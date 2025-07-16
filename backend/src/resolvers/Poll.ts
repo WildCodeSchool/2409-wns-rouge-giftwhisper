@@ -2,7 +2,8 @@ import { Arg, Ctx, ID, Mutation, Query, Resolver } from "type-graphql";
 import { Poll, CreatePollInput } from "../entities/Poll";
 import { PollVote } from "../entities/PollVote";
 import { PollOption } from "../entities/PollOptions";
-import { ContextType } from "../auth";
+import { ContextType, ContextUserType, getUserFromContext } from "../auth";
+import { User } from "../entities/User";
 
 @Resolver()
 export class PollResolver {
@@ -31,45 +32,98 @@ export class PollResolver {
     return poll;
   }
 
-  @Mutation(() => Boolean)
+  @Mutation(() => Poll, { nullable: true })
   async votePoll(
     @Arg("pollId", () => ID) pollId: number,
     @Arg("optionId", () => ID) optionId: number,
-    @Ctx() context: ContextType
-  ): Promise<boolean> {
+    @Ctx() context: ContextType | ContextUserType
+  ): Promise<Poll | null> {
+    let user: User | null | undefined;
+    if ('req' in context && 'req' in context) {
+      user = await getUserFromContext(context)
+    } else if (context.user) {
+      user = context.user;
+    }
+    if (!user) {
+      throw new Error('You need to be authenticated in order to post a message');
+    }
+    const existingVote = await PollVote.findOne({
+      where: {
+        user: { id: user.id },
+        poll: { id: pollId },
+      },
+    });
+    const poll = await Poll.findOne({
+      where: { id: pollId },
+    });
+    if (!poll) return null;
+    if (existingVote && !poll.allowMultipleVotes) return null;
     const vote = new PollVote();
-    vote.user = context.user!;
-    vote.poll = { id: pollId } as any;
-    vote.option = { id: optionId } as any;
-
+    vote.user = { id: user.id } as User;
+    vote.poll = { id: pollId } as Poll;
+    vote.option = { id: optionId } as PollOption;
     await vote.save();
-    return true;
+
+    const updatedPoll = await Poll.findOne({
+      where: { id: pollId },
+      relations: [
+        "options",
+        "options.votes",
+        "options.votes.user",
+        "createdBy",
+      ],
+    });
+    return updatedPoll;
   }
 
-  @Mutation(() => Boolean)
+  @Mutation(() => Boolean, { nullable: true })
   async removeVotePoll(
     @Arg("pollId", () => ID) pollId: number,
     @Arg("optionId", () => ID) optionId: number,
-    @Ctx() context: ContextType
-  ): Promise<boolean> {
-    try {
-      const voteToRemove = await PollVote.findOne({
-        where: {
-          user: { id: context.user!.id },
-          poll: { id: pollId },
-          option: { id: optionId },
-        },
-      });
-
-      if (voteToRemove) {
-        await voteToRemove.remove();
-        return true;
-      }
-      return false;
-    } catch (error) {
-      console.error("Erreur lors de la suppression du vote:", error);
-      return false;
+    @Ctx() context: ContextType | ContextUserType
+  ): Promise<Boolean> {
+    let user: User | null | undefined;
+    if ('req' in context && 'req' in context) {
+      user = await getUserFromContext(context)
+    } else if (context.user) {
+      user = context.user;
     }
+    if (!user) {
+      throw new Error('You need to be authenticated in order to post a message');
+    }
+    const voteToRemove = await PollVote.findOne({
+      where: {
+        user: { id: user.id },
+        poll: { id: pollId },
+        option: { id: optionId },
+      },
+    });
+    if (voteToRemove) {
+      await voteToRemove.remove();
+      return true;
+    }
+    return false;
+  }
+
+  @Mutation(() => Boolean, { nullable: true })
+  async removeUserVote(
+    @Arg("pollId", () => ID) pollId: number,
+    @Ctx() context: ContextType | ContextUserType
+  ): Promise<Boolean> {
+    let user: User | null | undefined;
+    if ('req' in context && 'req' in context) {
+      user = await getUserFromContext(context)
+    } else if (context.user) {
+      user = context.user;
+    }
+    if (!user) {
+      throw new Error('You need to be authenticated in order to post a message');
+    };
+    await PollVote.delete({
+      user: { id: user.id },
+      poll: { id: pollId },
+    });
+    return true;
   }
 
   @Query(() => Poll)

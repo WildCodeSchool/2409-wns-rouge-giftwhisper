@@ -37,3 +37,35 @@ export const createMessage = `#graphql
     }
   }
 `;
+
+export const createPollWithMessage = `#graphql
+  mutation createPollWithMessage($data: CreatePollInput!) {
+    createPollWithMessage(data: $data) {
+      id
+      content
+      messageType
+      createdBy {
+        id
+      }
+      poll {
+        id
+        question
+        isActive
+        createdAt
+        endDate
+        allowMultipleVotes
+        createdBy {
+          id
+        }
+        chat {
+          id
+        }
+        option {
+          id
+          text
+          votes
+        }
+      }
+    }
+  }
+`;

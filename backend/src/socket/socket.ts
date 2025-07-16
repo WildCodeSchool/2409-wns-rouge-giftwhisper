@@ -39,9 +39,9 @@ export function socketInit(httpServer: HttpServer) {
     socket.on('get-messages-history', socketMiddleWares.getMessages);
     socket.on("more-messages", socketMiddleWares.getMessages);
     socket.on("message", socketMiddleWares.createMessage);
-    socket.on("create-poll", socketMiddleWares.createPoll);
+    socket.on("create-poll", socketMiddleWares.createPollWithMessage);
     socket.on("vote-poll", socketMiddleWares.votePoll);
     socket.on("remove-vote-poll", socketMiddleWares.removeVotePoll);
-    socket.on("remove-all-user-votes-poll", socketMiddleWares.removeAllUserPoll);
+    socket.on("remove-all-user-votes-poll", socketMiddleWares.removeUserVote);
   });
 }

@@ -1,6 +1,8 @@
 import { Arg, Ctx, ID, Int, Mutation, Query, Resolver } from "type-graphql";
 import { Message } from "../entities/Message";
 import { ContextType, ContextUserType, getUserFromContext } from "../auth";
+import { CreatePollInput, Poll } from "../entities/Poll";
+import { PollOption } from "../entities/PollOptions";
 import { User } from "../entities/User";
 
 @Resolver()
@@ -68,6 +70,48 @@ export class MessageResolver {
       { messageType: "text" },
       { chat: { id: chatId } }
     );
+    await newMessage.save();
+    return newMessage;
+  }
+
+  @Mutation(() => Message)
+  async createPollWithMessage(
+    @Arg("data") data: CreatePollInput,
+    @Ctx() context: ContextType | ContextUserType
+  ): Promise<Message> {
+    let user: User | null | undefined;
+    if ('req' in context && 'req' in context) {
+      user = await getUserFromContext(context)
+    } else if (context.user) {
+      user = context.user;
+    }
+    if (!user) {
+      throw new Error('You need to be authenticated in order to post a message');
+    }
+    const poll = new Poll();
+    poll.question = data.question;
+    poll.allowMultipleVotes = data.allowMultipleVotes;
+    poll.createdBy = { id: user.id } as User;
+    poll.chat = null as any;
+    await poll.save();
+
+    const savedOptions = [];
+    for (const optionText of data.options) {
+      const option = new PollOption();
+      option.text = optionText;
+      option.poll = poll;
+      await option.save();
+      savedOptions.push({
+        id: option.id,
+        text: option.text,
+        votes: [],
+      });
+    }
+    const newMessage = new Message();
+    newMessage.content = `Sondage: ${data.question}`;
+    newMessage.messageType = "poll";
+    newMessage.createdBy = { id: user.id } as User;
+    newMessage.poll = poll;
     await newMessage.save();
     return newMessage;
   }
