@@ -93,9 +93,12 @@ export class UsersResolver {
   async login(@Arg("data") data: UserLoginInput, @Ctx() context: any) {
     const { req, res } = context;
     const { email, password } = data;
-    const user = await User.findOne({
-      where: { email },
-    });
+    //The user.hashedPassword is protected in the entity with {select: false} so we have to use
+    //a queryBuilder in order to retrieve the password from the DB
+    const user = await User.createQueryBuilder("user")
+      .addSelect("user.hashedPassword")
+      .where("email = :email", { email })
+      .getOne();
     if (!user || !email || !password) return null;
     const isVerified = await argon2.verify(user.hashedPassword, password);
     if (isVerified) {
