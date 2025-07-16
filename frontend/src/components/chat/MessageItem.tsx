@@ -1,19 +1,5 @@
 import { PollMessage } from "../PollMessage";
-
-interface PollData {
-  id: number;
-  question: string;
-  options: {
-    id: number;
-    text: string;
-    votes: { id: number; user: { first_name: string; id: number } }[];
-  }[];
-  allowMultipleVotes: boolean;
-  isActive: boolean;
-  createdBy: { first_name: string; id: number };
-  createdAt: string;
-  endDate?: string;
-}
+import { Poll } from "@/utils/types/chat";
 
 interface MessageItemProps {
   message: {
@@ -21,7 +7,7 @@ interface MessageItemProps {
     content: string;
     createdBy: { first_name: string; id: number };
     messageType?: string;
-    poll?: PollData;
+    poll?: Poll;
   };
   currentUserId: number;
   isLastItem: boolean;

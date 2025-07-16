@@ -1,25 +1,5 @@
 import { MessageItem } from "./MessageItem";
-
-type Message = {
-  id?: number;
-  content: string;
-  createdBy: { first_name: string; id: number };
-  messageType?: string;
-  poll?: {
-    id: number;
-    question: string;
-    options: {
-      id: number;
-      text: string;
-      votes: { id: number; user: { first_name: string; id: number } }[];
-    }[];
-    allowMultipleVotes: boolean;
-    isActive: boolean;
-    createdBy: { first_name: string; id: number };
-    createdAt: string;
-    endDate?: string;
-  };
-};
+import { Message } from "@/utils/types/chat";
 
 interface MessagesListProps {
   messages: Message[];

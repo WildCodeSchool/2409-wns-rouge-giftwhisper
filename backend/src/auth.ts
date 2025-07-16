@@ -3,12 +3,15 @@ import Cookies from "cookies";
 import { verify } from "jsonwebtoken";
 
 export type ContextType = { req: any; res: any; user: User | null | undefined };
+/**
+ * @dev This context type is provided through apolloServer.executeOperations from the websocket middlewares 
+ */
+export type ContextUserType = { user: User };
 export const getUserFromContext = async (context: ContextType) => {
   // En environnement de test uniquement, permettre l'injection directe d'un utilisateur
-  if (process.env.NODE_ENV === 'test' && context.user) {
+  if ((process.env.NODE_ENV === 'test' && context.user) || context.user) {
     return context.user;
   }
-
   const { req, res } = context;
   const cookies = new Cookies(req, res);
   const token = cookies.get("giftwhisper");

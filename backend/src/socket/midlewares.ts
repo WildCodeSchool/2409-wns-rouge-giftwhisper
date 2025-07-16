@@ -3,7 +3,18 @@ import { Message } from "../entities/Message";
 import { User } from "../entities/User";
 import { Poll } from "../entities/Poll";
 import { PollOption } from "../entities/PollOptions";
+import { ApolloServer, BaseContext } from "@apollo/server";
 import { PollVote } from "../entities/PollVote";
+import { GraphQLResponse } from "@apollo/server";
+import { getMessagesByChatId, createMessage } from "../queries/message";
+
+function getDataFromServerReponse<T extends Record<string, any>, K extends keyof T>(response: GraphQLResponse<T>, queryName: K) {
+  //TODO: Deal with errors if there are any
+  if (response.body.kind === "single" && !response.body.singleResult.errors) {
+    const data = response.body.singleResult.data?.[queryName];
+    return data;
+  }
+}
 
 // /!\ Warning : READ BEFORE ADDING NEW MIDDLEWARE //
 // socket.emit() will send information ONLY to the user connected to the socket
@@ -17,10 +28,12 @@ export class SocketMiddleWares {
   io;
   user;
   chatRoomId?: number;
-  constructor(socket: Socket, io: Server) {
+  server: ApolloServer;
+  constructor(socket: Socket, io: Server, apolloServer: ApolloServer<BaseContext>) {
     this.socket = socket;
     this.io = io;
     this.user = (this.socket.request as any).user as User;
+    this.server = apolloServer;
   }
 
   //TODO: Check if user is part of the chatroom;
@@ -34,42 +47,38 @@ export class SocketMiddleWares {
   }
 
   getMessages = async (options?: { skip?: number; take?: number }) => {
-    const messages = await Message.find({
-      relations: {
-        poll: true,
-        createdBy: true,
-        chat: true
-      },
-      where: {
-        chat: {
-          id: this.chatRoomId
-        }
-      },
-      skip: options?.skip ?? 0,
-      take: options?.take ?? 25,
-      order: { createdAt: 'DESC' },
+    const response = await this.server.executeOperation<{
+      getMessagesByChatId: Message[]
+    }>({
+      query: getMessagesByChatId,
+      variables: {
+        chatId: this.chatRoomId,
+        skip: options?.skip,
+        take: options?.take
+      }
     });
-    if (!options) {
-      this.socket.emit("messages-history", messages.reverse());
-    } else {
-      this.socket.emit("more-messages-response", messages.reverse());
+    const messages = getDataFromServerReponse(response, 'getMessagesByChatId');
+    if (messages) {
+      if (!options) {
+        this.socket.emit("messages-history", messages.reverse());
+      } else {
+        this.socket.emit("more-messages-response", messages.reverse());
+      }
     }
   };
 
-  receiveMessage = async ({ content, chatId }: { content: string, chatId: string }) => {
-    const newMessage = new Message();
-    Object.assign(
-      newMessage,
-      { createdBy: { id: this.user.id } },
-      { content },
-      { messageType: "text" },
-      { chat: { id: Number(chatId) } }
-    );
-    await newMessage.save();
-    this.io.to(String(chatId)).emit("new-message", {
-      ...newMessage,
-      createdBy: { id: this.user.id, first_name: this.user.first_name },
-    });
+  createMessage = async ({ content }: { content: string }) => {
+    const response = await this.server.executeOperation<{
+      createMessage: Message
+    }>({
+      query: createMessage,
+      variables: {
+        chatId: this.chatRoomId,
+        content
+      }
+    }, { contextValue: { user: this.user } });
+    const newMessage = getDataFromServerReponse(response, 'createMessage');
+    this.io.to(String(this.chatRoomId)).emit("new-message", newMessage);
   };
 
   createPoll = async (pollData: {

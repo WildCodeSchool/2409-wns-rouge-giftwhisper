@@ -77,7 +77,7 @@ function ChatWindow() {
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!message.length) return;
-    const messageData = { content: message, chatId };
+    const messageData = { content: message };
     socketEmitters.message(messageData);
     setMessage("");
   };
