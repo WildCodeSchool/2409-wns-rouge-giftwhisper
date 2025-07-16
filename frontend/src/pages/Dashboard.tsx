@@ -17,16 +17,17 @@ import { useAuth } from "@/hooks/useAuth";
 import SecretGroupTab from "@/components/SecretGroupTab";
 import {
   CreateGroupCard,
-  GroupCard,
   HowItWorksSection,
   GroupGrid,
+  GroupCardDisplay,
 } from "@/components/dashboard";
+import { useQuery } from "@apollo/client";
+import { GET_USER_GROUPS } from "@/api/group";
 
 function Dashboard() {
   const [giftMode, setGiftMode] = useState<"classic" | "secret">("classic");
   const navigate = useNavigate();
-  const { tokenInvitation, clearInvitationToken, isAuthenticated, user } =
-    useAuth();
+  const { tokenInvitation, clearInvitationToken, isAuthenticated, user } = useAuth();
   const [invitationDialogOpen, setInvitationDialogOpen] = useState(false);
   const [invitationDetails, setInvitationDetails] = useState<{
     groupName: string;
@@ -35,6 +36,29 @@ function Dashboard() {
   } | null>(null);
   const [validateInvitationToken] = useLazyQuery(VALIDATE_INVITATION_TOKEN);
   const [acceptInvitationMutation] = useMutation(ACCEPT_INVITATION);
+
+  const { data, loading, error } = useQuery(GET_USER_GROUPS, {
+    variables: { userId: user?.id },
+    skip: !user?.id,
+  });
+
+  // Palette de couleurs pour les cards de groupes
+  const groupColors = [
+    "from-[#FF8177] via-[#CF556C] to-[#B12A5B]",
+    "from-[#BAC8E0] to-[#6A85B6]",
+    "from-[#8DDAD5] to-[#00CDAC]",
+    "from-[#F7971E] via-[#FFD200] to-[#F7971E]",
+    "from-[#F953C6] to-[#B91D73]",
+    "from-[#43CEA2] to-[#185A9D]",
+    "from-[#FF6E7F] to-[#BFE9FF]",
+    "from-[#C33764] to-[#1D2671]",
+  ];
+
+  const classicGroups = data?.getUserGroups?.filter((group: any) => !group.is_secret_santa) || [];
+  const secretSantaGroups = data?.getUserGroups?.filter((group: any) => group.is_secret_santa) || [];
+
+  // On trie les groupes classiques : actifs d'abord
+  const sortedClassicGroups = [...classicGroups].sort((a, b) => Number(b.is_active) - Number(a.is_active));
 
   // On check si on a une invitation à un groupe en attente
   useEffect(() => {
@@ -58,7 +82,7 @@ function Dashboard() {
           }
         })
         .catch((error) => {
-          console.error("Erreur lors de la validation de l'invitation:", error);
+          console.error("Erreur lors de la validation de l'invitation :", error);
           toast.error("Erreur lors de la validation de l'invitation");
         });
     }
@@ -90,7 +114,7 @@ function Dashboard() {
         toast.error("Erreur lors de l'acceptation de l'invitation");
       }
     } catch (error) {
-      console.error("Erreur lors de l'acceptation de l'invitation:", error);
+      console.error("Erreur lors de l'acceptation de l'invitation :", error);
       toast.error("Erreur lors de l'acceptation de l'invitation");
     }
   };
@@ -107,42 +131,6 @@ function Dashboard() {
   };
 
   //TODO: Switch id of UUIDs;
-  const groupData = [
-    {
-      title: "Amis",
-      color: "from-[#FF8177] via-[#CF556C] to-[#B12A5B]",
-      route: "/friends",
-      id: 1,
-      members: [
-        { name: "Marie", avatar: "M" },
-        { name: "Paul", avatar: "P" },
-        { name: "Julie", avatar: "J" },
-      ],
-    },
-    {
-      title: "Travail",
-      color: "from-[#BAC8E0] to-[#6A85B6]",
-      route: "/work",
-      id: 2,
-      members: [
-        { name: "Alex", avatar: "A" },
-        { name: "Sarah", avatar: "S" },
-        { name: "Tom", avatar: "T" },
-        { name: "Lisa", avatar: "L" },
-      ],
-    },
-    {
-      title: "Famille",
-      color: "from-[#8DDAD5] to-[#00CDAC]",
-      route: "/family",
-      id: 3,
-      members: [
-        { name: "Maman", avatar: "M" },
-        { name: "Papa", avatar: "P" },
-      ],
-    },
-  ];
-
   const howItWorksSteps = [
     {
       number: 1,
@@ -197,7 +185,7 @@ function Dashboard() {
               <div className="relative flex">
                 <button
                   onClick={() => setGiftMode("classic")}
-                  className={`relative z-10 px-8 py-3 rounded-full text-base font-semibold transition-all duration-500 flex-1 transform ${
+                  className={`relative z-10 px-8 py-3 cursor-pointer rounded-full text-base font-semibold transition-all duration-500 flex-1 transform ${
                     giftMode === "classic"
                       ? "text-white translate-y-0"
                       : "text-gray-600 hover:text-gray-900 hover:-translate-y-0.5"
@@ -210,7 +198,7 @@ function Dashboard() {
                 </button>
                 <button
                   onClick={() => setGiftMode("secret")}
-                  className={`relative z-10 px-8 py-3 rounded-full text-base font-semibold transition-all duration-500 flex-1 transform ${
+                  className={`relative z-10 px-8 py-3 cursor-pointer rounded-full text-base font-semibold transition-all duration-500 flex-1 transform ${
                     giftMode === "secret"
                       ? "text-white translate-y-0"
                       : "text-gray-600 hover:text-gray-900 hover:-translate-y-0.5"
@@ -227,22 +215,14 @@ function Dashboard() {
           {/* Mode classique avec design amélioré */}
           {giftMode === "classic" && (
             <>
-              {groupData.length > 0 ? (
+              {loading && <div>Chargement des groupes...</div>}
+              {error && <div>Erreur lors du chargement des groupes</div>}
+              {classicGroups.length > 0 ? (
                 <GroupGrid title="Vos groupes d'échange">
                   <CreateGroupCard
                     onClick={() => navigate("/group-creation")}
                   />
-
-                  {groupData.map((group) => (
-                    <GroupCard
-                      key={group.title}
-                      title={group.title}
-                      color={group.color}
-                      route={group.route}
-                      id={group.id}
-                      memberCount={group.members.length}
-                    />
-                  ))}
+                  <GroupCardDisplay groups={sortedClassicGroups} user={user} groupColors={groupColors} />
                 </GroupGrid>
               ) : (
                 <HowItWorksSection
@@ -258,7 +238,7 @@ function Dashboard() {
           {/* Mode secret */}
           {giftMode === "secret" && (
             <div className="max-w-7xl mx-auto">
-              <SecretGroupTab />
+              <SecretGroupTab groups={secretSantaGroups} user={user} groupColors={groupColors} />
             </div>
           )}
         </section>

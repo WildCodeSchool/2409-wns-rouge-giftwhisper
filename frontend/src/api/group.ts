@@ -48,6 +48,20 @@ export const CREATE_GROUP = gql`
   }
 `;
 
+export const UPDATE_GROUP = gql`
+  mutation UpdateGroup($data: GroupUpdateInput!, $updateGroupId: ID!) {
+    updateGroup(data: $data, id: $updateGroupId) {
+      id
+      name
+      end_date
+      is_secret_santa
+      created_at
+      updated_at
+      is_active
+    }
+  }
+`;
+
 export const ADD_USERS_TO_GROUP = gql`
   mutation AddUsersToGroupByEmail($emails: [String!]!, $groupId: ID!) {
     addUsersToGroupByEmail(emails: $emails, groupId: $groupId) {

@@ -176,12 +176,7 @@ export default function GroupCreation() {
           <Button onClick={handlePrev} disabled={currentStep === 0}>
             Précédent
           </Button>
-          <Button
-            onClick={
-              currentStep === steps.length - 1 ? () => onSubmit() : handleNext
-            }
-            className="cursor-pointer"
-          >
+          <Button onClick={currentStep === steps.length - 1 ? () => onSubmit() : handleNext} className="cursor-pointer">
             {currentStep === steps.length - 1 ? "Terminer" : "Suivant"}
           </Button>
         </div>

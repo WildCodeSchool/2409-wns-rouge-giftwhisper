@@ -146,3 +146,15 @@
     );
   }
 }
+
+@keyframes spin-once {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.spin-once {
+  transition: transform 0.5s;
+}
+.hover\:spin-once:hover {
+  animation: spin-once 0.5s linear 1;
+}

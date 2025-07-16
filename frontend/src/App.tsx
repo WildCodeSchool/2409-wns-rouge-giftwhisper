@@ -67,7 +67,6 @@ function App() {
                 <Route path="/group" Component={Group} />
                 <Route path="/group/:id/settings" Component={GroupSettings} />
                 <Route path="/group-creation" Component={GroupCreation} />
-                <Route path="/group-settings" Component={GroupSettings} />
                 <Route path="/chat-select" Component={MobileChatSelect} />
                 <Route path="/wishlist" Component={Wishlist} />
               </Route>

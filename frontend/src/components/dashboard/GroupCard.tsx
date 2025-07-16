@@ -1,5 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Settings, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface GroupCardProps {
@@ -19,32 +19,12 @@ function GroupCard({
   route,
   id,
   memberCount,
-  onSettingsClick,
-  settingsRoute,
   children,
 }: GroupCardProps) {
   const cardContent = (
     <Card
       className={`group relative bg-gradient-to-br ${color} rounded-2xl h-48 flex flex-col cursor-pointer hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl border-0 overflow-hidden`}
     >
-      {/* Bouton settings */}
-      <div className="absolute top-4 right-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
-        <div
-          className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors duration-200"
-          onClick={
-            onSettingsClick ||
-            ((e) => {
-              e.stopPropagation();
-              e.preventDefault();
-              if (settingsRoute) {
-                window.location.href = settingsRoute;
-              }
-            })
-          }
-        >
-          <Settings className="w-4 h-4 text-white" />
-        </div>
-      </div>
 
       <CardContent className="flex flex-col items-center justify-center text-white p-6 h-full">
         {/* Compteur du nombre de membres amélioré */}
