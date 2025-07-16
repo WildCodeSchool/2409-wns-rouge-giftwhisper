@@ -5,6 +5,8 @@ import { User } from "../entities/User";
 import { In } from "typeorm";
 import { invitationService } from "../services/Invitation";
 import { getUserFromContext, ContextType } from "../auth";
+import { chatService } from "../services/Chat";
+import { getGroupIfUserIsCreator } from "../utils/groupPermissions";
 
 @Resolver()
 export class GroupsResolver {
@@ -100,81 +102,50 @@ export class GroupsResolver {
     @Arg("data", () => GroupUpdateInput) data: GroupUpdateInput,
     @Ctx() context: ContextType
   ): Promise<Group | null> {
-    // Check if the group exists
-    const group = await Group.findOne({
-      where: { id },
-      relations: { users: true },
-    });
+    const group = await getGroupIfUserIsCreator(id, context, ["users"]);
 
-    if (!group) {
-      throw new Error("Group not found");
-    }
-
-    const user = await getUserFromContext(context);
-
-    if (!user) {
-      throw new Error("Unauthorized");
-    }
-    // Check if the user is the creator of the group
-    if (group.created_by_id !== user.id) {
-      throw new Error("You are not authorized to update this group");
-    }
-
-    //If user IDs are provided, verify and add them if not already in the group
-    if (data.userIds && data.userIds.length > 0) {
-      //Check if users exist in the database
+    // Handle user additions
+    if (data.userIds?.length) {
       const existingUsers = await User.findBy({ id: In(data.userIds) });
       if (existingUsers.length !== data.userIds.length) {
         throw new Error("One or more users do not exist");
       }
 
-      //Retrieve existing user IDs from the group
       const existingUserIds = group.users.map((user) => user.id);
-
-      //Compare and find duplicates
-      const usersAlreadyInGroup = data.userIds.filter((userId) =>
-        existingUserIds.includes(userId)
+      const duplicates = data.userIds.filter((id) =>
+        existingUserIds.includes(id)
       );
-
-      if (usersAlreadyInGroup.length > 0) {
+      if (duplicates.length > 0) {
         throw new Error("One or more users already exist in the group");
       }
 
       const usersToAdd = await User.findBy({ id: In(data.userIds) });
-
-      //Add new users
-      for (const user of usersToAdd) {
-        group.users.push(user);
-      }
-
-      await group.save();
+      group.users.push(...usersToAdd);
     }
 
-    //Update group fields
-    if (data.name !== undefined) {
-      group.name = data.name;
-    }
+    // Detect if group is about to become active
+    const wasInactive = !group.is_active;
 
-    if (data.end_date !== undefined) {
-      group.end_date = data.end_date;
-    }
-
-    if (data.is_secret_santa !== undefined) {
+    // Apply updates
+    if (data.name !== undefined) group.name = data.name;
+    if (data.end_date !== undefined) group.end_date = data.end_date;
+    if (data.is_secret_santa !== undefined)
       group.is_secret_santa = data.is_secret_santa;
-    }
+    if (data.is_active !== undefined) group.is_active = data.is_active;
 
-    if (data.is_active !== undefined) {
-      group.is_active = data.is_active;
-    }
-
-    // Validate updated data
+    // Validate before saving
     const errors = await validate(group);
     if (errors.length > 0) {
       throw new Error(`Validation error: ${JSON.stringify(errors)}`);
     }
 
-    // Save updated group
     await group.save();
+
+    // If the group just became active, generate chats
+    if (wasInactive && group.is_active) {
+      await chatService.generateChatsForGroup(group);
+    }
+
     return group;
   }
 
@@ -199,20 +170,10 @@ export class GroupsResolver {
     @Ctx() context: ContextType
   ): Promise<Group> {
     // Retrieve group with its relations
-    const group = await Group.findOne({
-      where: { id: groupId },
-      relations: { users: true, invitations: true },
-    });
-    if (!group) throw new Error("Group not found");
-
-    const user = await getUserFromContext(context);
-    if (!user) {
-      throw new Error("Unauthorized");
-    }
-
-    if (group.created_by_id !== user.id) {
-      throw new Error("You are not authorized to add users to this group");
-    }
+    const group = await getGroupIfUserIsCreator(groupId, context, [
+      "users",
+      "invitations",
+    ]);
 
     // Remove duplicate emails
     const uniqueEmails = [...new Set(emails)];

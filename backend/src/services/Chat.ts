@@ -16,6 +16,9 @@ export class ChatService {
 
     await datasource.manager.transaction(async (manager) => {
       if (group.is_secret_santa) {
+        console.log(
+          " 🎅 Mode secret santa détecté — génération des chats par paire"
+        );
         //  Format name for the helper function
         const players = users.map(
           (user) => `${user.id}_${user.first_name} ${user.last_name}`
@@ -41,6 +44,7 @@ export class ChatService {
           const chat = new Chat();
           chat.users = [gifterUser, receiverUser];
           chat.group = group;
+          chat.name = `Secret Santa pour ${receiverUser.first_name} ${receiverUser.last_name}`;
 
           const errors = await validate(chat);
           if (errors.length > 0) {
@@ -51,7 +55,22 @@ export class ChatService {
         }
       } else {
         //TODO: Implémenter la logique pour les chats noël normaux
-        console.log("🎄 Mode noël détecté — génération fictive des chats...");
+        console.log(
+          "🎄 Mode noël détecté — génération des chats par groupe de discussion..."
+        );
+        for (const excludeUser of users) {
+          const chat = new Chat();
+          chat.users = users.filter((user) => user.id !== excludeUser.id);
+          chat.group = group;
+          chat.name = `Pour ${excludeUser.first_name} ${excludeUser.last_name}`;
+
+          const errors = await validate(chat);
+          if (errors.length > 0) {
+            throw new Error(`Validation error: ${JSON.stringify(errors)}`);
+          }
+
+          await manager.save(chat);
+        }
       }
     });
   }

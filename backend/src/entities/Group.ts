@@ -93,5 +93,5 @@ export class GroupUpdateInput {
   is_active?: boolean;
 
   @Field(() => [ID], { nullable: true })
-  userIds?: number[];
+  userIds?: number[]; //supprimer une fois que les création group + envoi de chat sont OK
 }
