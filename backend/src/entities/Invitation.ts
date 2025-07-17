@@ -22,6 +22,10 @@ export class Invitation extends BaseEntity {
   @Field()
   token!: string;
 
+  @Column()
+  @Field()
+  email!: string;
+
   @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
   @Field()
   created_at!: Date;

@@ -14,3 +14,18 @@ export const VALIDATE_INVITATION_TOKEN = gql`
     }
   }
 `;
+
+export const GET_INVITATIONS_BY_GROUP = gql`
+  query GetInvitationsByGroup($groupId: ID!) {
+    getInvitationsByGroup(groupId: $groupId) {
+      id
+      email
+      token
+      created_at
+      group {
+        id
+        name
+      }
+    }
+  }
+`;

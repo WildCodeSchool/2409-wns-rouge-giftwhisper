@@ -34,6 +34,7 @@ beforeAll(async () => {
     .mockImplementation(async (email: string, groupId: number) => {
       const invitation = new Invitation();
       invitation.token = `fake-token-for-${email}`;
+      invitation.email = email;
       invitation.group = await Group.findOneByOrFail({ id: groupId });
       await invitation.save();
       return invitation;

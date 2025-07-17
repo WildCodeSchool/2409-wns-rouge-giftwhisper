@@ -110,6 +110,15 @@ export class InvitationResolver {
     });
   }
 
+  @Query(() => [Invitation])
+  async getInvitationsByGroup(@Arg("groupId", () => ID) groupId: number): Promise<Invitation[]> {
+    return await Invitation.find({
+      where: { group: { id: groupId } },
+      relations: ["group"],
+      order: { created_at: "DESC" },
+    });
+  }
+
   @Mutation(() => Boolean)
   async deleteInvitation(
     @Arg("invitationId") invitationId: number
