@@ -145,16 +145,22 @@ export class GroupsResolver {
   }
 
   // Delete a group
-  @Mutation(() => Group, { nullable: true })
-  async deleteGroup(@Arg("id", () => ID) id: number): Promise<Group | null> {
+  @Mutation(() => Boolean)
+  async deleteGroup(
+    @Arg("id", () => ID) id: number,
+    @Ctx() context: ContextType
+  ): Promise<boolean> {
+    const user = await getUserFromContext(context);
+    if (!user) throw new Error ("Non autorisé - vous devez être connecté pour supprimer un groupe");
+
     const group = await Group.findOneBy({ id });
-    if (group !== null) {
-      await group.remove();
-      Object.assign(group, { id });
-      return group;
-    } else {
-      return null;
+    if (!group) throw new Error ("Ce groupe n'existe pas");
+
+    if (group.created_by_id !== user.id) {
+      throw new Error ("Non autorisé - seul le créateur du groupe peut le supprimer")
     }
+    await group.remove();
+    return true;
   }
 
   //Ajouter des membres à un groupe déjà existant
