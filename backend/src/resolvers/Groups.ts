@@ -100,7 +100,7 @@ export class GroupsResolver {
     return savedGroup;
   }
 
-  // Update a group
+  /// Update a group
   @Mutation(() => Group, { nullable: true })
   async updateGroup(
     @Arg("id", () => ID) id: number,
@@ -157,32 +157,35 @@ export class GroupsResolver {
     }
   }
 
-  //@sten j'avais dit que j'y touchais pas mais ça me bloque pour les tests d'avoir cette logique KO...
-  // du coup j'espère que ca colle à peu près à ce que tu as XD
-  // Add users to an existing group by email
+  //Ajouter des membres à un groupe déjà existant
   @Mutation(() => Group)
   async addUsersToGroupByEmail(
     @Arg("emails", () => [String]) emails: string[],
-    @Arg("groupId", () => ID) groupId: number,
-    @Ctx() context: ContextType
+    @Arg("groupId", () => ID) groupId: number
   ): Promise<Group> {
-    // Retrieve group with its relations
-    const group = await getGroupIfUserIsCreator(groupId, context, [
-      "users",
-      "invitations",
-    ]);
+    // Get the group with its relations
+    const group = await Group.findOne({
+      where: { id: groupId },
+      relations: { users: true, invitations: true },
+    });
+    if (!group) throw new Error("Group not found");
 
-    // Remove duplicate emails
+    // Remove potential duplicates from the list of emails
     const uniqueEmails = [...new Set(emails)];
 
     const emailPromises = uniqueEmails.map(async (email) => {
-      // Vérifie si l'email appartient déjà à un membre du groupe
-      const alreadyInGroup = group.users.some((user) => user.email === email);
-      if (!alreadyInGroup) {
+      
+      const user = await User.findOneBy({ email });
+
+      // Check if the user is already in the group
+      const userAlreadyInGroup = user ? group.users.some((existingUser) => existingUser.id === user.id) : false;
+
+      // If the user is NOT already in the group, send an invitation
+      if (!userAlreadyInGroup) {
         try {
           await invitationService.createInvitation(email, groupId);
         } catch (err) {
-          console.error(`Erreur lors de l'invitation de ${email} : ${err}`);
+          console.error(`Error sending invitation to ${email}: ${err}`);
         }
       }
     });

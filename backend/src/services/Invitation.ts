@@ -24,6 +24,7 @@ export class InvitationService {
         //2. On crée une invitation
         const newInvitation = new Invitation();
         newInvitation.token = crypto.randomBytes(16).toString("hex");
+        newInvitation.email = email;
         newInvitation.group = group;
 
         //3. On enregistre l'invitation dans la transaction
