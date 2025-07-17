@@ -22,7 +22,7 @@ export class Chat extends BaseEntity {
   id!: number;
 
   @Field()
-  @Column({nullable: true})
+  @Column({ nullable: true })
   name?: string;
 
   @CreateDateColumn()
@@ -45,7 +45,7 @@ export class Chat extends BaseEntity {
 
 @InputType()
 export class ChatCreateInput {
-  @Field({nullable: true})
+  @Field({ nullable: true })
   name?: string;
 
   @Field(() => [ID])

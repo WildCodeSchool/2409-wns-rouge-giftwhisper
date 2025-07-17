@@ -1,12 +1,17 @@
 import type { TestArgsType } from "../index.test";
 import { Group } from "../../../entities/Group";
-import { mutationCreateGroup, mutationUpdateGroup } from "../../api/group";
+import {
+  mutationCreateGroup,
+  mutationUpdateGroup,
+  mutationAddUsersToGroupByEmail,
+} from "../../api/group";
 import { User } from "../../../entities/User";
 import { assert } from "../index.test";
 import { mutationCreateUser } from "../../api/user";
 
 export function groupResolverTest(testArgs: TestArgsType) {
   describe("Group Resolver Tests", () => {
+    // Création du groupe : seul le créateur est membre
     it("Should create a group with valid data", async () => {
       const mockGroupData = {
         name: "The very third groupe, yay !",
@@ -15,99 +20,106 @@ export function groupResolverTest(testArgs: TestArgsType) {
       };
       const response = await testArgs.server?.executeOperation<{
         createGroup: Group;
-      }>({
-        query: mutationCreateGroup,
-        variables: {
-          data: {
-            name: mockGroupData.name,
-            end_date: mockGroupData.end_date,
-            is_secret_santa: mockGroupData.is_secret_santa,
+      }>(
+        {
+          query: mutationCreateGroup,
+          variables: {
+            data: {
+              name: mockGroupData.name,
+              end_date: mockGroupData.end_date,
+              is_secret_santa: mockGroupData.is_secret_santa,
+            },
           },
         },
-      }, {
-        contextValue: {
-          req: { headers: {} },
-          res: {},
-          user: testArgs.testUser
+        {
+          contextValue: {
+            req: { headers: {} },
+            res: {},
+            user: testArgs.testUser,
+          },
         }
-      });
+      );
 
       assert(response?.body.kind === "single");
       expect(response.body.singleResult.errors).toBeUndefined();
       const createdGroupId = response.body.singleResult.data?.createGroup.id;
-      const groupFromDb = await Group.findOneBy({ id: createdGroupId });
-      expect(mockGroupData.name).toBe(groupFromDb?.name);
+      const groupFromDb = await Group.findOne({
+        where: { id: createdGroupId },
+        relations: ["users"],
+      });
+      expect(groupFromDb?.users.map((u) => u.id)).toEqual([
+        testArgs.testUser?.id,
+      ]);
       testArgs.data.groupId = [];
       testArgs.data.groupId.push(createdGroupId);
+
+      // Ajout des utilisateurs au groupe
+      await testArgs.server?.executeOperation(
+        {
+          query: mutationAddUsersToGroupByEmail,
+          variables: {
+            emails: testArgs.data.userEmails,
+            groupId: createdGroupId,
+          },
+        },
+        {
+          contextValue: {
+            req: { headers: {} },
+            res: {},
+            user: testArgs.testUser,
+          },
+        }
+      );
     });
 
-    it("Should add all registered users to the group", async () => {      
-      // On ajoute les utilisateurs créés au groupe
-      const mockUpdateGroupData = {
-        userIds: testArgs.data.userIds,
+    // Invitation par email
+    it("Should invite users to the group by email", async () => {
+      // Initialisation manuelle si besoin
+      if (!testArgs.data.userEmails) {
+        testArgs.data.userEmails = [
+          "john.doe@example.com",
+          "jane.smith@example.com",
+        ];
       }
-      
+
+      const mockEmails = testArgs.data.userEmails;
+      expect(Array.isArray(mockEmails)).toBe(true);
+      expect(mockEmails.length).toBeGreaterThan(0);
+
       const response = await testArgs.server?.executeOperation<{
-        updateGroup: Group;
-      }>({
-        query: mutationUpdateGroup,
-        variables: {
-          id:  testArgs.data.groupId[0],
-          data: mockUpdateGroupData,
+        addUsersToGroupByEmail: Group;
+      }>(
+        {
+          query: mutationAddUsersToGroupByEmail,
+          variables: {
+            emails: mockEmails,
+            groupId: testArgs.data.groupId[0],
+          },
         },
-      }, {
-        contextValue: {
-          req: { headers: {} },
-          res: {},
-          user: testArgs.testUser
+        {
+          contextValue: {
+            req: { headers: {} },
+            res: {},
+            user: testArgs.testUser,
+          },
         }
-      });
+      );
 
       assert(response?.body.kind === "single");
       expect(response.body.singleResult.errors).toBeUndefined();
-      const updatedGroupId = response.body.singleResult.data?.updateGroup.id;
-      
-      // Récupération du groupe avec les relations 
-      const groupFromDb = await Group.findOne({ 
-        where: { id: updatedGroupId },
-        relations: ["users"] // Utiliser la syntaxe en tableau pour éviter l'erreur de type
-      });
-      
 
-      // Vérification que tous les utilisateurs ont bien été ajoutés au groupe
-      // @ts-ignore - La relation users existe mais TypeScript ne l'a pas encore reconnue
-      const userIdsInGroup = groupFromDb?.users?.map((user: User) => user.id) || [];
+      const updatedGroup =
+        response.body.singleResult.data?.addUsersToGroupByEmail;
+      const groupUserEmails = updatedGroup?.users.map((u) => u.email);
 
-      // Convertir tous les IDs en chaînes de caractères pour la comparaison
-      const stringUserIdsInGroup = userIdsInGroup.map((id: number) => String(id));
-      const stringCreatedUserIds = testArgs.data.userIds.map((id: string | number) => String(id));
-      
-      // Ajouter l'ID du créateur du groupe (testUser) aux utilisateurs attendus
-      const expectedUserIds = [...stringCreatedUserIds, String(testArgs.testUser?.id)];
+      // Le créateur doit être membre
+      expect(groupUserEmails).toContain(testArgs?.testUser?.email);
 
-      expect(stringUserIdsInGroup.sort()).toEqual(expectedUserIds.sort());
-
-      //Update du groupe en actif pour simuler le fait que tous les participants ont bien rejoint le groupe (et donc qu'ils sont inscrits sur l'app)
-      const update = await testArgs.server?.executeOperation<{
-        updateGroup: Group;
-      }>({
-        query: mutationUpdateGroup,
-        variables: {
-          id:  testArgs.data.groupId[0],
-          data: {
-            is_active: true,
-          },
-        },
-      }, {
-        contextValue: {
-          req: { headers: {} },
-          res: {},
-          user: testArgs.testUser
-        }
-      });
-      
-      assert(update?.body.kind === "single");
-      expect(update.body.singleResult.errors).toBeUndefined();
+      // Les invités (même s'ils existent déjà en base) NE DOIVENT PAS être dans users
+      for (const email of mockEmails) {
+        expect(groupUserEmails).not.toContain(email);
+        // à voir: vérifier qu'une invitation a bien été créée
+      }
     });
   });
 }

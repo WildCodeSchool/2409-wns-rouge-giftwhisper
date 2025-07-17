@@ -10,7 +10,7 @@ import { emailService } from "../services/Email";
 
 @Resolver()
 export class PasswordResetResolver {
-  //gére la demande de réinitialisation du mdp
+  //Processes the password reset request
   @Mutation(() => Boolean)
   async requestPasswordReset(@Arg("email") email: string): Promise<boolean> {
     const user = await User.findOneBy({ email });
@@ -19,17 +19,17 @@ export class PasswordResetResolver {
       return true;
     }
 
-    // Supprimer tous les tokens non expirés de cet utilisateur
+    //Delete all non-expired tokens for this user
     await PasswordResetToken.delete({
       user: { id: user.id },
       expiresAt: MoreThan(new Date()),
     });
 
-    // Générer un token sécurisé
+    // Generate a secure token
     const token = randomBytes(32).toString("hex");
 
     const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 1); // Token valide 1h
+    expiresAt.setHours(expiresAt.getHours() + 1); // Token valid for 1 hour
 
     const resetToken = PasswordResetToken.create({
       token,
@@ -40,7 +40,7 @@ export class PasswordResetResolver {
 
     await emailService.sendResetPasswordEmail(user.email, token);
 
-    //Lien affiché en console pour faciliter le dev (utile avec des emails fictifs)
+    //Link displayed in console to simplify development (useful with fake emails)
     console.log(
       `Lien de reset : http://localhost:8000/reset-password?token=${token}`
     );
@@ -59,7 +59,7 @@ export class PasswordResetResolver {
       relations: ["user"],
     });
 
-    //vérifie si le token existe
+    //Checks if the token exists
     if (!resetToken) {
       throw new Error("Invalid or expired token.");
     }
@@ -69,17 +69,17 @@ export class PasswordResetResolver {
       throw new Error("No user associated with this reset token.");
     }
 
-    //vérifie si le token a expiré et suppression du token si périmé
+    //Checks for token expiration and deletes it if expired
     if (resetToken.expiresAt < new Date()) {
       await resetToken.remove();
       throw new Error("Token expired.");
     }
 
-    //met à jour le MDP haché
+    //Updates the hashed password
     user.hashedPassword = await argon2.hash(newPassword);
     await user.save();
 
-    //supprime le token utilisé
+    //Deletes the used token
     await resetToken.remove();
 
     console.log(`✅ Password reset for user ${user.email}`);

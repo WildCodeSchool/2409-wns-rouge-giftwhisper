@@ -26,3 +26,15 @@ export const mutationUpdateGroup = `#graphql
     }
   }
 `;
+
+export const mutationAddUsersToGroupByEmail = `#graphql
+  mutation AddUsersToGroupByEmail($emails: [String!]!, $groupId: ID!) {
+    addUsersToGroupByEmail(emails: $emails, groupId: $groupId) {
+      id
+      users {
+        id
+        email
+      }
+    }
+  }
+`;

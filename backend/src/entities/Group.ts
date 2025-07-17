@@ -6,6 +6,7 @@ import {
   CreateDateColumn,
   Entity,
   ManyToMany,
+  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -45,6 +46,10 @@ export class Group extends BaseEntity {
   @Column({ default: false })
   @Field()
   is_active!: boolean;
+
+  @Column({ nullable: false })
+  @Field(() => ID)
+  created_by_id!: number;
 
   @ManyToMany(() => User, (user) => user.groups)
   @Field(() => [User])
@@ -88,5 +93,5 @@ export class GroupUpdateInput {
   is_active?: boolean;
 
   @Field(() => [ID], { nullable: true })
-  userIds?: number[];
+  userIds?: number[]; //supprimer une fois que les création group + envoi de chat sont OK
 }
