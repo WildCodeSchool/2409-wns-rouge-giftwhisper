@@ -2,7 +2,7 @@ import type { Message } from "@/utils/types/chat";
 import type { Poll } from "@/utils/types/chat";
 import { socketConnection } from "./socket";
 
-type SetMessagesData = React.Dispatch<React.SetStateAction<Message[] | undefined>>;
+type SetMessagesData = React.Dispatch<React.SetStateAction<Message[]>>;
 type MessageData = { content: string };
 type UpdatePollData = { pollId: number; poll: Poll; };
 type CreatePollData = { question: string; options: string[]; allowMultipleVotes: boolean; };
