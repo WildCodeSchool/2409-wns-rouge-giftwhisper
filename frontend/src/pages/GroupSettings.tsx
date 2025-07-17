@@ -32,7 +32,7 @@ import { HelpCircle, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation } from "@apollo/client";
-import { GET_GROUP, REMOVE_USER_FROM_GROUP, UPDATE_GROUP, ADD_USERS_TO_GROUP } from "@/api/group";
+import { GET_GROUP, REMOVE_USER_FROM_GROUP, UPDATE_GROUP, ADD_USERS_TO_GROUP, ACTIVATE_GROUP } from "@/api/group";
 import { GET_INVITATIONS_BY_GROUP } from "@/api/invitation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -108,6 +108,7 @@ export default function GroupSettings() {
   const [removeUserFromGroup] = useMutation(REMOVE_USER_FROM_GROUP);
   const [updateGroup] = useMutation(UPDATE_GROUP);
   const [addUsersToGroup] = useMutation(ADD_USERS_TO_GROUP);
+  const [activateGroup] = useMutation(ACTIVATE_GROUP);
   
   const [groupName, setGroupName] = useState("");
   const [endDate, setEndDate] = useState<Date | null>(null);
@@ -243,11 +244,31 @@ export default function GroupSettings() {
     setIsEditing(true);
   };
 
-  const handleActivateGroup = () => {
-    // This would trigger the secret santa assignment and chat creation
-    toast.success("Groupe activé", {
-      description: "Les chats ont été générés et le groupe est maintenant actif.",
-    });
+  const handleActivateGroup = async () => {
+    try {
+      await activateGroup({
+        variables: {
+          id: id,
+        },
+      });
+
+      // Rafraîchir les données du groupe
+      await refetch();
+
+      toast.success("Groupe activé", {
+        description: "Les chats ont été générés et le groupe est maintenant actif.",
+      });
+    } catch (error: any) {
+      console.error("Erreur lors de l'activation du groupe:", error);
+      
+      const errorMessage = error.graphQLErrors?.[0]?.message || 
+                          error.message || 
+                          "Une erreur est survenue lors de l'activation du groupe";
+      
+      toast.error("Erreur lors de l'activation", {
+        description: errorMessage,
+      });
+    }
   };
 
   const removeMember = async (userId: number) => {

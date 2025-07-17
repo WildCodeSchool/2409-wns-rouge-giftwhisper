@@ -89,3 +89,9 @@ export const REMOVE_USER_FROM_GROUP = gql`
     }
   }
 `;
+
+export const ACTIVATE_GROUP = gql`
+  mutation ActivateGroup($id: ID!) {
+    activateGroup(id: $id)
+  }
+`;
