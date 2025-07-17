@@ -95,7 +95,6 @@ export class SocketMiddleWares {
         }
       }, { contextValue: { user: this.user } });
       const messageWithPoll = getDataFromServerReponse(response, "createPollWithMessage");
-      console.log(messageWithPoll);
       this.io.to(String(this.chatId)).emit("new-message", messageWithPoll);
     } catch (error) {
       console.error("Erreur lors de la création du sondage:", error);

@@ -12,9 +12,28 @@ export const getMessagesByChatId = `#graphql
       messageType
       poll {
         id
-      }
-      chat {
-        id
+        question
+        allowMultipleVotes
+        isActive     
+        endDate     
+        createdBy {
+          id
+          first_name
+        }
+        options {
+          id
+          text
+          votes {
+            id
+            user {
+              id
+              first_name
+            }
+          }
+        }
+        chat {
+          id
+        }
       }
     }
   }

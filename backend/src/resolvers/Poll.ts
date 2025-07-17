@@ -4,6 +4,7 @@ import { PollVote } from "../entities/PollVote";
 import { PollOption } from "../entities/PollOptions";
 import { ContextType, ContextUserType, getUserFromContext } from "../auth";
 import { User } from "../entities/User";
+import { Chat } from "../entities/Chat";
 
 @Resolver()
 export class PollResolver {
@@ -17,7 +18,7 @@ export class PollResolver {
     poll.allowMultipleVotes = data.allowMultipleVotes || false;
     poll.endDate = data.endDate;
     poll.createdBy = context.user!;
-    poll.chat = { id: data.chatId } as any;
+    poll.chat = { id: data.chatId } as Chat;
 
     await poll.save();
 

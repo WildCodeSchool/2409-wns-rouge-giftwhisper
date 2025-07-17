@@ -30,11 +30,7 @@ export class MessageResolver {
     @Arg('take', () => Int, { nullable: true }) take: number
   ) {
     const messages = await Message.find({
-      relations: {
-        poll: true,
-        createdBy: true,
-        chat: true
-      },
+      relations: ['poll', 'poll.createdBy', 'poll.options', 'poll.options.votes', 'poll.options.votes.user', 'chat', 'createdBy'],
       where: {
         chat: {
           id: chatId
@@ -100,6 +96,7 @@ export class MessageResolver {
     newMessage.messageType = "poll";
     newMessage.createdBy = { id: user.id } as User;
     newMessage.poll = updatedPoll;
+    newMessage.chat = { id: data.chatId } as Chat;
     await newMessage.save();
     return newMessage;
   }
