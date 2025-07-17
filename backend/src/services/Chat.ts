@@ -3,6 +3,7 @@ import { datasource } from "../datasource.config";
 import { Chat } from "../entities/Chat";
 import { Group } from "../entities/Group";
 import { getRandomPairs } from "../utils/secret_santa/helpers";
+import { User } from "../entities/User";
 // import { getNoelChatConfigurations } from "../utils/secret_santa/helpers";
 
 export class ChatService {
@@ -10,7 +11,7 @@ export class ChatService {
   async generateChatsForGroup(group: Group): Promise<void> {
     const users = group.users;
 
-    if (!users || users.length < 2) {
+    if (!users || users.length < 3) {
       throw new Error("Not enough users in the group");
     }
 
@@ -42,8 +43,11 @@ export class ChatService {
 
           //  create a new chat for the pair
           const chat = new Chat();
-          chat.users = [gifterUser, receiverUser];
-          chat.group = group;
+          chat.users = [
+            Object.assign(new User(), gifterUser),
+            Object.assign(new User(), receiverUser),
+          ];
+          chat.group = Object.assign(new Group(), group);
           chat.name = `Secret Santa pour ${receiverUser.first_name} ${receiverUser.last_name}`;
 
           const errors = await validate(chat);
@@ -54,14 +58,17 @@ export class ChatService {
           await manager.save(chat);
         }
       } else {
-        //TODO: Implémenter la logique pour les chats noël normaux
+        // logique pour les conversations noël classiques
         console.log(
           "🎄 Mode noël détecté — génération des chats par groupe de discussion..."
         );
         for (const excludeUser of users) {
           const chat = new Chat();
-          chat.users = users.filter((user) => user.id !== excludeUser.id);
-          chat.group = group;
+          chat.users = users
+            .filter((user) => user.id !== excludeUser.id)
+            .map((user) => Object.assign(new User(), user));
+          chat.group = Object.assign(new Group(), group);
+
           chat.name = `Pour ${excludeUser.first_name} ${excludeUser.last_name}`;
 
           const errors = await validate(chat);

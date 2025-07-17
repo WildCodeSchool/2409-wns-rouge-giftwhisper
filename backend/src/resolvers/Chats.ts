@@ -31,10 +31,10 @@ export class ChatsResolver {
   @Mutation(() => Chat)
   async createChat(@Arg("data") data: ChatCreateInput): Promise<Chat> {
     const users = await User.find({
-      where: { id: In(data.userIds.map((user) => user)) },
+      where: { id: In(data.users.map((users) => users)) },
     });
 
-    if (users.length !== data.userIds.length) {
+    if (users.length !== data.users.length) {
       throw new Error("Some users not found");
     }
 

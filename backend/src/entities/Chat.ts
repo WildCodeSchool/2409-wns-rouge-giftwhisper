@@ -49,8 +49,7 @@ export class ChatCreateInput {
   name?: string;
 
   @Field(() => [ID])
-  //users!: number[]; renommé pour éviter la confusion avec le champ users dans l'entité Chat
-  userIds!: number[];
+  users!: number[];
 
   @Field(() => ID)
   groupId!: number;

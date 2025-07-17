@@ -65,34 +65,39 @@ export class GroupsResolver {
     @Arg("data", () => GroupCreateInput) data: GroupCreateInput,
     @Ctx() context: ContextType
   ): Promise<Group> {
-    // Retrieve the user from the context
     const user = await getUserFromContext(context);
-
     if (!user) {
       throw new Error(
         "Non autorisé - vous devez être connecté pour créer un groupe"
       );
     }
 
+    // Refetch user to avoid partial entity issues
+    const fullUser = await User.findOneByOrFail({ id: user.id });
+
     const newGroup = new Group();
     Object.assign(newGroup, data);
+    newGroup.created_by_id = fullUser.id;
+
+    // 👇 Ajoute l’admin comme membre dès le départ
+    newGroup.users = [fullUser];
 
     const errors = await validate(newGroup);
     if (errors.length > 0) {
       throw new Error(`Validation error: ${JSON.stringify(errors)}`);
     }
 
-    // Save the group with the creator's ID
-    newGroup.created_by_id = user.id;
     await newGroup.save();
 
-    // Add the creator to the group
-    newGroup.users = [user];
+    // Recharge le groupe avec ses relations
+    const savedGroup = await Group.findOne({
+      where: { id: newGroup.id },
+      relations: ["users"],
+    });
 
-    // Save the updated group with the creator
-    await newGroup.save();
+    if (!savedGroup) throw new Error("Erreur lors de la création du groupe");
 
-    return newGroup;
+    return savedGroup;
   }
 
   // Update a group
@@ -104,27 +109,17 @@ export class GroupsResolver {
   ): Promise<Group | null> {
     const group = await getGroupIfUserIsCreator(id, context, ["users"]);
 
-    // Handle user additions
-    if (data.userIds?.length) {
-      const existingUsers = await User.findBy({ id: In(data.userIds) });
-      if (existingUsers.length !== data.userIds.length) {
-        throw new Error("One or more users do not exist");
-      }
-
-      const existingUserIds = group.users.map((user) => user.id);
-      const duplicates = data.userIds.filter((id) =>
-        existingUserIds.includes(id)
-      );
-      if (duplicates.length > 0) {
-        throw new Error("One or more users already exist in the group");
-      }
-
-      const usersToAdd = await User.findBy({ id: In(data.userIds) });
-      group.users.push(...usersToAdd);
-    }
-
     // Detect if group is about to become active
     const wasInactive = !group.is_active;
+    const wantsToActivate = data.is_active === true;
+
+    // activate a group only if it has at least 3 users
+    if (wantsToActivate) {
+      const currentUsers = group.users ?? [];
+      if (currentUsers.length < 3) {
+        throw new Error("A group must have at least 3 users to be activated");
+      }
+    }
 
     // Apply updates
     if (data.name !== undefined) group.name = data.name;
@@ -162,6 +157,8 @@ export class GroupsResolver {
     }
   }
 
+  //@sten j'avais dit que j'y touchais pas mais ça me bloque pour les tests d'avoir cette logique KO...
+  // du coup j'espère que ca colle à peu près à ce que tu as XD
   // Add users to an existing group by email
   @Mutation(() => Group)
   async addUsersToGroupByEmail(
@@ -179,22 +176,13 @@ export class GroupsResolver {
     const uniqueEmails = [...new Set(emails)];
 
     const emailPromises = uniqueEmails.map(async (email) => {
-      const user = await User.findOneBy({ email });
-
-      // Check if user exists
-      if (user) {
-        // Check if user is not already in the group
-        const userAlreadyInGroup = group.users.some(
-          (existingUser) => existingUser.id === user.id
-        );
-
-        if (!userAlreadyInGroup) {
-          // Create invitation via service
-          try {
-            await invitationService.createInvitation(email, groupId);
-          } catch (err) {
-            console.error(`Erreur lors de l'invitation de ${email} : ${err}`);
-          }
+      // Vérifie si l'email appartient déjà à un membre du groupe
+      const alreadyInGroup = group.users.some((user) => user.email === email);
+      if (!alreadyInGroup) {
+        try {
+          await invitationService.createInvitation(email, groupId);
+        } catch (err) {
+          console.error(`Erreur lors de l'invitation de ${email} : ${err}`);
         }
       }
     });
