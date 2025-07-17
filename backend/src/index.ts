@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import { datasource } from "./datasource.config";
-import { ApolloServer } from "@apollo/server";
+import { ApolloServer, BaseContext } from "@apollo/server";
 import { expressMiddleware } from "@apollo/server/express4";
 import express from "express";
 import http from 'http';
@@ -8,6 +8,9 @@ import { getSchema } from "./utils/server/schema";
 import { seedAll } from "./seeds/index.seed";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
 import { socketInit } from "./socket/socket";
+
+
+export let initializedApolloServer: ApolloServer<BaseContext> | undefined;
 
 async function initialize() {
 
@@ -21,15 +24,15 @@ async function initialize() {
   const app = express();
   const httpServer = http.createServer(app);
 
-  socketInit(httpServer);
-
+  
   const server = new ApolloServer({
     schema,
     plugins: [ApolloServerPluginDrainHttpServer({ httpServer })]
   });
-
+  
+  initializedApolloServer = server;
   await server.start();
-
+  
   app.use(
     "/api",
     express.json(),
@@ -39,6 +42,8 @@ async function initialize() {
       }
     })
   );
+  
+  socketInit(httpServer);
 
   await new Promise<void>((resolve) => {
     httpServer.listen({ port: 5500 }, resolve);

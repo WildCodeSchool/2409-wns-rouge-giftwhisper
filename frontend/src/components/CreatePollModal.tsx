@@ -7,7 +7,7 @@ interface CreatePollModalProps {
   onCreatePoll: (
     question: string,
     options: string[],
-    allowMultiple: boolean
+    allowMultipleVotes: boolean
   ) => void;
 }
 
@@ -18,7 +18,7 @@ export function CreatePollModal({
 }: CreatePollModalProps) {
   const [question, setQuestion] = useState("");
   const [options, setOptions] = useState(["", ""]);
-  const [allowMultiple, setAllowMultiple] = useState(false);
+  const [allowMultipleVotes, setAllowMultipleVotes] = useState(false);
 
   if (!isOpen) return null;
 
@@ -43,10 +43,10 @@ export function CreatePollModal({
   const handleSubmit = () => {
     const validOptions = options.filter((opt) => opt.trim() !== "");
     if (question.trim() && validOptions.length >= 2) {
-      onCreatePoll(question.trim(), validOptions, allowMultiple);
+      onCreatePoll(question.trim(), validOptions, allowMultipleVotes);
       setQuestion("");
       setOptions(["", ""]);
-      setAllowMultiple(false);
+      setAllowMultipleVotes(false);
       onClose();
     }
   };
@@ -148,8 +148,8 @@ export function CreatePollModal({
             <label className="flex items-start gap-3 cursor-pointer">
               <input
                 type="checkbox"
-                checked={allowMultiple}
-                onChange={(e) => setAllowMultiple(e.target.checked)}
+                checked={allowMultipleVotes}
+                onChange={(e) => setAllowMultipleVotes(e.target.checked)}
                 className="mt-1 w-4 h-4 text-primary border-2 border-slate-300 rounded focus:ring-primary focus:ring-2"
               />
               <div>

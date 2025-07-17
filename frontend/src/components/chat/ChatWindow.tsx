@@ -13,7 +13,7 @@ import { useSocket } from "@/hooks/useSocket";
 function ChatWindow() {
   //TODO: Deal with color per user instead of hardcoded colors
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState<Message[] | undefined>(undefined);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [displayAutoScrollDown, setDisplayAutoScrollDown] = useState(false);
   const [displayMoreMessage, setDisplayMoreMessage] = useState(false);
   const lastMessageRef = useRef<HTMLDivElement>(null);
@@ -26,10 +26,14 @@ function ChatWindow() {
     return null;
   }
 
-  const { socketEmitters, socketListeners } = useSocket(groupId);
+  const { socketEmitters, socketListeners, getSocket } = useSocket(groupId);
 
   useEffect(() => {
     if (!user) return;
+    setDisplayAutoScrollDown(false);
+    //getSocket => Even if we connect the socket from the previous page (group selection) 
+    //we need to make sure the connection is established (the user can reach this page using an url)
+    getSocket(groupId);
     socketEmitters.joinChatRoom(chatId);
     socketEmitters.getMessageHistory();
     socketListeners.onMessageHistory(setMessages)
@@ -44,7 +48,7 @@ function ChatWindow() {
   }, [user, chatId]);
 
   useLayoutEffect(() => {
-    if (!displayAutoScrollDown) {
+    if (!displayAutoScrollDown || messages[messages.length - 1].createdBy.id === user.id) {
       lastMessageRef.current?.scrollIntoView({ behavior: "instant" });
     }
   }, [messages]);
@@ -56,9 +60,9 @@ function ChatWindow() {
     const isFirstMessageVisible = elementIsVisibleInViewport(
       firstMessageRef.current!
     );
-    if (!isLastMessageVisible && !displayAutoScrollDown) {
+    if (messages.length && !isLastMessageVisible && !displayAutoScrollDown) {
       setDisplayAutoScrollDown(true);
-    } else if (isLastMessageVisible && displayAutoScrollDown) {
+    } else if (messages.length && isLastMessageVisible && displayAutoScrollDown) {
       setDisplayAutoScrollDown(false);
     }
     //TODO: Add message count to display the message only if there are more messages in DB
@@ -77,7 +81,7 @@ function ChatWindow() {
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!message.length) return;
-    const messageData = { content: message, chatId };
+    const messageData = { content: message };
     socketEmitters.message(messageData);
     setMessage("");
   };
@@ -85,9 +89,9 @@ function ChatWindow() {
   const handleCreatePoll = (
     question: string,
     options: string[],
-    allowMultiple: boolean
+    allowMultipleVotes: boolean
   ) => {
-    socketEmitters.createPoll({ question, options, allowMultiple })
+    socketEmitters.createPoll({ question, options, allowMultipleVotes })
   };
 
   const handleVotePoll = (pollId: number, optionId: number) => {
@@ -120,8 +124,8 @@ function ChatWindow() {
           />
 
           <MessagesList
-            messages={messages || []}
-            currentUserId={Number(user.id)}
+            messages={messages}
+            currentUserId={user.id}
             onScroll={handleScroll}
             lastMessageRef={lastMessageRef}
             firstMessageRef={firstMessageRef}

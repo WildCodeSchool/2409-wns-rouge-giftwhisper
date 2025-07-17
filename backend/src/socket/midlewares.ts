@@ -2,8 +2,22 @@ import { Server, Socket } from "socket.io";
 import { Message } from "../entities/Message";
 import { User } from "../entities/User";
 import { Poll } from "../entities/Poll";
-import { PollOption } from "../entities/PollOptions";
-import { PollVote } from "../entities/PollVote";
+import { ApolloServer, BaseContext } from "@apollo/server";
+import { GraphQLResponse } from "@apollo/server";
+import { getMessagesByChatId, createMessage, createPollWithMessage } from "../queries/message";
+import { removeUserVote, removeVotePoll, votePoll } from "../queries/poll";
+
+function getDataFromServerReponse<T extends Record<string, any>, K extends keyof T>(response: GraphQLResponse<T>, queryName: K) {
+  //TODO: Deal with errors if there are any
+  if (response.body.kind === "single") {
+    const errors = response.body.singleResult.errors;
+    console.log(errors);
+  }
+  if (response.body.kind === "single" && !response.body.singleResult.errors) {
+    const data = response.body.singleResult.data?.[queryName];
+    return data;
+  }
+}
 
 // /!\ Warning : READ BEFORE ADDING NEW MIDDLEWARE //
 // socket.emit() will send information ONLY to the user connected to the socket
@@ -16,112 +30,72 @@ export class SocketMiddleWares {
   socket;
   io;
   user;
-  chatRoomId?: number;
-  constructor(socket: Socket, io: Server) {
+  chatId?: number;
+  server: ApolloServer;
+  constructor(socket: Socket, io: Server, apolloServer: ApolloServer<BaseContext>) {
     this.socket = socket;
     this.io = io;
     this.user = (this.socket.request as any).user as User;
+    this.server = apolloServer;
   }
 
   //TODO: Check if user is part of the chatroom;
   joinRoom = (chatId: string) => {
-    this.chatRoomId = Number(chatId);
+    this.chatId = Number(chatId);
     this.socket.join(chatId);
   };
   leaveRoom = (chatId: string) => {
-    this.chatRoomId = undefined;
+    this.chatId = undefined;
     this.socket.leave(chatId);
   }
 
   getMessages = async (options?: { skip?: number; take?: number }) => {
-    const messages = await Message.find({
-      relations: {
-        poll: true,
-        createdBy: true,
-        chat: true
-      },
-      where: {
-        chat: {
-          id: this.chatRoomId
-        }
-      },
-      skip: options?.skip ?? 0,
-      take: options?.take ?? 25,
-      order: { createdAt: 'DESC' },
+    const response = await this.server.executeOperation<{
+      getMessagesByChatId: Message[]
+    }>({
+      query: getMessagesByChatId,
+      variables: {
+        chatId: this.chatId,
+        skip: options?.skip,
+        take: options?.take
+      }
     });
-    if (!options) {
-      this.socket.emit("messages-history", messages.reverse());
-    } else {
-      this.socket.emit("more-messages-response", messages.reverse());
+    const messages = getDataFromServerReponse(response, 'getMessagesByChatId');
+    if (messages) {
+      if (!options) {
+        this.socket.emit("messages-history", messages.reverse());
+      } else {
+        this.socket.emit("more-messages-response", messages.reverse());
+      }
     }
   };
 
-  receiveMessage = async ({ content, chatId }: { content: string, chatId: string }) => {
-    const newMessage = new Message();
-    Object.assign(
-      newMessage,
-      { createdBy: { id: this.user.id } },
-      { content },
-      { messageType: "text" },
-      { chat: { id: Number(chatId) } }
-    );
-    await newMessage.save();
-    this.io.to(String(chatId)).emit("new-message", {
-      ...newMessage,
-      createdBy: { id: this.user.id, first_name: this.user.first_name },
-    });
+  createMessage = async ({ content }: { content: string }) => {
+    const response = await this.server.executeOperation<{ createMessage: Message }>({
+      query: createMessage,
+      variables: {
+        chatId: this.chatId,
+        content
+      }
+    }, { contextValue: { user: this.user } });
+    const newMessage = getDataFromServerReponse(response, 'createMessage');
+    this.io.to(String(this.chatId)).emit("new-message", newMessage);
   };
 
-  createPoll = async (pollData: {
+  createPollWithMessage = async (pollData: {
     question: string;
     options: string[];
-    allowMultiple: boolean;
+    allowMultipleVotes: boolean;
   }) => {
     try {
-      const poll = new Poll();
-      poll.question = pollData.question;
-      poll.allowMultipleVotes = pollData.allowMultiple;
-      poll.createdBy = { id: this.user.id } as User;
-      poll.chat = null as any;
-      await poll.save();
-
-      const savedOptions = [];
-      for (const optionText of pollData.options) {
-        const option = new PollOption();
-        option.text = optionText;
-        option.poll = poll;
-        await option.save();
-        savedOptions.push({
-          id: option.id,
-          text: option.text,
-          votes: [],
-        });
-      }
-
-      const newMessage = new Message();
-      newMessage.content = `Sondage: ${pollData.question}`;
-      newMessage.messageType = "poll";
-      newMessage.createdBy = { id: this.user.id } as User;
-      newMessage.poll = poll;
-      await newMessage.save();
-
-      const messageWithPoll = {
-        id: newMessage.id,
-        content: newMessage.content,
-        messageType: "poll",
-        createdBy: { id: this.user.id, first_name: this.user.first_name },
-        poll: {
-          id: poll.id,
-          question: poll.question,
-          allowMultipleVotes: poll.allowMultipleVotes,
-          isActive: poll.isActive,
-          createdBy: { id: this.user.id, first_name: this.user.first_name },
-          createdAt: poll.createdAt,
-          endDate: poll.endDate,
-          options: savedOptions,
-        },
-      };
-      this.io.to(String(this.chatRoomId)).emit("new-message", messageWithPoll);
+      const response = await this.server.executeOperation<{ createPollWithMessage: Message }>({
+        query: createPollWithMessage,
+        variables: {
+          data: { ...pollData, chatId: this.chatId }
+        }
+      }, { contextValue: { user: this.user } });
+      const messageWithPoll = getDataFromServerReponse(response, "createPollWithMessage");
+      this.io.to(String(this.chatId)).emit("new-message", messageWithPoll);
     } catch (error) {
       console.error("Erreur lors de la création du sondage:", error);
     }
@@ -129,35 +103,16 @@ export class SocketMiddleWares {
 
   votePoll = async (voteData: { pollId: number; optionId: number }) => {
     try {
-      const existingVote = await PollVote.findOne({
-        where: {
-          user: { id: this.user.id },
-          poll: { id: voteData.pollId },
-        },
-      });
-      const poll = await Poll.findOne({
-        where: { id: voteData.pollId },
-      });
-      if (!poll) return;
-      if (existingVote && !poll.allowMultipleVotes) return;
-      const vote = new PollVote();
-      vote.user = { id: this.user.id } as User;
-      vote.poll = { id: voteData.pollId } as Poll;
-      vote.option = { id: voteData.optionId } as PollOption;
-      await vote.save();
-
-      const updatedPoll = await Poll.findOne({
-        where: { id: voteData.pollId },
-        relations: [
-          "options",
-          "options.votes",
-          "options.votes.user",
-          "createdBy",
-        ],
-      });
-
+      const response = await this.server.executeOperation<{ votePoll: Poll }>({
+        query: votePoll,
+        variables: {
+          pollId: voteData.pollId,
+          optionId: voteData.optionId
+        }
+      }, { contextValue: { user: this.user } });
+      const updatedPoll = getDataFromServerReponse(response, 'votePoll');
       if (updatedPoll) {
-        this.io.to(String(this.chatRoomId)).emit("poll-updated", {
+        this.io.to(String(this.chatId)).emit("poll-updated", {
           pollId: voteData.pollId,
           poll: updatedPoll,
         });
@@ -169,64 +124,33 @@ export class SocketMiddleWares {
 
   removeVotePoll = async (voteData: { pollId: number; optionId: number }) => {
     try {
-      const voteToRemove = await PollVote.findOne({
-        where: {
-          user: { id: this.user.id },
-          poll: { id: voteData.pollId },
-          option: { id: voteData.optionId },
-        },
-      });
-
-      if (voteToRemove) {
-        await voteToRemove.remove();
-
-        const updatedPoll = await Poll.findOne({
-          where: { id: voteData.pollId },
-          relations: [
-            "options",
-            "options.votes",
-            "options.votes.user",
-            "createdBy",
-          ],
-        });
-
-        if (updatedPoll) {
-          this.io.to(String(this.chatRoomId)).emit("poll-updated", {
-            pollId: voteData.pollId,
-            poll: updatedPoll,
-          });
+      const reponse = await this.server.executeOperation<{ removeVotePoll: Boolean }>({
+        query: removeVotePoll,
+        variables: {
+          pollId: voteData.pollId,
+          optionId: voteData.optionId
         }
+      }, { contextValue: { user: this.user } });
+      const hasBeenDeleted = getDataFromServerReponse(reponse, "removeVotePoll");
+      if (hasBeenDeleted) {
+        this.io.to(String(this.chatId)).emit("poll-updated", hasBeenDeleted);
       }
     } catch (error) {
       console.error("Erreur lors de la suppression du vote:", error);
     }
   };
 
-  removeAllUserPoll = async (voteData: { pollId: number }) => {
+  removeUserVote = async (voteData: { pollId: number }) => {
     try {
-      // Supprimer tous les votes de l'utilisateur pour ce sondage
-      await PollVote.delete({
-        user: { id: this.user.id },
-        poll: { id: voteData.pollId },
-      });
-
-      // Récupérer le sondage mis à jour avec tous les votes
-      const updatedPoll = await Poll.findOne({
-        where: { id: voteData.pollId },
-        relations: [
-          "options",
-          "options.votes",
-          "options.votes.user",
-          "createdBy",
-        ],
-      });
-
-      if (updatedPoll) {
-        // Émettre la mise à jour du sondage à tous les clients
-        this.io.to(String(this.chatRoomId)).emit("poll-updated", {
-          pollId: voteData.pollId,
-          poll: updatedPoll,
-        });
+      const response = await this.server.executeOperation<{ removeUserVote: Boolean }>({
+        query: removeUserVote,
+        variables: {
+          pollId: voteData.pollId
+        }
+      }, { contextValue: { user: this.user } });
+      const hasBeenDeleted = getDataFromServerReponse(response, 'removeUserVote');
+      if (hasBeenDeleted) {
+        this.io.to(String(this.chatId)).emit("poll-updated", hasBeenDeleted);
       }
     } catch (error) {
       console.error("Erreur lors de la suppression des votes:", error);

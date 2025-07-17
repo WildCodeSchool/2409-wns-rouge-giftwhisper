@@ -2,16 +2,16 @@ import type { Message } from "@/utils/types/chat";
 import type { Poll } from "@/utils/types/chat";
 import { socketConnection } from "./socket";
 
-type SetMessagesData = React.Dispatch<React.SetStateAction<Message[] | undefined>>;
-type MessageData = { content: string; chatId: string; };
+type SetMessagesData = React.Dispatch<React.SetStateAction<Message[]>>;
+type MessageData = { content: string };
 type UpdatePollData = { pollId: number; poll: Poll; };
-type CreatePollData = { question: string; options: string[]; allowMultiple: boolean; };
+type CreatePollData = { question: string; options: string[]; allowMultipleVotes: boolean; };
 type VotePollData = { pollId: number; optionId: number; };
 type RemoveVotePollData = VotePollData;
 
 export function useSocket(groupId: string) {
-  const { getSocket, disconnectSocket } = socketConnection(groupId);
-  const socket = getSocket();
+  const { getSocket, disconnectSocket } = socketConnection();
+  const socket = getSocket(groupId);
   const emitters = {
     joinChatRoom: (chatId: string) => socket.emit("join-room", chatId),
     leaveChatRoom: (chatId: string) => socket.emit("leave-room", chatId),

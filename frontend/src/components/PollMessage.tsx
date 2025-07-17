@@ -1,21 +1,7 @@
 import { useState } from "react";
 import { FiCheck, FiEdit3, FiX, FiUsers } from "react-icons/fi";
 import { IoBarChart } from "react-icons/io5";
-
-interface PollOption {
-  id: number;
-  text: string;
-  votes: { id: number; user: { id: number; first_name: string } }[];
-}
-
-interface Poll {
-  id: number;
-  question: string;
-  allowMultipleVotes: boolean;
-  isActive: boolean;
-  options: PollOption[];
-  createdBy: { id: number; first_name: string };
-}
+import { Poll } from "@/utils/types/chat";
 
 interface PollMessageProps {
   poll: Poll;
@@ -169,29 +155,26 @@ export function PollMessage({
           return (
             <div key={option.id} className="relative group">
               <button
-                className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 relative overflow-hidden ${
-                  userVoted && !isEditingVote
+                className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 relative overflow-hidden ${userVoted && !isEditingVote
                     ? "bg-gradient-to-r from-[#A18CD1]/10 to-[#FBC2EB]/10 border-[#A18CD1]/30 ring-1 ring-[#A18CD1]/20"
                     : isSelected
-                    ? "bg-gradient-to-r from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB] border-[#A18CD1] text-white shadow-lg"
-                    : "bg-slate-50 border-slate-200 hover:border-slate-300 hover:bg-slate-100"
-                } ${
-                  canInteract
+                      ? "bg-gradient-to-r from-[#A18CD1] via-[#CEA7DE] to-[#FBC2EB] border-[#A18CD1] text-white shadow-lg"
+                      : "bg-slate-50 border-slate-200 hover:border-slate-300 hover:bg-slate-100"
+                  } ${canInteract
                     ? "cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
                     : "cursor-default"
-                }`}
+                  }`}
                 onClick={() => canInteract && handleOptionToggle(option.id)}
                 disabled={!canInteract}
               >
                 {/* Background progress bar */}
                 <div
-                  className={`absolute inset-0 transition-all duration-700 ease-out ${
-                    userVoted && !isEditingVote
+                  className={`absolute inset-0 transition-all duration-700 ease-out ${userVoted && !isEditingVote
                       ? "bg-gradient-to-r from-[#A18CD1]/5 to-[#FBC2EB]/5"
                       : isSelected
-                      ? "bg-white/10"
-                      : "bg-slate-200/30"
-                  }`}
+                        ? "bg-white/10"
+                        : "bg-slate-200/30"
+                    }`}
                   style={{ width: `${percentage}%` }}
                 />
 
@@ -199,13 +182,12 @@ export function PollMessage({
                   <div className="flex items-center gap-3 flex-1">
                     {/* Checkbox/Radio indicator */}
                     <div
-                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
-                        userVoted && !isEditingVote
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${userVoted && !isEditingVote
                           ? "border-[#A18CD1] bg-[#A18CD1]"
                           : isSelected
-                          ? "border-white bg-white"
-                          : "border-slate-300 group-hover:border-slate-400"
-                      }`}
+                            ? "border-white bg-white"
+                            : "border-slate-300 group-hover:border-slate-400"
+                        }`}
                     >
                       {(userVoted && !isEditingVote) || isSelected ? (
                         <FiCheck
@@ -218,9 +200,8 @@ export function PollMessage({
                     </div>
 
                     <span
-                      className={`font-medium flex-1 ${
-                        isSelected ? "text-white" : "text-slate-800"
-                      }`}
+                      className={`font-medium flex-1 ${isSelected ? "text-white" : "text-slate-800"
+                        }`}
                     >
                       {option.text}
                     </span>
@@ -228,16 +209,14 @@ export function PollMessage({
 
                   <div className="text-right ml-4">
                     <div
-                      className={`text-sm font-semibold ${
-                        isSelected ? "text-white" : "text-slate-700"
-                      }`}
+                      className={`text-sm font-semibold ${isSelected ? "text-white" : "text-slate-700"
+                        }`}
                     >
                       {voteCount}
                     </div>
                     <div
-                      className={`text-xs ${
-                        isSelected ? "text-white/80" : "text-slate-500"
-                      }`}
+                      className={`text-xs ${isSelected ? "text-white/80" : "text-slate-500"
+                        }`}
                     >
                       {percentage.toFixed(0)}%
                     </div>
