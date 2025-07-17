@@ -30,7 +30,6 @@ export function socketInit(httpServer: HttpServer) {
     req.user = user;
     next();
   });
-
   io.on("connection", async (socket) => {
     if (!initializedApolloServer) throw new Error("The server did not start correctly");
     const socketMiddleWares = new SocketMiddleWares(socket, io, initializedApolloServer);

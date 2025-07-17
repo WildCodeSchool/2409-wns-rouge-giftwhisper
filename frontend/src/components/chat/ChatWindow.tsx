@@ -26,10 +26,13 @@ function ChatWindow() {
     return null;
   }
 
-  const { socketEmitters, socketListeners } = useSocket(groupId);
+  const { socketEmitters, socketListeners, getSocket } = useSocket(groupId);
 
   useEffect(() => {
     if (!user) return;
+    //getSocket => Even if we connect the socket from the previous page (group selection) 
+    //we need to make sure the connection is established (the user can reach this page using an url)
+    getSocket(groupId);
     socketEmitters.joinChatRoom(chatId);
     socketEmitters.getMessageHistory();
     socketListeners.onMessageHistory(setMessages)
@@ -85,9 +88,9 @@ function ChatWindow() {
   const handleCreatePoll = (
     question: string,
     options: string[],
-    allowMultiple: boolean
+    allowMultipleVotes: boolean
   ) => {
-    socketEmitters.createPoll({ question, options, allowMultiple })
+    socketEmitters.createPoll({ question, options, allowMultipleVotes })
   };
 
   const handleVotePoll = (pollId: number, optionId: number) => {
@@ -121,7 +124,7 @@ function ChatWindow() {
 
           <MessagesList
             messages={messages || []}
-            currentUserId={Number(user.id)}
+            currentUserId={user.id}
             onScroll={handleScroll}
             lastMessageRef={lastMessageRef}
             firstMessageRef={firstMessageRef}

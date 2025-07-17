@@ -56,14 +56,21 @@ export const createPollWithMessage = `#graphql
         allowMultipleVotes
         createdBy {
           id
+          first_name
         }
         chat {
           id
         }
-        option {
+        options {
           id
           text
-          votes
+          votes {
+            id
+            user {
+              id
+              first_name
+            }
+          }
         }
       }
     }

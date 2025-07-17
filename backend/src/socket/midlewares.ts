@@ -9,6 +9,10 @@ import { removeUserVote, removeVotePoll, votePoll } from "../queries/poll";
 
 function getDataFromServerReponse<T extends Record<string, any>, K extends keyof T>(response: GraphQLResponse<T>, queryName: K) {
   //TODO: Deal with errors if there are any
+  if (response.body.kind === "single") {
+    const errors = response.body.singleResult.errors;
+    console.log(errors);
+  }
   if (response.body.kind === "single" && !response.body.singleResult.errors) {
     const data = response.body.singleResult.data?.[queryName];
     return data;
@@ -81,7 +85,7 @@ export class SocketMiddleWares {
   createPollWithMessage = async (pollData: {
     question: string;
     options: string[];
-    allowMultiple: boolean;
+    allowMultipleVotes: boolean;
   }) => {
     try {
       const response = await this.server.executeOperation<{ createPollWithMessage: Message }>({
@@ -91,6 +95,7 @@ export class SocketMiddleWares {
         }
       }, { contextValue: { user: this.user } });
       const messageWithPoll = getDataFromServerReponse(response, "createPollWithMessage");
+      console.log(messageWithPoll);
       this.io.to(String(this.chatId)).emit("new-message", messageWithPoll);
     } catch (error) {
       console.error("Erreur lors de la création du sondage:", error);
@@ -105,7 +110,7 @@ export class SocketMiddleWares {
           pollId: voteData.pollId,
           optionId: voteData.optionId
         }
-      });
+      }, { contextValue: { user: this.user } });
       const updatedPoll = getDataFromServerReponse(response, 'votePoll');
       if (updatedPoll) {
         this.io.to(String(this.chatId)).emit("poll-updated", {
@@ -126,7 +131,7 @@ export class SocketMiddleWares {
           pollId: voteData.pollId,
           optionId: voteData.optionId
         }
-      });
+      }, { contextValue: { user: this.user } });
       const hasBeenDeleted = getDataFromServerReponse(reponse, "removeVotePoll");
       if (hasBeenDeleted) {
         this.io.to(String(this.chatId)).emit("poll-updated", hasBeenDeleted);
@@ -143,7 +148,7 @@ export class SocketMiddleWares {
         variables: {
           pollId: voteData.pollId
         }
-      });
+      }, { contextValue: { user: this.user } });
       const hasBeenDeleted = getDataFromServerReponse(response, 'removeUserVote');
       if (hasBeenDeleted) {
         this.io.to(String(this.chatId)).emit("poll-updated", hasBeenDeleted);

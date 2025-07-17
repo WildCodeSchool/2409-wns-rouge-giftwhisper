@@ -4,6 +4,7 @@ import { ContextType, ContextUserType, getUserFromContext } from "../auth";
 import { CreatePollInput, Poll } from "../entities/Poll";
 import { PollOption } from "../entities/PollOptions";
 import { User } from "../entities/User";
+import { Chat } from "../entities/Chat";
 
 @Resolver()
 export class MessageResolver {
@@ -78,26 +79,27 @@ export class MessageResolver {
     poll.question = data.question;
     poll.allowMultipleVotes = data.allowMultipleVotes;
     poll.createdBy = { id: user.id } as User;
-    poll.chat = null as any;
+    poll.chat = { id: data.chatId } as Chat;
     await poll.save();
 
-    const savedOptions = [];
     for (const optionText of data.options) {
       const option = new PollOption();
       option.text = optionText;
       option.poll = poll;
       await option.save();
-      savedOptions.push({
-        id: option.id,
-        text: option.text,
-        votes: [],
-      });
+    }
+    const updatedPoll = await Poll.findOne({
+      where: { id: poll.id },
+      relations: ['options', 'options.votes', 'createdBy', 'chat', 'votes']
+    });
+    if (!updatedPoll) {
+      throw new Error('Error while updated the poll');
     }
     const newMessage = new Message();
     newMessage.content = `Sondage: ${data.question}`;
     newMessage.messageType = "poll";
     newMessage.createdBy = { id: user.id } as User;
-    newMessage.poll = poll;
+    newMessage.poll = updatedPoll;
     await newMessage.save();
     return newMessage;
   }

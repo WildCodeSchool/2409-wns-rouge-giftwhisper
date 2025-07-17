@@ -3,11 +3,12 @@ export const votePoll = `#graphql
     votePoll(pollId: $pollId, optionId: $optionId) {
       id
       question
-      allowMultipleVotes;
+      allowMultipleVotes
       isActive     
       endDate     
       createdBy {
         id
+        first_name
       }
       chat {
         id
@@ -15,14 +16,11 @@ export const votePoll = `#graphql
       options {
         id
         text
-      }
-      votes {
-        id
-        user {
+        votes {
           id
-          option {
+          user {
             id
-            text
+            first_name
           }
         }
       }

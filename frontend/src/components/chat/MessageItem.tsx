@@ -30,7 +30,7 @@ export function MessageItem({
   onRemoveVote,
   onRemoveAllVotes,
 }: MessageItemProps) {
-  const isOwnMessage = Number(message.createdBy.id) === currentUserId;
+  const isOwnMessage = message.createdBy.id === currentUserId;
 
   return (
     <div
