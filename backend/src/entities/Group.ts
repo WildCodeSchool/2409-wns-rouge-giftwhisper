@@ -88,10 +88,4 @@ export class GroupUpdateInput {
 
   @Field({ nullable: true })
   is_secret_santa?: boolean;
-
-  @Field({ nullable: true })
-  is_active?: boolean;
-
-  @Field(() => [ID], { nullable: true })
-  userIds?: number[]; //supprimer une fois que les création group + envoi de chat sont OK
 }
