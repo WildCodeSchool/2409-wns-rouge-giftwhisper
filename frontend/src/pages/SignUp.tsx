@@ -11,8 +11,16 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
+interface SignUpFormData {
+  firstName: string;
+  lastName: string;
+  birthdate: string;
+  email: string;
+  password: string;
+}
+
 export default function SignUp() {
-  const form = useForm({
+  const form = useForm<SignUpFormData>({
     defaultValues: {
       firstName: "",
       lastName: "",
@@ -22,7 +30,7 @@ export default function SignUp() {
     },
   });
 
-  const onSubmit = (data: any) => {
+  const onSubmit = (data: SignUpFormData) => {
     console.log("signup submitted:", data);
   };
 

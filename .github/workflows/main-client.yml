@@ -5,10 +5,12 @@ on:
     branches: [main]
     paths:
       - "frontend/**"
+      - ".github/workflows/**" # ← Ajout temporaire
   pull_request:
     branches: [main]
     paths:
       - "frontend/**"
+      - ".github/workflows/**" # ← Ajout temporaire
   workflow_dispatch:
     inputs:
       deploy_frontend:
@@ -21,8 +23,8 @@ jobs:
   tests_frontend:
     name: Run Tests & Build
     runs-on: ubuntu-latest
-    # Ne lance les tests QUE si ce n'est pas un déploiement manuel OU si on ne déploie pas
-    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.deploy_frontend }}
+    # Exécuter si c'est une PR/push normal, PAS si c'est un deploy manuel
+    if: ${{ github.event_name != 'workflow_dispatch' }}
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -46,16 +48,11 @@ jobs:
         run: npm run build
         working-directory: ./frontend
 
-      # Décommentez quand vous ajouterez des tests frontend
-      # - name: Run frontend tests
-      #   run: npm test
-      #   working-directory: ./frontend
-
   deploy_frontend:
     name: Deploy Frontend
     runs-on: ubuntu-latest
-    # Ne déploie QUE si c'est un déclenchement manuel ET que deploy_frontend est true
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_frontend }}
+    # Deploy SEULEMENT sur main ET en mode manuel
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && inputs.deploy_frontend }}
     steps:
       - name: Check out code
         uses: actions/checkout@v4
