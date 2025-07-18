@@ -21,7 +21,7 @@ jobs:
   tests_backend:
     name: Run Tests
     runs-on: ubuntu-latest
-    # Ne lance les tests QUE si ce n'est pas un déploiement manuel OU si on ne déploie pas
+    # Tests sur PR ou push vers main (mais pas lors d'un deploy manuel)
     if: ${{ github.event_name != 'workflow_dispatch' || !inputs.deploy_backend }}
     services:
       test-db:
@@ -64,8 +64,8 @@ jobs:
   deploy_backend:
     name: Deploy Backend
     runs-on: ubuntu-latest
-    # Ne déploie QUE si c'est un déclenchement manuel ET que deploy_backend est true
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_backend }}
+    # Deploy SEULEMENT sur main ET en mode manuel
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && inputs.deploy_backend }}
     steps:
       - name: Check out code
         uses: actions/checkout@v4
