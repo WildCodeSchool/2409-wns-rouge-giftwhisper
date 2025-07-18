@@ -11,7 +11,7 @@ on:
       - "backend/**"
   workflow_dispatch:
     inputs:
-      deploy_only:
+      deploy_backend:
         description: "Deploy backend to DockerHub"
         required: true
         default: false
@@ -21,7 +21,8 @@ jobs:
   tests_backend:
     name: Run Tests
     runs-on: ubuntu-latest
-    if: ${{ !inputs.deploy_only }}
+    # Ne lance les tests QUE si ce n'est pas un déploiement manuel OU si on ne déploie pas
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.deploy_backend }}
     services:
       test-db:
         image: postgres:15-alpine
@@ -63,7 +64,8 @@ jobs:
   deploy_backend:
     name: Deploy Backend
     runs-on: ubuntu-latest
-    if: ${{ inputs.deploy_only }}
+    # Ne déploie QUE si c'est un déclenchement manuel ET que deploy_backend est true
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_backend }}
     steps:
       - name: Check out code
         uses: actions/checkout@v4
