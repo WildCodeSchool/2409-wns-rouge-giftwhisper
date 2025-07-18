@@ -57,4 +57,13 @@ export class InvitationAcceptInput {
   userId!: number;
 }
 
+@ObjectType()
+export class InvitationValidationResult {
+  @Field(() => Group)
+  group!: Group;
+
+  @Field()
+  invitationEmail!: string;
+}
+
 
