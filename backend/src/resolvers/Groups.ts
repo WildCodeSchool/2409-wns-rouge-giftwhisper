@@ -249,4 +249,54 @@ export class GroupsResolver {
       return false;
     }
   }
+
+  // Remove a user from a group
+  @Mutation(() => Boolean)
+  async removeUserFromGroup(
+    @Arg("groupId", () => ID) groupId: number,
+    @Arg("userId", () => ID) userId: number,
+    @Ctx() context: ContextType
+  ): Promise<boolean> {
+    const currentUser = await getUserFromContext(context);
+    if (!currentUser) {
+      throw new Error(
+        "Non autorisé - vous devez être connecté pour supprimer un membre d'un groupe"
+      );
+    }
+
+    const group = await Group.findOne({ 
+      where: { id: groupId }, 
+      relations: ["users"] 
+    });
+    if (!group) {
+      throw new Error("Group not found");
+    }
+
+    if (group.created_by_id !== currentUser.id) {
+      throw new Error(
+        "Non autorisé - seul le créateur du groupe peut retirer des membres"
+      );
+    }
+
+    const userToRemove = group.users?.find(user => {
+      return user.id === Number(userId);
+    });
+    
+    if (!userToRemove) {
+      throw new Error("Cet utilisateur n'est pas membre de ce groupe");
+    }
+
+    if (Number(userId) === group.created_by_id) {
+      throw new Error("Impossible de retirer le créateur du groupe");
+    }
+
+    try {
+      group.users = group.users?.filter(user => user.id !== Number(userId)) || [];
+      await group.save();
+
+      return true;
+    } catch (error) {
+      throw new Error("Erreur lors de la suppression du membre du groupe");
+    }
+  }
 }

@@ -280,16 +280,23 @@ export default function GroupSettings() {
         },
       });
 
-      //todo send the group data to the backend
-      
       toast.success("Membre supprimé", {
         description: `${memberToDelete?.first_name} ${memberToDelete?.last_name} a été retiré du groupe.`,
       });
 
       // Rafraîchir les données du groupe
-      refetch();
-    } catch {
-      toast.error("Erreur lors de la suppression du membre");
+      await refetch();
+      setMemberToDelete(null);
+    } catch (error: any) {
+      console.error("Erreur lors de la suppression du membre:", error);
+
+      const errorMessage = error.graphQLErrors?.[0]?.message || 
+                          error.message || 
+                          "Une erreur est survenue lors de la suppression du membre";
+
+      toast.error("Erreur lors de la suppression", {
+        description: errorMessage,
+      });
     }
   };
 
