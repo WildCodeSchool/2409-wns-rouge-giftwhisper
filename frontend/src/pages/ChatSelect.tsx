@@ -1,5 +1,5 @@
 import { Settings } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -9,63 +9,25 @@ import {
   BreadcrumbPage,
 } from "@/components/ui/breadcrumb";
 import ChatSelector from "@/components/ChatSelector";
-
-interface Chat {
-  id: number;
-  name: string;
-  messages: number;
-  lastMessage: string;
-  gradient: string;
-}
-
-const chats: Chat[] = [
-  {
-    id: 1,
-    name: "Jean-Claude",
-    messages: 8,
-    lastMessage: "hier",
-    gradient: "bg-gradient-to-r from-pink-500 to-orange-400",
-  },
-  {
-    id: 2,
-    name: "Sten",
-    messages: 15,
-    lastMessage: "aujourd'hui",
-    gradient: "bg-gradient-to-r from-green-400 to-blue-500",
-  },
-  {
-    id: 3,
-    name: "Priscilla",
-    messages: 12,
-    lastMessage: "15/06/2024",
-    gradient: "bg-gradient-to-r from-purple-500 to-pink-400",
-  },
-  {
-    id: 4,
-    name: "Jérémy",
-    messages: 5,
-    lastMessage: "hier",
-    gradient: "bg-gradient-to-r from-yellow-400 to-red-500",
-  },
-  {
-    id: 5,
-    name: "Isil",
-    messages: 21,
-    lastMessage: "10/06/2024",
-    gradient: "bg-gradient-to-r from-indigo-500 to-purple-500",
-  },
-  {
-    id: 6,
-    name: "Axel",
-    messages: 9,
-    lastMessage: "02/06/2024",
-    gradient: "bg-gradient-to-r from-cyan-500 to-blue-400",
-  },
-];
+import { useQuery } from "@apollo/client";
+import { GET_CHAT_BY_GROUP_ID } from "@/api/chat";
+import { Chat } from "@/utils/types/chat";
 
 function ChatSelect() {
   const navigate = useNavigate();
-  const groupId = 1; // À remplacer par le vrai ID du groupe
+  const { groupId } = useParams<{ groupId: string }>();
+  const { data, loading } = useQuery<{ getChatsByGroup: Chat[] }>(GET_CHAT_BY_GROUP_ID, {
+    variables: { groupId }
+  });
+  if (!data?.getChatsByGroup) return null;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="animate-spin w-6 h-6 border-2 border-[#A18CD1] border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
+  const chats = data.getChatsByGroup;
   return (
     <>
       <header className="pt-10 px-4 flex justify-between items-center">

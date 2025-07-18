@@ -19,6 +19,24 @@ export class ChatsResolver {
     return chats;
   }
 
+  @Query(() => [Chat])
+  async getChatsByGroup(
+    @Arg('groupId', () => ID) groupId: number
+  ): Promise<Chat[]> {
+    const chats = await Chat.find({
+      relations: {
+        users: true,
+        group: true,
+      },
+      where: {
+        group: { id: groupId }
+      }
+    });
+
+    return chats;
+  }
+
+
   @Query(() => Chat)
   async chat(@Arg("id", () => ID) id: string): Promise<Chat> {
     const chat = await Chat.findOne({ where: { id: parseInt(id) } });

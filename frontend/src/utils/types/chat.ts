@@ -22,3 +22,10 @@ export interface PollOptions {
   text: string;
   votes: { id: number; user: { id: number; first_name: string } }[];
 }
+
+export interface Chat {
+  id: number;
+  name: string;
+  messages: number;
+  lastMessage: string;
+}

@@ -13,7 +13,7 @@ function ChatLayout() {
   const { disconnectSocket, getSocket } = useSocket(groupId);
   
   useEffect(() => {
-    getSocket();
+    getSocket(groupId);
     return () => disconnectSocket();
   }, []);
 
