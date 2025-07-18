@@ -17,6 +17,7 @@ import { signUpSchema } from "@/schemas/auth.schema";
 import type { z } from "zod";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { PasswordInput } from "@/components/form/PasswordInput";
 
 type SignUpFormData = z.infer<typeof signUpSchema>;
 
@@ -146,7 +147,7 @@ export default function SignUp() {
                 <FormItem>
                   <FormLabel>Mot de passe</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} />
+                    <PasswordInput {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
