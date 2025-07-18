@@ -21,8 +21,8 @@ jobs:
   tests_frontend:
     name: Run Tests & Build
     runs-on: ubuntu-latest
-    # Tests sur PR ou push vers main (mais pas lors d'un deploy manuel)
-    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.deploy_frontend }}
+    # Exécuter si c'est une PR/push normal, PAS si c'est un deploy manuel
+    if: ${{ github.event_name != 'workflow_dispatch' }}
     steps:
       - name: Check out code
         uses: actions/checkout@v4
