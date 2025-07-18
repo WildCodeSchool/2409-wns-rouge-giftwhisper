@@ -1,11 +1,14 @@
 import { Link } from "react-router-dom";
+import { chatColorSchemeGradient } from "@/utils/hardValues/chat";
+import { Chat } from "@/utils/types/chat";
 
-interface Chat {
-  id: number;
-  name: string;
-  messages: number;
-  lastMessage: string;
-  gradient: string;
+function getGradientByName(name: string) {
+  let colorSchemeGradient = 0;
+  for (const char of name) {
+    colorSchemeGradient += char.charCodeAt(0);
+  }
+  const gardient = chatColorSchemeGradient[colorSchemeGradient % chatColorSchemeGradient.length]
+  return gardient;
 }
 
 function ChatSelector({ chat }: { chat: Chat }) {
@@ -14,9 +17,9 @@ function ChatSelector({ chat }: { chat: Chat }) {
       <ul className="flex items-center w-full gap-4 p-3 rounded-lg hover:bg-gray-50/50 transition-colors duration-200">
         <li className="flex items-center">
           <p
-            className={`${chat.gradient} rounded-full w-11 h-11 flex items-center justify-center text-white font-medium transition-transform duration-200 hover:scale-105`}
+            className={`${getGradientByName(chat.name)} rounded-full w-11 h-11 flex items-center justify-center text-white font-medium transition-transform duration-200 hover:scale-105`}
           >
-            {chat.name.charAt(0)}
+            {chat.name.charAt(0).toUpperCase()}
           </p>
         </li>
         <li className="flex flex-col items-start gap-0 flex-1">
