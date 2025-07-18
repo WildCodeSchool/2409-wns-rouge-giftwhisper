@@ -12,8 +12,7 @@ export function usersResolverTest(testArgs: TestArgsType) {
         password: "Whisky-Lover@44!",
         first_name: "Jean-Claude13",
         last_name: "Whisky13",
-        date_of_birth: new Date("12/12/1973"),
-        is_verified: true,
+        date_of_birth: new Date("12/12/1973")
       };
       const response = await testArgs.server?.executeOperation<{
         createUser: User;
@@ -25,8 +24,7 @@ export function usersResolverTest(testArgs: TestArgsType) {
             password: mockUser.password,
             first_name: mockUser.first_name,
             last_name: mockUser.last_name,
-            date_of_birth: mockUser.date_of_birth,
-            is_verified: mockUser.is_verified,
+            date_of_birth: mockUser.date_of_birth
           },
         },
       });
@@ -54,7 +52,6 @@ export function usersResolverTest(testArgs: TestArgsType) {
               first_name: user.first_name,
               last_name: user.last_name,
               date_of_birth: user.date_of_birth,
-              is_verified: user.is_verified,
             },
           },
         });
