@@ -1,7 +1,6 @@
 import { AuthContextType, UserSignIn } from "@/utils/types/auth";
-import { User } from "@/utils/types/user";
-import { createContext, useCallback, useMemo, useState, useEffect } from "react";
-import { useMutation } from "@apollo/client";
+import { createContext, useCallback, useMemo, useState } from "react";
+import { useApolloClient, useMutation } from "@apollo/client";
 import { LOGIN, LOGOUT } from "@/api/auth";
 import { useCurrentUser } from "@/hooks/currentUser";
 
@@ -12,31 +11,16 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
+  const client = useApolloClient(); 
   const [loginMutation] = useMutation(LOGIN);
   const [logoutMutation] = useMutation(LOGOUT);
-  const [user, setUser] = useState<User | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [tokenInvitation, setTokenInvitation] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(true);
-
-  // Utiliser whoami pour récupérer l'utilisateur au démarrage
+  // Utilise whoami pour récupérer l'utilisateur au démarrage
   const { user: currentUser, loading: whoamiLoading } = useCurrentUser();
-
-  // Initialiser l'état d'authentification au démarrage
-  useEffect(() => {
-    if (!whoamiLoading) {
-      if (currentUser) {
-        setUser(currentUser);
-        setIsAuthenticated(true);
-      } else {
-        setUser(null);
-        setIsAuthenticated(false);
-      }
-      setIsInitializing(false);
-    }
-  }, [currentUser, whoamiLoading]);
+  const isAuthenticated = !!currentUser;
+  const isInitializing = whoamiLoading;
 
   const login = useCallback(async (userInfo: UserSignIn) => {
     setIsLoggingIn(true);
@@ -51,8 +35,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       });
 
       if (response.data.login) {
-        setIsAuthenticated(true);
-        setUser(response.data.login);
+        await client.resetStore(); // synchronise currentUser
         return true;
       } else {
         return false;
@@ -62,15 +45,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } finally {
       setIsLoggingIn(false);
     }
-  }, [loginMutation]);
+  }, [loginMutation, client]);
 
   const logout = useCallback(async () => {
     setIsLoggingOut(true);
     try {
       const response = await logoutMutation();
-      if (response.data.logout) {
-        setIsAuthenticated(false);
-        setUser(null);
+      if (response.data.logout) {;
+        await client.resetStore(); // purge user
+        return true
       }
       return response.data.logout;
     } catch (error) {
@@ -90,7 +73,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const contextValue = useMemo(
     () => ({
-      user,
+      user: currentUser,
       isAuthenticated,
       tokenInvitation,
       login,
@@ -102,7 +85,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       isInitializing,
     }),
     [
-      user, 
+      currentUser, 
       isAuthenticated, 
       tokenInvitation, 
       login, 

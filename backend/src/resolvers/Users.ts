@@ -126,7 +126,14 @@ export class UsersResolver {
   async logout(@Ctx() context: any) {
     const { req, res } = context;
     const cookies = new Cookies(req, res);
-    cookies.set("giftwhisper", "", { maxAge: 0 });
+    cookies.set("giftwhisper", "", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 0,
+      expires: new Date(0),
+    });
     return true;
   }
 
