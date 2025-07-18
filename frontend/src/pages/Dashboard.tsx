@@ -69,7 +69,17 @@ function Dashboard() {
       })
         .then((response) => {
           if (response.data?.validateInvitationToken) {
-            const group = response.data.validateInvitationToken;
+            const validationResult = response.data.validateInvitationToken;
+            const group = validationResult.group;
+            const invitationEmail = validationResult.invitationEmail;
+
+            // VÉRIFICATION DE SÉCURITÉ : On vérifie que l'email de l'utilisateur correspond à l'invitation
+            if (user?.email !== invitationEmail) {
+              toast.error("Cette invitation ne vous est pas destinée");
+              clearInvitationToken();
+              return;
+            }
+
             setInvitationDetails({
               groupName: group.name,
               groupId: group.id,
@@ -86,7 +96,7 @@ function Dashboard() {
           toast.error("Erreur lors de la validation de l'invitation");
         });
     }
-  }, [tokenInvitation]);
+  }, [tokenInvitation, user?.email]);
 
   // Fonction pour accepter l'invitation
   const handleAcceptInvitation = async () => {

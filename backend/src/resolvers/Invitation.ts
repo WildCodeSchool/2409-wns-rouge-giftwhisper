@@ -1,5 +1,5 @@
 import { Arg, ID, Int, Mutation, Query, Resolver } from "type-graphql";
-import { Invitation, InvitationCreateInput } from "../entities/Invitation";
+import { Invitation, InvitationCreateInput, InvitationValidationResult } from "../entities/Invitation";
 import { Group } from "../entities/Group";
 import { User } from "../entities/User";
 import { invitationService } from "../services/Invitation";
@@ -14,12 +14,11 @@ export class InvitationResolver {
     return invitationService.createInvitation(data.email, data.groupId);
   }
 
-  @Query(() => Group, { nullable: true })
+  @Query(() => InvitationValidationResult, { nullable: true })
   async validateInvitationToken(
     @Arg("token") token: string
-  ): Promise<Group | null> {
+  ): Promise<InvitationValidationResult | null> {
 
-    console.log("validateInvitationToken", token);
     // 1. On récupère l'invitation par son token
     const invitation = await Invitation.findOne({
       where: { token },
@@ -31,8 +30,11 @@ export class InvitationResolver {
       throw new Error("Invitation invalide ou expirée");
     }
 
-    // 3. On renvoie le groupe associé à l'invitation
-    return invitation.group;
+    // 3. On renvoie le groupe ET l'email de l'invitation
+    return {
+      group: invitation.group,
+      invitationEmail: invitation.email
+    };
   }
 
   @Mutation(() => Boolean)
@@ -51,10 +53,16 @@ export class InvitationResolver {
 
     const user = await User.findOneBy({ id: data.userId }); 
 
-    if (!user)
+    if (!user){
       throw new Error("Aucun utilisateur trouvé pour cette invitation");
+    }
 
-    // 2. On vérifie si l'utilisateur est déjà membre du groupe
+    // 2. VÉRIFICATION DE SÉCURITÉ : On vérifie que l'email de l'utilisateur correspond à l'invitation
+    if (user.email !== invitation.email) {
+      throw new Error("Cette invitation ne vous est pas destinée");
+    }
+
+    // 3. On vérifie si l'utilisateur est déjà membre du groupe
     const groupWithUsers = await Group.findOne({
       where: { id: invitation.group.id },
       relations: { users: true },
