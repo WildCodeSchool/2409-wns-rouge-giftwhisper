@@ -11,7 +11,7 @@ on:
       - "frontend/**"
   workflow_dispatch:
     inputs:
-      deploy_frontend:
+      deploy_only:
         description: "Deploy frontend to DockerHub"
         required: true
         default: false
@@ -21,8 +21,7 @@ jobs:
   tests_frontend:
     name: Run Tests & Build
     runs-on: ubuntu-latest
-    # Ne lance les tests QUE si ce n'est pas un déploiement manuel OU si on ne déploie pas
-    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.deploy_frontend }}
+    if: ${{ !inputs.deploy_only }}
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -54,8 +53,7 @@ jobs:
   deploy_frontend:
     name: Deploy Frontend
     runs-on: ubuntu-latest
-    # Ne déploie QUE si c'est un déclenchement manuel ET que deploy_frontend est true
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.deploy_frontend }}
+    if: ${{ inputs.deploy_only }}
     steps:
       - name: Check out code
         uses: actions/checkout@v4
