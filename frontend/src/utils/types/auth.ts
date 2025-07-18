@@ -11,7 +11,7 @@ export type UserSignIn = {
 }
 
 export type AuthContextType = {
-  user: User | null;
+  user: User | undefined;
   isAuthenticated: boolean;
   tokenInvitation: string | null;
   isLoggingIn: boolean;
