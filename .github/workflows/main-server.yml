@@ -5,10 +5,12 @@ on:
     branches: [main]
     paths:
       - "backend/**"
+      - ".github/workflows/**" # ← Ajout temporaire
   pull_request:
     branches: [main]
     paths:
       - "backend/**"
+      - ".github/workflows/**" # ← Ajout temporaire
   workflow_dispatch:
     inputs:
       deploy_backend:
