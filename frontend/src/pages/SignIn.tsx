@@ -11,15 +11,20 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
+interface SignInFormData {
+  email: string;
+  password: string;
+}
+
 export default function SignIn() {
-  const form = useForm({
+  const form = useForm<SignInFormData>({
     defaultValues: {
       email: "",
       password: "",
     },
   });
 
-  const onSubmit = (data: any) => {
+  const onSubmit = (data: SignInFormData) => {
     console.log("form submitted:", data);
   };
 
