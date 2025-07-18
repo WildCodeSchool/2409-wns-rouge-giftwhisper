@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Eye, EyeOff } from "lucide-react";
+import { PasswordInput } from "@/components/form/PasswordInput";
 
 export default function SignIn() {
   const navigate = useNavigate();
@@ -108,22 +109,7 @@ export default function SignIn() {
                   <FormLabel>Mot de passe</FormLabel>
                   <FormControl>
                     <div className="relative">
-                      <Input
-                        type={showPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        {...field}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword((prev) => !prev)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                      >
-                        {showPassword ? (
-                          <EyeOff className="w-5 h-5" />
-                        ) : (
-                          <Eye className="w-5 h-5" />
-                        )}
-                      </button>
+                      <PasswordInput {...field} />
                     </div>
                   </FormControl>
                   <FormMessage />

@@ -23,7 +23,6 @@ export class UsersResolver {
     newUser.last_name = data.last_name;
     newUser.date_of_birth = data.date_of_birth;
 
-    // Hachage du mot de passe
     newUser.hashedPassword = await argon2.hash(data.password);
 
     const errors = await validate(newUser);

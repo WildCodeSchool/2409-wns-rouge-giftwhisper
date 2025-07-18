@@ -11,6 +11,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/form/PasswordInput";
 
 export function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -77,17 +78,7 @@ export function ResetPassword() {
                 <FormItem>
                   <FormLabel>Nouveau mot de passe</FormLabel>
                   <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="••••••••"
-                      {...field}
-                      // 👇 ajoute ceci si Input ne propage pas bien par défaut
-                      onChange={field.onChange}
-                      onBlur={field.onBlur}
-                      name={field.name}
-                      ref={field.ref}
-                      value={field.value}
-                    />
+                    <PasswordInput {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
