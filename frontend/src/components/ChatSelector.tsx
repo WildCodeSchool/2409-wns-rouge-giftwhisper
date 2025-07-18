@@ -3,11 +3,11 @@ import { chatColorSchemeGradient } from "@/utils/hardValues/chat";
 import { Chat } from "@/utils/types/chat";
 
 function getGradientByName(name: string) {
-  let colorSchemeGradient = 0;
+  let colorSchemeGradientIndex = 0;
   for (const char of name) {
-    colorSchemeGradient += char.charCodeAt(0);
+    colorSchemeGradientIndex += char.charCodeAt(0);
   }
-  const gardient = chatColorSchemeGradient[colorSchemeGradient % chatColorSchemeGradient.length]
+  const gardient = chatColorSchemeGradient[colorSchemeGradientIndex % chatColorSchemeGradient.length]
   return gardient;
 }
 
