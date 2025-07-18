@@ -19,8 +19,10 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/hooks/useAuth";
 
 export function Navbar() {
+  const { logout, isLoggingOut } = useAuth();
   const items = [
     {
       title: "Giftwhisper",
@@ -58,8 +60,30 @@ export function Navbar() {
   ];
 
   // Composant pour les éléments du menu mobile qui ferment le sidebar au clic
-  function MobileMenuItem({ item }: { item: (typeof items)[0] }) {
+  function MobileMenuItem({ item, logoutButton }: { item: (typeof items)[0] | (typeof accountItems)[0], logoutButton?: boolean }) {
     const { setOpenMobile } = useSidebar();
+
+    if (logoutButton) {
+      return (
+        <SidebarMenuItem className="p-0">
+          <SidebarMenuButton
+            asChild
+            className="w-full hover:bg-[#FFFBFF]/10 rounded-lg transition-colors duration-200"
+          >
+            <button
+              onClick={() => { logout(); setOpenMobile(false); }}
+              disabled={isLoggingOut}
+              className="flex items-center gap-4 p-3 w-full bg-transparent text-[#D36567] hover:bg-[#D36567] hover:text-[#FFE5E5] transition-colors rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <div className="bg-[#FFFBFF]/20 p-2 rounded-lg">
+                <item.icon className="h-6 w-6" />
+              </div>
+              <span className="text-xl font-medium">{isLoggingOut ? "Déconnexion en cours..." : "Déconnexion"}</span>
+            </button>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      );
+    }
 
     return (
       <SidebarMenuItem className="p-0">
@@ -128,13 +152,14 @@ export function Navbar() {
               ))}
               <DropdownMenuSeparator className="bg-[#FFFBFF]/20" />
               <DropdownMenuItem asChild>
-                <Link
-                  to={accountItems[accountItems.length - 1].path}
-                  className="flex items-center gap-2 cursor-pointer bg-[#FFFBFF] text-[#D36567] hover:bg-[#D36567] hover:text-[#FFE5E5] transition-colors"
+                <button
+                  onClick={logout}
+                  disabled={isLoggingOut}
+                  className="flex items-center gap-2 cursor-pointer bg-[#FFFBFF] text-[#D36567] hover:bg-[#D36567] hover:text-[#FFE5E5] transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full px-2 py-1.5 rounded"
                 >
                   <LogOut className="h-4 w-4 hover:text-[#FFE5E5] transition-colors" />
-                  <span>Déconnexion</span>
-                </Link>
+                  <span>{isLoggingOut ? "Déconnexion en cours..." : "Déconnexion"}</span>
+                </button>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -172,7 +197,7 @@ export function Navbar() {
                 ))}
                 <div className="h-px bg-gray-700 my-4" />
                 {accountItems.slice(-1).map((item) => (
-                  <MobileMenuItem key={item.path} item={item} />
+                  <MobileMenuItem key={item.path} item={item} logoutButton />
                 ))}
               </SidebarMenu>
             </SidebarContent>
