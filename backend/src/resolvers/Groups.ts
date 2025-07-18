@@ -107,26 +107,37 @@ export class GroupsResolver {
     @Arg("data", () => GroupUpdateInput) data: GroupUpdateInput,
     @Ctx() context: ContextType
   ): Promise<Group | null> {
-    const group = await getGroupIfUserIsCreator(id, context, ["users"]);
 
-    // Detect if group is about to become active
-    const wasInactive = !group.is_active;
-    const wantsToActivate = data.is_active === true;
-
-    // activate a group only if it has at least 3 users
-    if (wantsToActivate) {
-      const currentUsers = group.users ?? [];
-      if (currentUsers.length < 3) {
-        throw new Error("A group must have at least 3 users to be activated");
-      }
+    const user = await getUserFromContext(context);
+    if (!user) {
+      throw new Error(
+        "Unauthorized - you must be connected to update a group"
+      );
     }
 
-    // Apply updates
-    if (data.name !== undefined) group.name = data.name;
-    if (data.end_date !== undefined) group.end_date = data.end_date;
-    if (data.is_secret_santa !== undefined)
+    const group = await Group.findOneBy({ id });
+    if (!group) {
+      throw new Error("Group not found");
+    }
+
+    if (group.created_by_id !== user.id) {
+      throw new Error(
+        "Unauthorized - only the creator of the group can update it"
+      );
+    }
+
+    if (data.name) {
+      group.name = data.name;
+    } 
+
+    if (data.end_date)
+    {
+      group.end_date = data.end_date;
+    } 
+
+    if (data.is_secret_santa && !group.is_active) {
       group.is_secret_santa = data.is_secret_santa;
-    if (data.is_active !== undefined) group.is_active = data.is_active;
+    }
 
     // Validate before saving
     const errors = await validate(group);
@@ -135,11 +146,6 @@ export class GroupsResolver {
     }
 
     await group.save();
-
-    // If the group just became active, generate chats
-    if (wasInactive && group.is_active) {
-      await chatService.generateChatsForGroup(group);
-    }
 
     return group;
   }
@@ -199,5 +205,48 @@ export class GroupsResolver {
     await Promise.all(emailPromises);
 
     return group;
+  }
+
+  @Mutation(() => Boolean)
+  async activateGroup(@Arg("id", () => ID) id: number, @Ctx() context: ContextType): Promise<boolean> {
+
+    const user = await getUserFromContext(context);
+    if (!user) {
+      throw new Error(
+        "Unauthorized - you must be connected to activate a group"
+      );
+    }
+
+    const group = await Group.findOne({ where: { id }, relations: { users: true } });
+    if (!group) {
+      throw new Error("Group not found");
+    }
+
+    if (group.created_by_id !== user.id) {
+      throw new Error ("Unauthorized - only the creator of the group can activate it")
+    }
+
+    if (group.is_active) {
+      throw new Error("Group already active");
+    }
+
+    if (group.users.length < 3) {
+      throw new Error("A group must have at least 3 users to be activated");
+    }
+
+    try {
+      
+      await chatService.generateChatsForGroup(group);
+
+      group.is_active = true;
+      await group.save();
+
+      return true;
+
+    } catch (error) {
+
+      console.error(`Error activating group ${id}: ${error}`);
+      return false;
+    }
   }
 }

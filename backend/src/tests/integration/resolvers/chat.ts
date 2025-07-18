@@ -3,7 +3,7 @@ import { Chat } from "../../../entities/Chat";
 import { mutationCreateChat } from "../../api/chat";
 import { assert } from "../index.test";
 import { Group } from "../../../entities/Group";
-import { mutationUpdateGroup, queryGroup } from "../../api/group";
+import { mutationActivateGroup, queryGroup } from "../../api/group";
 import { invitationService } from "../../../services/Invitation";
 import { User } from "../../../entities/User";
 import { mutationAcceptInvitation } from "../../api/invitation";
@@ -98,12 +98,11 @@ export function chatResolverTest(testArgs: TestArgsType) {
 
       // 5. Activate the group
       const activateResp = await testArgs.server?.executeOperation<{
-        updateGroup: Group;
+        activateGroup: boolean;
       }>({
-        query: mutationUpdateGroup,
+        query: mutationActivateGroup,
         variables: {
           id: groupId,
-          data: { is_active: true },
         },
       });
 
