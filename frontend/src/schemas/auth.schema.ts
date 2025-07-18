@@ -21,7 +21,7 @@ export const signUpSchema = z
       .string()
       .min(8, "Le mot de passe doit contenir au moins 8 caractères")
       .regex(
-        /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+        /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z\d])[\S]{8,}$/,
         "Le mot de passe doit contenir au moins une majuscule, une minuscule, un chiffre et un caractère spécial"
       ),
     confirmPassword: z
