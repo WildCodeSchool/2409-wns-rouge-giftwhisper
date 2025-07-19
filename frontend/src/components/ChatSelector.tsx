@@ -12,6 +12,9 @@ function getGradientByName(name: string) {
 }
 
 function ChatSelector({ chat }: { chat: Chat }) {
+  const lastMessageDate = chat.lastMessageDate
+    ? new Date(Number(chat.lastMessageDate)).toLocaleDateString()
+    : null;
   return (
     <Link to={`${chat.id}`} className="block w-full">
       <ul className="flex items-center w-full gap-4 p-3 rounded-lg hover:bg-gray-50/50 transition-colors duration-200">
@@ -31,7 +34,7 @@ function ChatSelector({ chat }: { chat: Chat }) {
           </p>
         </li>
         <li className="flex items-center justify-end text-right">
-          <p className="font-semibold text-xs text-black">{chat.lastMessage}</p>
+          <p className="font-semibold text-xs text-black">{lastMessageDate}</p>
         </li>
       </ul>
     </Link>

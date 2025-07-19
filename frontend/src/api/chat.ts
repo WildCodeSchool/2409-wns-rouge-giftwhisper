@@ -5,6 +5,7 @@ export const GET_CHAT_BY_GROUP_ID = gql`
     getChatsByGroup(groupId: $groupId) {
       id
       name
+      lastMessageDate
     }
   }
 `;

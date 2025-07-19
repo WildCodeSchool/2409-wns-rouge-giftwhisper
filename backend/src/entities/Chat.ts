@@ -7,11 +7,13 @@ import {
   JoinTable,
   ManyToMany,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
 import { User } from "./User";
 import { Group } from "./Group";
+import { Message } from "./Message";
 
 @ObjectType()
 @Entity()
@@ -41,6 +43,13 @@ export class Chat extends BaseEntity {
   @Field(() => Group)
   @ManyToOne(() => Group, (group) => group.chats)
   group!: Group;
+
+  @OneToMany(() => Message, (message) => message.chat)
+  @Field(() => [Message])
+  messages!: Message[];
+
+  @Field(() => String, { nullable: true })
+  lastMessageDate?: string;
 }
 
 @InputType()

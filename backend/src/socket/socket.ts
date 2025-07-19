@@ -44,3 +44,6 @@ export function socketInit(httpServer: HttpServer) {
     socket.on("remove-all-user-votes-poll", socketMiddleWares.removeUserVote);
   });
 }
+
+// => "deconnection" => set the date somewhere in the user entity when was the last time he connected
+// to the chatroom in order to get the number of unread messages

@@ -38,7 +38,7 @@ export class Message extends BaseEntity {
   @Field(() => Poll, { nullable: true })
   poll?: Poll;
 
-  @ManyToOne(() => Chat, (chat) => chat.id)
+  @ManyToOne(() => Chat, (chat) => chat.messages)
   @Field(() => Chat)
   chat!: Chat;
 }

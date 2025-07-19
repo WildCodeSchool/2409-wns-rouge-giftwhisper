@@ -27,5 +27,5 @@ export interface Chat {
   id: number;
   name: string;
   messages: number;
-  lastMessage: string;
+  lastMessageDate?: string;
 }

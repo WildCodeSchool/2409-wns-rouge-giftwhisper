@@ -4,6 +4,7 @@ import { In } from "typeorm";
 import { User } from "../entities/User";
 import { Group } from "../entities/Group";
 import { chatService } from "../services/Chat";
+import { Message } from "../entities/Message";
 
 @Resolver()
 export class ChatsResolver {
@@ -25,17 +26,39 @@ export class ChatsResolver {
   ): Promise<Chat[]> {
     const chats = await Chat.find({
       relations: {
-        users: true,
         group: true,
       },
       where: {
         group: { id: groupId }
       }
     });
-
+    // => We loop in chats in order to get the last message sent by chat
+    // This is not great because of complexity n+1 (+ 1 request sent to the db for each chat in the group)
+    // IMPROVEMENT : Figure out a way to limit the relation with message when querying chats
+    for (const chat of chats) {
+      const lastMessageDate = await this.getLastMessageDate(chat.id);
+      if (lastMessageDate) chat.lastMessageDate = lastMessageDate;
+    }
     return chats;
   }
 
+  @Query(() => String)
+  async getLastMessageDate(
+    @Arg('chatId', () => ID, { nullable: true }) chatId: number
+  ): Promise<string | null> {
+    const lastMessage = await Message.findOne({
+      where: {
+        chat: {
+          id: chatId
+        }
+      },
+      order: {
+        "createdAt": "DESC"
+      }
+    })
+    if (!lastMessage) return null;
+    return lastMessage.createdAt;
+  }
 
   @Query(() => Chat)
   async chat(@Arg("id", () => ID) id: string): Promise<Chat> {
