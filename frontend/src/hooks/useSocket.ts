@@ -56,7 +56,6 @@ export function useSocket(groupId: string) {
   }
   const listeners = {
     onUpdateUnreadCount: (setUnreadMessageCountByChat: setUnreadMessageData, activeChatId: string | undefined) => socket.on<SocketCustomEvents["listeners"]>("unread-count", (chatId) => {
-      console.log({activeChatId, chatId})
       if (activeChatId && activeChatId === chatId) return;
       setUnreadMessageCountByChat((current) => {
         const copy = structuredClone(current);
