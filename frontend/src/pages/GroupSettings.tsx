@@ -43,9 +43,10 @@ interface GroupActivationAlertProps {
   isSecretSanta: boolean;
   onActivate: () => void;
   className?: string;
+  userCount: number;
 }
 
-function GroupActivationAlert({ isSecretSanta, onActivate, className = "" }: GroupActivationAlertProps) {
+function GroupActivationAlert({ isSecretSanta, onActivate, className = "", userCount }: GroupActivationAlertProps) {
   return (
     <Card className={`border-orange-200 bg-orange-50 p-4 sm:p-6 ${className}`}>
       <CardHeader className="pb-4">
@@ -58,8 +59,22 @@ function GroupActivationAlert({ isSecretSanta, onActivate, className = "" }: Gro
         </p>
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button className="w-full bg-orange-600 hover:bg-orange-700">
-              Activer le groupe
+            <Button 
+              className="w-full bg-orange-600 hover:bg-orange-700 disabled:bg-gray-700 disabled:cursor-not-allowed cursor-pointer"
+              disabled={userCount < 3}
+            >
+              {userCount < 3 ? (
+                <>
+                  <span className="hidden sm:inline">
+                    Il faut au moins 3 membres (actuellement {userCount})
+                  </span>
+                  <span className="sm:hidden">
+                    Il faut min 3 membres
+                  </span>
+                </>
+              ) : (
+                "Activer le groupe"
+              )}
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
@@ -540,6 +555,7 @@ export default function GroupSettings() {
               isSecretSanta={isSecretSanta} 
               onActivate={handleActivateGroup} 
               className="lg:block hidden"
+              userCount={data.group.users.length}
             />
           )}
         </div>
@@ -717,6 +733,7 @@ export default function GroupSettings() {
           <GroupActivationAlert 
             isSecretSanta={isSecretSanta} 
             onActivate={handleActivateGroup} 
+            userCount={data.group.users.length}
           />
         </div>
       )}
