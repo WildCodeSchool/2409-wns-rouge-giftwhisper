@@ -11,7 +11,6 @@ import { Message } from "@/utils/types/chat";
 import { useSocket } from "@/hooks/useSocket";
 
 function ChatWindow() {
-  //TODO: Deal with color per user instead of hardcoded colors
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [displayAutoScrollDown, setDisplayAutoScrollDown] = useState(false);
@@ -43,7 +42,13 @@ function ChatWindow() {
 
     return () => {
       socketEmitters.leaveChatRoom(chatId);
-      socketEmitters.removeAllListeners();
+      //Remove only listeners that were set on here, otherwise if will disconnect the
+      //unreadMessageCount
+      socketEmitters.removeListeners([
+        'messages-history',
+        'new-message',
+        'poll-updated',
+        'more-messages-response'])
     }
   }, [user, chatId]);
 
@@ -122,6 +127,8 @@ function ChatWindow() {
             onClick={loadMoreMessages}
             isVisible={displayMoreMessage}
           />
+
+          <button onClick={() => socketEmitters.debugging()}>TEST</button>
 
           <MessagesList
             messages={messages}

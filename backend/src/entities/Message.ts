@@ -28,7 +28,7 @@ export class Message extends BaseEntity {
 
   @CreateDateColumn()
   @Field()
-  createdAt!: string;
+  createdAt!: Date;
 
   @Column({ type: "enum", enum: ["text", "poll"], default: "text" })
   @Field()

@@ -6,6 +6,7 @@ export const GET_CHAT_BY_GROUP_ID = gql`
       id
       name
       lastMessageDate
+      unreadMessageCount
     }
   }
 `;

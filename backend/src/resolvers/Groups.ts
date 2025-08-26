@@ -59,6 +59,8 @@ export class GroupsResolver {
     return user.groups;
   }
 
+  
+
   // Create a new group
   @Mutation(() => Group)
   async createGroup(

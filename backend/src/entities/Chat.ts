@@ -14,13 +14,13 @@ import {
 import { User } from "./User";
 import { Group } from "./Group";
 import { Message } from "./Message";
+import { ChatLastConnection } from "./ChatLastConnection";
 
 @ObjectType()
 @Entity()
 export class Chat extends BaseEntity {
   @Field(() => ID)
   @PrimaryGeneratedColumn()
-  @Field()
   id!: number;
 
   @Field()
@@ -48,8 +48,15 @@ export class Chat extends BaseEntity {
   @Field(() => [Message])
   messages!: Message[];
 
-  @Field(() => String, { nullable: true })
-  lastMessageDate?: string;
+  @Field(() => Date, { nullable: true })
+  lastMessageDate?: Date;
+
+  @Field(() => ChatLastConnection, { nullable: true })
+  @OneToMany(() => ChatLastConnection, chatLastConnection => chatLastConnection.chat)
+  chatLastConnection!: ChatLastConnection;
+
+  @Field(() => Number, { nullable: true })
+  unreadMessageCount!: number;
 }
 
 @InputType()

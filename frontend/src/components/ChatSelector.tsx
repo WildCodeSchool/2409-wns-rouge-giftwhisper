@@ -1,6 +1,13 @@
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { chatColorSchemeGradient } from "@/utils/hardValues/chat";
 import { Chat } from "@/utils/types/chat";
+import { useEffect } from "react";
+
+type ChatSelectorProps = {
+  chat: Chat;
+  unreadMessageCountByChat: Record<number, number>;
+  setUnreadMessageCountByChat: React.Dispatch<React.SetStateAction<Record<number, number>>>;
+}
 
 function getGradientByName(name: string) {
   let colorSchemeGradientIndex = 0;
@@ -10,11 +17,22 @@ function getGradientByName(name: string) {
   const gardient = chatColorSchemeGradient[colorSchemeGradientIndex % chatColorSchemeGradient.length]
   return gardient;
 }
-
-function ChatSelector({ chat }: { chat: Chat }) {
+function ChatSelector({ chat, unreadMessageCountByChat, setUnreadMessageCountByChat }: ChatSelectorProps) {
+  const { chatId } = useParams();
   const lastMessageDate = chat.lastMessageDate
-    ? new Date(Number(chat.lastMessageDate)).toLocaleDateString()
+    ? new Date(chat.lastMessageDate).toLocaleDateString()
     : null;
+
+  useEffect(() => {
+    if (chatId && Number(chat.id) === Number(chatId)) {
+      setUnreadMessageCountByChat((current) => {
+        const copy = structuredClone(current);
+        copy[chat.id] = 0;
+        return copy;
+      });
+    }
+  }, [chatId]);
+
   return (
     <Link to={`${chat.id}`} className="block w-full">
       <ul className="flex items-center w-full gap-4 p-3 rounded-lg hover:bg-gray-50/50 transition-colors duration-200">
@@ -30,7 +48,7 @@ function ChatSelector({ chat }: { chat: Chat }) {
             Pour {chat.name}
           </p>
           <p className="text-xs text-black mt-0.5">
-            {chat.messages} nouveaux messages
+            {unreadMessageCountByChat[chat.id] > 0 ? `${unreadMessageCountByChat[chat.id]} nouveaux messages` : "Pas de nouveaux messages"}
           </p>
         </li>
         <li className="flex items-center justify-end text-right">

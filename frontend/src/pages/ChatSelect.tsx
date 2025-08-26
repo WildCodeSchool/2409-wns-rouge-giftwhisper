@@ -12,13 +12,35 @@ import ChatSelector from "@/components/ChatSelector";
 import { useQuery } from "@apollo/client";
 import { GET_CHAT_BY_GROUP_ID } from "@/api/chat";
 import { Chat } from "@/utils/types/chat";
+import { useSocket } from "@/hooks/useSocket";
+import { useEffect, useState } from "react";
 
 function ChatSelect() {
+  const [unreadMessageCountByChat, setUnreadMessageCountByChat] = useState<Record<number, number>>({});
   const navigate = useNavigate();
-  const { groupId } = useParams<{ groupId: string }>();
+  const { groupId, chatId } = useParams<{ groupId: string, chatId: string }>();
   const { data, loading } = useQuery<{ getChatsByGroup: Chat[] }>(GET_CHAT_BY_GROUP_ID, {
-    variables: { groupId }
+    variables: { groupId },
+    fetchPolicy: "network-only"
   });
+
+  useEffect(() => {
+    socketListeners.onUpdateUnreadCount(setUnreadMessageCountByChat, chatId);
+
+    return () => socketEmitters.removeListeners(['unread-count']);
+  }, [chatId]);
+
+  useEffect(() => {
+    if (!data) return;
+    const chatsUnredMessageCount: Record<number, number> = {};
+    for (const chat of chats) {
+      chatsUnredMessageCount[Number(chat.id)] = chat.unreadMessageCount ?? 0;
+    }
+    setUnreadMessageCountByChat(chatsUnredMessageCount);
+  }, [data])
+
+  if (!groupId) return null;
+  const { socketListeners, socketEmitters } = useSocket(groupId);
   if (!data?.getChatsByGroup) return null;
   if (loading) {
     return (
@@ -28,6 +50,7 @@ function ChatSelect() {
     );
   }
   const chats = data.getChatsByGroup;
+
   return (
     <>
       <header className="pt-10 px-4 flex justify-between items-center">
@@ -57,7 +80,7 @@ function ChatSelect() {
       </header>
       <section className="px-4 flex flex-col gap-4 pt-10">
         {chats.map((chat) => (
-          <ChatSelector key={chat.id} chat={chat} />
+          <ChatSelector key={chat.id} chat={chat} unreadMessageCountByChat={unreadMessageCountByChat} setUnreadMessageCountByChat={setUnreadMessageCountByChat} />
         ))}
       </section>
     </>
