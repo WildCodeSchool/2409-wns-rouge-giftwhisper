@@ -20,15 +20,10 @@ function ChatWindow() {
   const { user, loading } = useCurrentUser();
   const [showPollModal, setShowPollModal] = useState(false);
   const { chatId, groupId } = useParams<{ chatId: string | undefined, groupId: string | undefined }>();
-
-  if (!user || !chatId || !groupId) {
-    return null;
-  }
-
   const { socketEmitters, socketListeners, getSocket } = useSocket(groupId);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !groupId || !chatId) return;
     setDisplayAutoScrollDown(false);
     //getSocket => Even if we connect the socket from the previous page (group selection) 
     //we need to make sure the connection is established (the user can reach this page using an url)
@@ -53,7 +48,7 @@ function ChatWindow() {
   }, [user, chatId]);
 
   useLayoutEffect(() => {
-    if (!displayAutoScrollDown || messages[messages.length - 1].createdBy.id === user.id) {
+    if (!displayAutoScrollDown || !user || messages[messages.length - 1].createdBy.id === user.id) {
       lastMessageRef.current?.scrollIntoView({ behavior: "instant" });
     }
   }, [messages]);
@@ -78,6 +73,9 @@ function ChatWindow() {
       setDisplayMoreMessage(false);
     }
   };
+
+
+  if (!user || !chatId || !groupId) return null;
 
   const loadMoreMessages = () => {
     socketEmitters.moreMessage(messages?.length)
@@ -127,8 +125,6 @@ function ChatWindow() {
             onClick={loadMoreMessages}
             isVisible={displayMoreMessage}
           />
-
-          <button onClick={() => socketEmitters.debugging()}>TEST</button>
 
           <MessagesList
             messages={messages}

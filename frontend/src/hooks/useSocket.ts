@@ -30,7 +30,8 @@ type SocketCustomEvents = {
   "more-messages-response"
 }
 
-export function useSocket(groupId: string) {
+export function useSocket(groupId: string | undefined) {
+  if (!groupId) throw new Error('A groupId is required in order to initialize the socket');
   const { getSocket, disconnectSocket } = socketConnection();
   const socket = getSocket(groupId);
   const emitters = {
