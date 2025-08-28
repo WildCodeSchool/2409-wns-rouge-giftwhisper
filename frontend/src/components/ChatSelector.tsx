@@ -6,25 +6,41 @@ import { useEffect } from "react";
 type ChatSelectorProps = {
   chat: Chat;
   unreadMessageCountByChat: Record<number, number>;
-  setUnreadMessageCountByChat: React.Dispatch<React.SetStateAction<Record<number, number>>>;
-}
+  setUnreadMessageCountByChat: React.Dispatch<
+    React.SetStateAction<Record<number, number>>
+  >;
+};
 
 function getGradientByName(name: string) {
   let colorSchemeGradientIndex = 0;
   for (const char of name) {
     colorSchemeGradientIndex += char.charCodeAt(0);
   }
-  const gardient = chatColorSchemeGradient[colorSchemeGradientIndex % chatColorSchemeGradient.length]
+  const gardient =
+    chatColorSchemeGradient[
+      colorSchemeGradientIndex % chatColorSchemeGradient.length
+    ];
   return gardient;
 }
-function ChatSelector({ chat, unreadMessageCountByChat, setUnreadMessageCountByChat }: ChatSelectorProps) {
+function ChatSelector({
+  chat,
+  unreadMessageCountByChat,
+  setUnreadMessageCountByChat,
+}: ChatSelectorProps) {
   const { chatId } = useParams();
   const lastMessageDate = chat.lastMessageDate
     ? new Date(chat.lastMessageDate).toLocaleDateString()
     : null;
 
+  const isSelected = chatId && Number(chat.id) === Number(chatId);
+
+  // Extraire le nom de la personne sans le "Pour"
+  const personName = chat.name.startsWith("Pour ")
+    ? chat.name.slice(5)
+    : chat.name;
+
   useEffect(() => {
-    if (chatId && Number(chat.id) === Number(chatId)) {
+    if (isSelected) {
       setUnreadMessageCountByChat((current) => {
         const copy = structuredClone(current);
         copy[chat.id] = 0;
@@ -34,21 +50,30 @@ function ChatSelector({ chat, unreadMessageCountByChat, setUnreadMessageCountByC
   }, [chatId]);
 
   return (
-    <Link to={`${chat.id}`} className="block w-full">
-      <ul className="flex items-center w-full gap-4 p-3 rounded-lg hover:bg-gray-50/50 transition-colors duration-200">
+    <Link
+      to={`${chat.id}`}
+      className={`block w-full transition-colors duration-200 ${
+        isSelected ? "bg-black/5" : "hover:bg-black/5"
+      }`}
+    >
+      <ul className="flex items-center w-full gap-4 p-3 px-4 ">
         <li className="flex items-center">
           <p
-            className={`${getGradientByName(chat.name)} rounded-full w-11 h-11 flex items-center justify-center text-white font-medium transition-transform duration-200 hover:scale-105`}
+            className={`${getGradientByName(
+              chat.name
+            )} rounded-full w-11 h-11 flex items-center justify-center text-white font-medium transition-transform duration-200 hover:scale-105`}
           >
-            {chat.name.charAt(0).toUpperCase()}
+            {personName.charAt(0).toUpperCase()}
           </p>
         </li>
         <li className="flex flex-col items-start gap-0 flex-1">
           <p className="text-xl leading-none font-semibold text-primary text-nowrap">
-            Pour {chat.name}
+            Pour {personName}
           </p>
           <p className="text-xs text-black mt-0.5">
-            {unreadMessageCountByChat[chat.id] > 0 ? `${unreadMessageCountByChat[chat.id]} nouveaux messages` : "Pas de nouveaux messages"}
+            {unreadMessageCountByChat[chat.id] > 0
+              ? `${unreadMessageCountByChat[chat.id]} nouveaux messages`
+              : "Pas de nouveaux messages"}
           </p>
         </li>
         <li className="flex items-center justify-end text-right">

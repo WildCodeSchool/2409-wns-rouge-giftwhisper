@@ -15,7 +15,6 @@ import Settings from "./pages/Settings";
 import SignUp from "./pages/SignUp";
 import InvitationHandler from "./components/InvitationHandler";
 import { Toaster } from "./components/ui/sonner";
-import { MobileChatSelect } from "./utils/helpers/MobileChatSelect";
 import {
   ProtectedLayout,
   PublicOnlyLayout,
@@ -67,7 +66,6 @@ function App() {
                 <Route path="/group" Component={Group} />
                 <Route path="/group/:id/settings" Component={GroupSettings} />
                 <Route path="/group-creation" Component={GroupCreation} />
-                <Route path="/chat-select" Component={MobileChatSelect} />
                 <Route path="/wishlist" Component={Wishlist} />
               </Route>
 

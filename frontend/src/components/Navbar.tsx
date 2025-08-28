@@ -25,7 +25,7 @@ export function Navbar() {
   const { logout, isLoggingOut } = useAuth();
   const items = [
     {
-      title: "Giftwhisper",
+      title: "Accueil",
       path: "/dashboard",
       icon: Home,
     },
@@ -60,7 +60,13 @@ export function Navbar() {
   ];
 
   // Composant pour les éléments du menu mobile qui ferment le sidebar au clic
-  function MobileMenuItem({ item, logoutButton }: { item: (typeof items)[0] | (typeof accountItems)[0], logoutButton?: boolean }) {
+  function MobileMenuItem({
+    item,
+    logoutButton,
+  }: {
+    item: (typeof items)[0] | (typeof accountItems)[0];
+    logoutButton?: boolean;
+  }) {
     const { setOpenMobile } = useSidebar();
 
     if (logoutButton) {
@@ -71,14 +77,19 @@ export function Navbar() {
             className="w-full hover:bg-[#FFFBFF]/10 rounded-lg transition-colors duration-200"
           >
             <button
-              onClick={() => { logout(); setOpenMobile(false); }}
+              onClick={() => {
+                logout();
+                setOpenMobile(false);
+              }}
               disabled={isLoggingOut}
               className="flex items-center gap-4 p-3 w-full bg-transparent text-[#D36567] hover:bg-[#D36567] hover:text-[#FFE5E5] transition-colors rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <div className="bg-[#FFFBFF]/20 p-2 rounded-lg">
                 <item.icon className="h-6 w-6" />
               </div>
-              <span className="text-xl font-medium">{isLoggingOut ? "Déconnexion en cours..." : "Déconnexion"}</span>
+              <span className="text-xl font-medium">
+                {isLoggingOut ? "Déconnexion en cours..." : "Déconnexion"}
+              </span>
             </button>
           </SidebarMenuButton>
         </SidebarMenuItem>
@@ -158,7 +169,9 @@ export function Navbar() {
                   className="flex items-center gap-2 cursor-pointer bg-[#FFFBFF] text-[#D36567] hover:bg-[#D36567] hover:text-[#FFE5E5] transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full px-2 py-1.5 rounded"
                 >
                   <LogOut className="h-4 w-4 hover:text-[#FFE5E5] transition-colors" />
-                  <span>{isLoggingOut ? "Déconnexion en cours..." : "Déconnexion"}</span>
+                  <span>
+                    {isLoggingOut ? "Déconnexion en cours..." : "Déconnexion"}
+                  </span>
                 </button>
               </DropdownMenuItem>
             </DropdownMenuContent>

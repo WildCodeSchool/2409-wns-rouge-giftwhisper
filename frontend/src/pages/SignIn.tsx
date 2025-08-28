@@ -14,16 +14,13 @@ import { signInSchema } from "@/schemas/auth.schema";
 import type { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { Eye, EyeOff } from "lucide-react";
 import { PasswordInput } from "@/components/form/PasswordInput";
 
 export default function SignIn() {
   const navigate = useNavigate();
   const { tokenInvitation, login, isLoggingIn } = useAuth();
-
-  const [showPassword, setShowPassword] = useState(false);
 
   // On check si a un token d'invitation dans le sessionStorage
   const hasInvitation = !!tokenInvitation;
