@@ -1,5 +1,5 @@
 import { Field, ID, ObjectType } from "type-graphql";
-import { BaseEntity, Column, Entity, JoinTable, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { BaseEntity, Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { User } from "./User";
 import { Chat } from "./Chat";
 
@@ -14,13 +14,11 @@ export class ChatLastConnection extends BaseEntity {
   @Field(() => Date)
   lastConnection!: Date;
 
-  @ManyToOne(() => User, user => user.id)
-  @JoinTable()
+  @ManyToOne(() => User, user => user.chatLastConnections)
   @Field(() => User)
   user!: User;
 
-  @ManyToOne(() => Chat, chat => chat.chatLastConnection)
-  @JoinTable()
+  @ManyToOne(() => Chat, chat => chat.chatLastConnections)
   @Field(() => Chat)
   chat!: Chat;
 }

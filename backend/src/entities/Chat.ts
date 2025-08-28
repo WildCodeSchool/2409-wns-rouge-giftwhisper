@@ -51,9 +51,9 @@ export class Chat extends BaseEntity {
   @Field(() => Date, { nullable: true })
   lastMessageDate?: Date;
 
-  @Field(() => ChatLastConnection, { nullable: true })
   @OneToMany(() => ChatLastConnection, chatLastConnection => chatLastConnection.chat)
-  chatLastConnection!: ChatLastConnection;
+  @Field(() => [ChatLastConnection], { nullable: true })
+  chatLastConnections!: ChatLastConnection[];
 
   @Field(() => Number, { nullable: true })
   unreadMessageCount!: number;
