@@ -190,7 +190,6 @@ export default function GroupSettings() {
         name: groupName,
         end_date: endDate,
         is_secret_santa: isSecretSanta,
-        is_active: isActive,
       };
 
       // Filtrer les champs undefined pour ne pas les envoyer
@@ -200,7 +199,7 @@ export default function GroupSettings() {
 
       await updateGroup({
         variables: {
-          id: id,
+          updateGroupId: id,
           data: filteredData,
         },
       });
@@ -219,7 +218,6 @@ export default function GroupSettings() {
         name: groupName,
         end_date: endDate,
         is_secret_santa: isSecretSanta,
-        is_active: isActive,
       });
 
     } catch (error: any) {
@@ -230,7 +228,6 @@ export default function GroupSettings() {
         setGroupName(originalData.name);
         setEndDate(originalData.end_date);
         setIsSecretSanta(originalData.is_secret_santa);
-        setIsActive(originalData.is_active);
       }
 
       // Afficher le message d'erreur
