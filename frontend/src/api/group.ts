@@ -57,7 +57,6 @@ export const UPDATE_GROUP = gql`
       is_secret_santa
       created_at
       updated_at
-      is_active
     }
   }
 `;
