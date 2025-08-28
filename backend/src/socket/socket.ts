@@ -28,6 +28,7 @@ export function socketInit(httpServer: HttpServer) {
       return next(new Error('No group id provided for the socket'))
     }
     req.user = user;
+    req.groupId = groupId;
     next();
   });
   io.on("connection", async (socket) => {
@@ -35,6 +36,7 @@ export function socketInit(httpServer: HttpServer) {
     const socketMiddleWares = new SocketMiddleWares(socket, io, initializedApolloServer);
     socket.on('join-room', socketMiddleWares.joinRoom);
     socket.on('leave-room', socketMiddleWares.leaveRoom);
+    socket.on('disconnect', socketMiddleWares.leaveRoom);
     socket.on('get-messages-history', socketMiddleWares.getMessages);
     socket.on("more-messages", socketMiddleWares.getMessages);
     socket.on("message", socketMiddleWares.createMessage);
@@ -42,5 +44,10 @@ export function socketInit(httpServer: HttpServer) {
     socket.on("vote-poll", socketMiddleWares.votePoll);
     socket.on("remove-vote-poll", socketMiddleWares.removeVotePoll);
     socket.on("remove-all-user-votes-poll", socketMiddleWares.removeUserVote);
+    socket.on("debugging", socketMiddleWares.debugging);
+    socket.on("disconnect", socketMiddleWares.disconnetSocket);
   });
 }
+
+// => "leaveRoom" => set the date somewhere in the user entity when was the last time he connected
+// to the chatroom in order to get the number of unread messages

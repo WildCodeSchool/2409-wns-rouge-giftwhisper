@@ -5,6 +5,8 @@ import { CreatePollInput, Poll } from "../entities/Poll";
 import { PollOption } from "../entities/PollOptions";
 import { User } from "../entities/User";
 import { Chat } from "../entities/Chat";
+import { ChatLastConnection } from "../entities/ChatLastConnection";
+import { LessThan, MoreThan } from "typeorm";
 
 @Resolver()
 export class MessageResolver {
@@ -41,6 +43,28 @@ export class MessageResolver {
       order: { createdAt: 'DESC' },
     });
     return messages;
+  }
+
+  @Query(() => Number)
+  async getUnreadCount(
+    @Arg('chatId', () => ID) chatId: number,
+    @Ctx() context: ContextType | ContextUserType
+  ) {
+    const user = await getUserFromContext(context);
+    if (!user) throw new Error('You need to be authenticated in order to post a message');
+    const lastChatConnection = await ChatLastConnection.findOneBy({
+      user: { id: user.id },
+      chat: { id: chatId }
+    });
+    if (!lastChatConnection) return 0;
+    const lastReadMessage = lastChatConnection.lastConnection;
+    const unreadMessagesNumb = await Message.count({
+      where: {
+        chat: { id: chatId },
+        createdAt: MoreThan(lastReadMessage)
+      }
+    });
+    return unreadMessagesNumb;
   }
 
   @Mutation(() => Message)

@@ -6,8 +6,9 @@ import { ApolloServer, BaseContext } from "@apollo/server";
 import { GraphQLResponse } from "@apollo/server";
 import { getMessagesByChatId, createMessage, createPollWithMessage } from "../queries/message";
 import { removeUserVote, removeVotePoll, votePoll } from "../queries/poll";
+import { saveLastConnection } from "../queries/chatLastConnection";
 
-function getDataFromServerReponse<T extends Record<string, any>, K extends keyof T>(response: GraphQLResponse<T>, queryName: K) {
+function getDataFromServerGQLReponse<T extends Record<string, any>, K extends keyof T>(response: GraphQLResponse<T>, queryName: K) {
   //TODO: Deal with errors if there are any
   if (response.body.kind === "single") {
     const errors = response.body.singleResult.errors;
@@ -22,7 +23,7 @@ function getDataFromServerReponse<T extends Record<string, any>, K extends keyof
 // /!\ Warning : READ BEFORE ADDING NEW MIDDLEWARE //
 // socket.emit() will send information ONLY to the user connected to the socket
 // socket.to().emit() will send information to all users connected to the room EXEPT the user sending the data
-// io.to().emit() will send information to all users connected the the romm INCLUDING the user sending the data
+// io.to().emit() will send information to all users connected the the room INCLUDING the user sending the data
 // ex : - a new message should be shared to all users in the room => io.to().emit()
 // - a message history request is only for the user making the request => socket.emit()
 
@@ -30,24 +31,54 @@ export class SocketMiddleWares {
   socket;
   io;
   user;
-  chatId?: number;
+  groupId: string;
+  groupRoomId: string;
+  chatId?: string;
+  chatRoomId?: string;
   server: ApolloServer;
   constructor(socket: Socket, io: Server, apolloServer: ApolloServer<BaseContext>) {
     this.socket = socket;
     this.io = io;
     this.user = (this.socket.request as any).user as User;
+    this.groupId = (this.socket.request as any).groupId as string;
     this.server = apolloServer;
+    this.groupRoomId = `group-${this.groupId}`;
+    //Automatically join the group room on class creation
+    this.socket.join(this.groupRoomId);
   }
+
+  debugging = () => {
+    console.log(this.socket.rooms);
+  };
 
   //TODO: Check if user is part of the chatroom;
   joinRoom = (chatId: string) => {
-    this.chatId = Number(chatId);
-    this.socket.join(chatId);
+    this.chatId = chatId;
+    this.chatRoomId = `chat-${chatId}`;
+    this.socket.join(this.chatRoomId);
   };
-  leaveRoom = (chatId: string) => {
-    this.chatId = undefined;
-    this.socket.leave(chatId);
+
+  leaveRoom = async () => {
+    if (this.chatId) {
+      //We first store then delete this.chatId in order to execute sync operations before calling the gql api
+      //in order to avoid problems with the orders of execution with joinRoom in case of the user switching rooms
+      const chatId = this.chatId;
+      this.chatId = undefined;
+      this.socket.leave(`chat-${chatId}`);
+      await this.server.executeOperation<{
+        saveLastConnection: boolean
+      }>({
+        query: saveLastConnection,
+        variables: {
+          chatId: chatId,
+        }
+      }, { contextValue: { user: this.user } });
+    }
   }
+
+  disconnetSocket = async () => {
+    this.socket.leave(this.groupRoomId);
+  };
 
   getMessages = async (options?: { skip?: number; take?: number }) => {
     const response = await this.server.executeOperation<{
@@ -60,7 +91,7 @@ export class SocketMiddleWares {
         take: options?.take
       }
     });
-    const messages = getDataFromServerReponse(response, 'getMessagesByChatId');
+    const messages = getDataFromServerGQLReponse(response, 'getMessagesByChatId');
     if (messages) {
       if (!options) {
         this.socket.emit("messages-history", messages.reverse());
@@ -71,6 +102,7 @@ export class SocketMiddleWares {
   };
 
   createMessage = async ({ content }: { content: string }) => {
+    if (!this.chatRoomId) throw new Error("Not chatroom id detected");
     const response = await this.server.executeOperation<{ createMessage: Message }>({
       query: createMessage,
       variables: {
@@ -78,8 +110,9 @@ export class SocketMiddleWares {
         content
       }
     }, { contextValue: { user: this.user } });
-    const newMessage = getDataFromServerReponse(response, 'createMessage');
-    this.io.to(String(this.chatId)).emit("new-message", newMessage);
+    const newMessage = getDataFromServerGQLReponse(response, 'createMessage');
+    this.io.to(this.chatRoomId).emit("new-message", newMessage);
+    this.io.to(this.groupRoomId).emit("unread-count", this.chatId);
   };
 
   createPollWithMessage = async (pollData: {
@@ -88,14 +121,15 @@ export class SocketMiddleWares {
     allowMultipleVotes: boolean;
   }) => {
     try {
+      if (!this.chatRoomId) throw new Error("Not chatroom id detected");
       const response = await this.server.executeOperation<{ createPollWithMessage: Message }>({
         query: createPollWithMessage,
         variables: {
           data: { ...pollData, chatId: this.chatId }
         }
       }, { contextValue: { user: this.user } });
-      const messageWithPoll = getDataFromServerReponse(response, "createPollWithMessage");
-      this.io.to(String(this.chatId)).emit("new-message", messageWithPoll);
+      const messageWithPoll = getDataFromServerGQLReponse(response, "createPollWithMessage");
+      this.io.to(this.chatRoomId).emit("new-message", messageWithPoll);
     } catch (error) {
       console.error("Erreur lors de la création du sondage:", error);
     }
@@ -103,6 +137,7 @@ export class SocketMiddleWares {
 
   votePoll = async (voteData: { pollId: number; optionId: number }) => {
     try {
+      if (!this.chatRoomId) throw new Error("Not chatroom id detected");
       const response = await this.server.executeOperation<{ votePoll: Poll }>({
         query: votePoll,
         variables: {
@@ -110,9 +145,9 @@ export class SocketMiddleWares {
           optionId: voteData.optionId
         }
       }, { contextValue: { user: this.user } });
-      const updatedPoll = getDataFromServerReponse(response, 'votePoll');
+      const updatedPoll = getDataFromServerGQLReponse(response, 'votePoll');
       if (updatedPoll) {
-        this.io.to(String(this.chatId)).emit("poll-updated", {
+        this.io.to(this.chatRoomId).emit("poll-updated", {
           pollId: voteData.pollId,
           poll: updatedPoll,
         });
@@ -124,6 +159,7 @@ export class SocketMiddleWares {
 
   removeVotePoll = async (voteData: { pollId: number; optionId: number }) => {
     try {
+      if (!this.chatRoomId) throw new Error("Not chatroom id detected");
       const reponse = await this.server.executeOperation<{ removeVotePoll: Boolean }>({
         query: removeVotePoll,
         variables: {
@@ -131,9 +167,9 @@ export class SocketMiddleWares {
           optionId: voteData.optionId
         }
       }, { contextValue: { user: this.user } });
-      const hasBeenDeleted = getDataFromServerReponse(reponse, "removeVotePoll");
+      const hasBeenDeleted = getDataFromServerGQLReponse(reponse, "removeVotePoll");
       if (hasBeenDeleted) {
-        this.io.to(String(this.chatId)).emit("poll-updated", hasBeenDeleted);
+        this.io.to(this.chatRoomId).emit("poll-updated", hasBeenDeleted);
       }
     } catch (error) {
       console.error("Erreur lors de la suppression du vote:", error);
@@ -142,15 +178,16 @@ export class SocketMiddleWares {
 
   removeUserVote = async (voteData: { pollId: number }) => {
     try {
+      if (!this.chatRoomId) throw new Error("Not chatroom id detected");
       const response = await this.server.executeOperation<{ removeUserVote: Boolean }>({
         query: removeUserVote,
         variables: {
           pollId: voteData.pollId
         }
       }, { contextValue: { user: this.user } });
-      const hasBeenDeleted = getDataFromServerReponse(response, 'removeUserVote');
+      const hasBeenDeleted = getDataFromServerGQLReponse(response, 'removeUserVote');
       if (hasBeenDeleted) {
-        this.io.to(String(this.chatId)).emit("poll-updated", hasBeenDeleted);
+        this.io.to(this.chatRoomId).emit("poll-updated", hasBeenDeleted);
       }
     } catch (error) {
       console.error("Erreur lors de la suppression des votes:", error);
