@@ -1,6 +1,6 @@
 import { Arg, ID, Mutation, Query, Ctx, Resolver } from "type-graphql";
 import { Chat, ChatCreateInput } from "../entities/Chat";
-import { In, MoreThan, Not } from "typeorm";
+import { In, MoreThan } from "typeorm";
 import { User } from "../entities/User";
 import { Group } from "../entities/Group";
 import { chatService } from "../services/Chat";
