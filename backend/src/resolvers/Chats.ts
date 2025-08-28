@@ -1,6 +1,6 @@
 import { Arg, ID, Mutation, Query, Ctx, Resolver } from "type-graphql";
 import { Chat, ChatCreateInput } from "../entities/Chat";
-import { FindOperator, In, MoreThan } from "typeorm";
+import { In, MoreThan } from "typeorm";
 import { User } from "../entities/User";
 import { Group } from "../entities/Group";
 import { chatService } from "../services/Chat";
@@ -32,9 +32,11 @@ export class ChatsResolver {
     const chats = await Chat.find({
       relations: {
         group: true,
+        users: true
       },
       where: {
-        group: { id: groupId }
+        group: { id: groupId },
+        users: { id: user.id }
       }
     });
     // => We loop in chats in order to get the last message sent by chat
@@ -49,8 +51,8 @@ export class ChatsResolver {
         chat: { id: chat.id }
       });
       const userLastConnection = lastChatConnection?.lastConnection;
-      const where: any = { chat: { id: chat.id } }
-      if (userLastConnection) where.createdAt = MoreThan(userLastConnection)
+      const where: any = { chat: { id: chat.id } };
+      if (userLastConnection) where.createdAt = MoreThan(userLastConnection);
       const unreadMessagesCount = await Message.count({ where });
       chat.unreadMessageCount = unreadMessagesCount;
     }
