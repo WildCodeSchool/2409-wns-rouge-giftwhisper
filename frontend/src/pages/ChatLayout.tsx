@@ -1,30 +1,51 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useParams } from "react-router-dom";
 import ChatSelect from "./ChatSelect";
 import { useEffect } from "react";
-import { useParams } from "react-router-dom";
 import { useSocket } from "@/hooks/useSocket";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 function ChatLayout() {
-  const { groupId } = useParams<{ groupId: string }>();
+  const { groupId, chatId } = useParams<{ groupId: string; chatId?: string }>();
+  const isMobile = useIsMobile();
+  const { disconnectSocket, getSocket } = useSocket(groupId);
+
+  useEffect(() => {
+    if (groupId) {
+      getSocket(groupId);
+      return () => disconnectSocket();
+    }
+  }, [groupId]);
+
   //TODO: Redirection page;
   if (!groupId) {
     return null;
   }
-  const { disconnectSocket, getSocket } = useSocket(groupId);
-  
-  useEffect(() => {
-    getSocket(groupId);
-    return () => disconnectSocket();
-  }, []);
-
 
   return (
     <>
       <div className="flex h-screen overflow-hidden">
-        <aside className="bg-[#FAFAFA] px-4 hidden md:flex md:flex-col">
+        {/* Desktop: Toujours afficher la sidebar */}
+        <aside className="bg-[#FAFAFA] hidden md:flex md:flex-col">
           <ChatSelect />
         </aside>
-        <Outlet />
+
+        {/* Mobile: Afficher ChatSelect si pas de chatId, sinon l'Outlet */}
+        {isMobile ? (
+          <>
+            {!chatId ? (
+              <div className="flex flex-col w-full md:hidden">
+                <ChatSelect />
+              </div>
+            ) : (
+              <div className="flex flex-col w-full md:hidden">
+                <Outlet />
+              </div>
+            )}
+          </>
+        ) : (
+          /* Desktop: Toujours afficher l'Outlet */
+          <Outlet />
+        )}
       </div>
     </>
   );

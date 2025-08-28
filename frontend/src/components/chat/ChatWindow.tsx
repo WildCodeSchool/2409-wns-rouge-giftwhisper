@@ -9,6 +9,22 @@ import { useParams } from "react-router-dom";
 import { elementIsVisibleInViewport } from "@/utils/helpers/helpers";
 import { Message } from "@/utils/types/chat";
 import { useSocket } from "@/hooks/useSocket";
+import { useQuery } from "@apollo/client";
+import { GET_CHAT_BY_GROUP_ID } from "@/api/chat";
+import { chatColorSchemeGradient } from "@/utils/hardValues/chat";
+import { Chat } from "@/utils/types/chat";
+
+function getGradientByName(name: string) {
+  let colorSchemeGradientIndex = 0;
+  for (const char of name) {
+    colorSchemeGradientIndex += char.charCodeAt(0);
+  }
+  const gradient =
+    chatColorSchemeGradient[
+      colorSchemeGradientIndex % chatColorSchemeGradient.length
+    ];
+  return gradient;
+}
 
 function ChatWindow() {
   const [message, setMessage] = useState("");
@@ -19,20 +35,36 @@ function ChatWindow() {
   const firstMessageRef = useRef<HTMLDivElement>(null);
   const { user, loading } = useCurrentUser();
   const [showPollModal, setShowPollModal] = useState(false);
-  const { chatId, groupId } = useParams<{ chatId: string | undefined, groupId: string | undefined }>();
+  const { chatId, groupId } = useParams<{
+    chatId: string | undefined;
+    groupId: string | undefined;
+  }>();
   const { socketEmitters, socketListeners, getSocket } = useSocket(groupId);
+
+  const { data: chatsData } = useQuery<{ getChatsByGroup: Chat[] }>(
+    GET_CHAT_BY_GROUP_ID,
+    {
+      variables: { groupId },
+      skip: !groupId,
+    }
+  );
+
+  const currentChat = chatsData?.getChatsByGroup?.find(
+    (chat: Chat) => String(chat.id) === chatId
+  );
+  const chatGradient = currentChat ? getGradientByName(currentChat.name) : "";
 
   useEffect(() => {
     if (!user || !groupId || !chatId) return;
     setDisplayAutoScrollDown(false);
-    //getSocket => Even if we connect the socket from the previous page (group selection) 
+    //getSocket => Even if we connect the socket from the previous page (group selection)
     //we need to make sure the connection is established (the user can reach this page using an url)
     getSocket(groupId);
     socketEmitters.joinChatRoom(chatId);
     socketEmitters.getMessageHistory();
-    socketListeners.onMessageHistory(setMessages)
-    socketListeners.onNewMessage(setMessages)
-    socketListeners.onPollUpdated(setMessages)
+    socketListeners.onMessageHistory(setMessages);
+    socketListeners.onNewMessage(setMessages);
+    socketListeners.onPollUpdated(setMessages);
     socketListeners.onMoreMessageReponse(setMessages);
 
     return () => {
@@ -40,15 +72,20 @@ function ChatWindow() {
       //Remove only listeners that were set on here, otherwise if will disconnect the
       //unreadMessageCount
       socketEmitters.removeListeners([
-        'messages-history',
-        'new-message',
-        'poll-updated',
-        'more-messages-response'])
-    }
+        "messages-history",
+        "new-message",
+        "poll-updated",
+        "more-messages-response",
+      ]);
+    };
   }, [user, chatId]);
 
   useLayoutEffect(() => {
-    if (!displayAutoScrollDown || !user || messages[messages.length - 1].createdBy.id === user.id) {
+    if (
+      !displayAutoScrollDown ||
+      !user ||
+      messages[messages.length - 1].createdBy.id === user.id
+    ) {
       lastMessageRef.current?.scrollIntoView({ behavior: "instant" });
     }
   }, [messages]);
@@ -62,7 +99,11 @@ function ChatWindow() {
     );
     if (messages.length && !isLastMessageVisible && !displayAutoScrollDown) {
       setDisplayAutoScrollDown(true);
-    } else if (messages.length && isLastMessageVisible && displayAutoScrollDown) {
+    } else if (
+      messages.length &&
+      isLastMessageVisible &&
+      displayAutoScrollDown
+    ) {
       setDisplayAutoScrollDown(false);
     }
     //TODO: Add message count to display the message only if there are more messages in DB
@@ -74,11 +115,10 @@ function ChatWindow() {
     }
   };
 
-
   if (!user || !chatId || !groupId) return null;
 
   const loadMoreMessages = () => {
-    socketEmitters.moreMessage(messages?.length)
+    socketEmitters.moreMessage(messages?.length);
   };
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -94,19 +134,19 @@ function ChatWindow() {
     options: string[],
     allowMultipleVotes: boolean
   ) => {
-    socketEmitters.createPoll({ question, options, allowMultipleVotes })
+    socketEmitters.createPoll({ question, options, allowMultipleVotes });
   };
 
   const handleVotePoll = (pollId: number, optionId: number) => {
-    socketEmitters.votePoll({ pollId, optionId })
+    socketEmitters.votePoll({ pollId, optionId });
   };
 
   const handleRemoveVotePoll = (pollId: number, optionId: number) => {
-    socketEmitters.removeVotePoll({ pollId, optionId })
+    socketEmitters.removeVotePoll({ pollId, optionId });
   };
 
   const handleRemoveAllUserVotesPoll = (pollId: number) => {
-    socketEmitters.removeAllVotePoll(pollId)
+    socketEmitters.removeAllVotePoll(pollId);
   };
 
   if (loading) {
@@ -135,6 +175,7 @@ function ChatWindow() {
             onVote={handleVotePoll}
             onRemoveVote={handleRemoveVotePoll}
             onRemoveAllVotes={handleRemoveAllUserVotesPoll}
+            chatGradient={chatGradient}
           />
 
           <ScrollToBottomButton

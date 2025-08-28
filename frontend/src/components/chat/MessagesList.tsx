@@ -10,6 +10,7 @@ interface MessagesListProps {
   onVote: (pollId: number, optionId: number) => void;
   onRemoveVote: (pollId: number, optionId: number) => void;
   onRemoveAllVotes: (pollId: number) => void;
+  chatGradient: string;
 }
 
 export function MessagesList({
@@ -21,6 +22,7 @@ export function MessagesList({
   onVote,
   onRemoveVote,
   onRemoveAllVotes,
+  chatGradient,
 }: MessagesListProps) {
   return (
     <section
@@ -44,6 +46,7 @@ export function MessagesList({
               onVote={onVote}
               onRemoveVote={onRemoveVote}
               onRemoveAllVotes={onRemoveAllVotes}
+              chatGradient={chatGradient}
             />
           );
         })}
