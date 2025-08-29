@@ -7,7 +7,7 @@ import { datasource } from "../datasource.config";
 
 export class InvitationService {
   /**
-   * Crée une invitation et envoie un email 
+   * Crée une invitation et envoie un email
    */
   async createInvitation(email: string, groupId: number): Promise<Invitation> {
     return await datasource.manager.transaction(
@@ -19,6 +19,22 @@ export class InvitationService {
 
         if (!group) {
           throw new Error("Group not found");
+        }
+
+        // Vérifier si une invitation existe déjà pour ce couple (groupId, email)
+        const existing = await transactionalEntityManager.findOne(Invitation, {
+          where: { email, group: { id: groupId } },
+          relations: ["group"],
+        });
+
+        if (existing) {
+          // renvoi de l'existante sans en créer une nouvelle
+          await emailService.sendInvitationEmail(
+            existing.email,
+            group.name,
+            existing.token
+          );
+          return existing;
         }
 
         //2. On crée une invitation
