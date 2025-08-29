@@ -7,6 +7,9 @@ export const GET_CHAT_BY_GROUP_ID = gql`
       name
       lastMessageDate
       unreadMessageCount
+      group {
+        is_secret_santa
+      }
     }
   }
 `;

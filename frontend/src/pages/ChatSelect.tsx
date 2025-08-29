@@ -44,7 +44,7 @@ function ChatSelect() {
   useEffect(() => {
     if (!data) return;
     const chatsUnredMessageCount: Record<number, number> = {};
-    for (const chat of chats) {
+    for (const chat of data.getChatsByGroup) {
       chatsUnredMessageCount[Number(chat.id)] = chat.unreadMessageCount ?? 0;
     }
     setUnreadMessageCountByChat(chatsUnredMessageCount);

@@ -29,4 +29,7 @@ export interface Chat {
   messages: number;
   lastMessageDate?: Date;
   unreadMessageCount?: number;
+  group: {
+    is_secret_santa: boolean;
+  }
 }
