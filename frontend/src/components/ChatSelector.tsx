@@ -2,6 +2,9 @@ import { Link, useParams } from "react-router-dom";
 import { chatColorSchemeGradient } from "@/utils/hardValues/chat";
 import { Chat } from "@/utils/types/chat";
 import { useEffect } from "react";
+import { useCurrentUser } from "@/hooks/currentUser";
+import { GiftIcon, SnowflakeIcon } from "lucide-react"
+
 
 type ChatSelectorProps = {
   chat: Chat;
@@ -18,7 +21,7 @@ function getGradientByName(name: string) {
   }
   const gardient =
     chatColorSchemeGradient[
-      colorSchemeGradientIndex % chatColorSchemeGradient.length
+    colorSchemeGradientIndex % chatColorSchemeGradient.length
     ];
   return gardient;
 }
@@ -28,16 +31,10 @@ function ChatSelector({
   setUnreadMessageCountByChat,
 }: ChatSelectorProps) {
   const { chatId } = useParams();
+  const { user } = useCurrentUser();
   const lastMessageDate = chat.lastMessageDate
     ? new Date(chat.lastMessageDate).toLocaleDateString()
     : null;
-
-  const isSelected = chatId && Number(chat.id) === Number(chatId);
-
-  // Extraire le nom de la personne sans le "Pour"
-  const personName = chat.name.startsWith("Pour ")
-    ? chat.name.slice(5)
-    : chat.name;
 
   useEffect(() => {
     if (isSelected) {
@@ -49,12 +46,27 @@ function ChatSelector({
     }
   }, [chatId]);
 
+  const isSelected = chatId && Number(chat.id) === Number(chatId);
+
+  let chatName = chat.name;
+  let chatIcon = <GiftIcon />;
+  if (chat.group.is_secret_santa) {
+    const [receiver] = chat.name.split(' ');
+    const receiverId = receiver.split('_')[1];
+    const isReceiver = Number(receiverId) === Number(user?.id);
+    if (isReceiver) {
+      chatName = "Je reçois de ?";
+    } else {
+      chatName = "J'offre à ?";
+      chatIcon = <SnowflakeIcon />;
+    }
+  }
+
   return (
     <Link
       to={`${chat.id}`}
-      className={`block w-full transition-colors duration-200 ${
-        isSelected ? "bg-black/5" : "hover:bg-black/5"
-      }`}
+      className={`block w-full transition-colors duration-200 ${isSelected ? "bg-black/5" : "hover:bg-black/5"
+        }`}
     >
       <ul className="flex items-center w-full gap-4 p-3 px-4 ">
         <li className="flex items-center">
@@ -63,12 +75,12 @@ function ChatSelector({
               chat.name
             )} rounded-full w-11 h-11 flex items-center justify-center text-white font-medium transition-transform duration-200 hover:scale-105`}
           >
-            {personName.charAt(0).toUpperCase()}
+            {chat.group.is_secret_santa ? chatIcon : chatName.charAt(0).toUpperCase()}
           </p>
         </li>
         <li className="flex flex-col items-start gap-0 flex-1">
           <p className="text-xl leading-none font-semibold text-primary text-nowrap">
-            Pour {personName}
+            {chat.group.is_secret_santa ? chatName : `Pour ${chatName}`}
           </p>
           <p className="text-xs text-black mt-0.5">
             {unreadMessageCountByChat[chat.id] > 0

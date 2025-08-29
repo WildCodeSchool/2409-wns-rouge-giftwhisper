@@ -48,7 +48,7 @@ export class ChatService {
             Object.assign(new User(), receiverUser),
           ];
           chat.group = Object.assign(new Group(), group);
-          chat.name = `Secret Santa pour ${receiverUser.first_name} ${receiverUser.last_name}`;
+          chat.name = `receiver_${receiverUser.id} gifter_${gifterUser.id}`;
 
           const errors = await validate(chat);
           if (errors.length > 0) {
