@@ -1,15 +1,30 @@
-name: ci
+name: main-server
 
 on:
   push:
     branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/**" # ← Ajout temporaire
   pull_request:
     branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/**" # ← Ajout temporaire
+  workflow_dispatch:
+    inputs:
+      deploy_backend:
+        description: "Deploy backend to DockerHub"
+        required: true
+        default: false
+        type: boolean
 
 jobs:
   tests_backend:
     name: Run Tests
     runs-on: ubuntu-latest
+    # Exécuter si c'est une PR/push normal, PAS si c'est un deploy manuel
+    if: ${{ github.event_name != 'workflow_dispatch' }}
     services:
       test-db:
         image: postgres:15-alpine
@@ -29,7 +44,13 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
 
-      # --- BACKEND ---
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: "./backend/package-lock.json"
+
       - name: Install backend deps
         run: npm ci
         working-directory: ./backend
@@ -42,37 +63,30 @@ jobs:
         working-directory: ./backend
         run: npm run test:integration
 
-  build:
+  deploy_backend:
+    name: Deploy Backend
     runs-on: ubuntu-latest
-    needs: tests_backend
+    # Deploy SEULEMENT sur main ET en mode manuel
+    if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && inputs.deploy_backend }}
     steps:
       - name: Check out code
         uses: actions/checkout@v4
 
-      # --- BACKEND ---
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: "./backend/package-lock.json"
+
       - name: Install backend deps
         run: npm ci
         working-directory: ./backend
 
-      # - name: Run backend tests
-      #   run: npm run test:unit
-      #   working-directory: ./backend
-
-      # --- FRONTEND ---
-      - name: Install frontend deps
-        run: npm ci
-        working-directory: ./frontend
-
-      # - name: Run frontend tests
-      #   run: npm test
-      #   working-directory: ./frontend
-
-      # --- GIT SHA ---
       - name: Get short SHA
         id: sha
         run: echo "value=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
 
-      # --- DOCKER ---
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
@@ -92,17 +106,5 @@ jobs:
           context: ./backend
           push: true
           tags: |
-            ${{ vars.DOCKERHUB_REPO }}:latest
-            ${{ vars.DOCKERHUB_REPO }}:${{ steps.sha.outputs.value }}
-
-      - name: Build and push for frontend
-        id: frontend
-        uses: docker/build-push-action@v6
-        with:
-          context: ./frontend
-          push: true
-          tags: |
-            ${{ vars.DOCKERHUB_REPO_FRONT }}:latest
-            ${{ vars.DOCKERHUB_REPO_FRONT }}:${{ steps.sha.outputs.value }}
-
-
+            ${{ vars.DOCKERHUB_REPO }}-server:latest
+            ${{ vars.DOCKERHUB_REPO }}-server:${{ steps.sha.outputs.value }}

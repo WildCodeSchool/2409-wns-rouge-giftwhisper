@@ -18,7 +18,13 @@ import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { PasswordInput } from "@/components/form/PasswordInput";
 
+interface SignInFormData {
+  email: string;
+  password: string;
+}
+
 export default function SignIn() {
+
   const navigate = useNavigate();
   const { tokenInvitation, login, isLoggingIn } = useAuth();
 
