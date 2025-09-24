@@ -3,17 +3,17 @@ import { Chat } from "../../../entities/Chat";
 import { mutationCreateChat } from "../../api/chat";
 import { assert } from "../index.test";
 import { Group } from "../../../entities/Group";
-import { queryGroup } from "../../api/group";
-import { getRandomPairs } from "../../../utils/secret_santa/helpers";
+import { mutationActivateGroup, queryGroup } from "../../api/group";
+import { invitationService } from "../../../services/Invitation";
+import { User } from "../../../entities/User";
+import { mutationAcceptInvitation } from "../../api/invitation";
+import * as authUtils from "../../../auth";
 
 export function chatResolverTest(testArgs: TestArgsType) {
+  jest.setTimeout(20000);
+
   describe("Chat Resolver Tests", () => {
     it("Should create a chat with valid data", async () => {
-      const mockChatData = {
-        name: "The very first chat, yay !",
-        users: [11, 14],
-        groupId: 1,
-      };
       const response = await testArgs.server?.executeOperation<{
         createChat: Chat;
       }>({
@@ -30,58 +30,107 @@ export function chatResolverTest(testArgs: TestArgsType) {
       expect(response.body.singleResult.errors).toBeUndefined();
     });
 
-    it("In secret santa, should create 2 anonymous chatroom per user", async () => {
-      // Cette action est déclenchée par l'administrateur d'un groupe
-      // Le groupe doit etre en mode secret santa
-      // Le groupe doit avoir le statut actif => ça veut dire que tous les utilisateurs ont bien rejoint le groupe
+    it("In secret santa, should create one chat per group-user", async () => {
+      // 1. Create and save an admin user
+      const admin = User.create({
+        email: "admin@example.com",
+        first_name: "Admin",
+        last_name: "Tester",
+        hashedPassword: "hashedpassword",
+        is_verified: true,
+        date_of_birth: new Date("1990-01-01"),
+      });
+      await admin.save();
 
-      //1. Récupérer les utilisateurs du groupe
-      const response = await testArgs.server?.executeOperation<{
-        group: Group;
+      // 2. Mock auth context with the admin
+      jest.spyOn(authUtils, "getUserFromContext").mockResolvedValue(admin);
+
+      // 3. Create a Secret Santa group
+      const groupResp = await testArgs.server?.executeOperation<{
+        createGroup: Group;
       }>({
-        query: queryGroup,
+        query: /* GraphQL */ `
+          mutation CreateGroup($data: GroupCreateInput!) {
+            createGroup(data: $data) {
+              id
+              users {
+                id
+              }
+            }
+          }
+        `,
         variables: {
-          id: testArgs.data.groupId[0],
+          data: {
+            name: "Secret Santa Group",
+            is_secret_santa: true,
+            end_date: "2099-12-31T23:59:59.999Z",
+          },
         },
       });
 
-      assert(response?.body.kind === "single");
-      expect(response.body.singleResult.errors).toBeUndefined();
+      assert(groupResp?.body.kind === "single");
+      const groupId = groupResp.body.singleResult.data?.createGroup.id!;
+      expect(groupId).toBeDefined();
 
-      const users = response.body.singleResult.data?.group.userGroups.map(
-        (userGroup) => {
-          const { first_name, last_name, id } = userGroup.user;
-          return `${id}_${first_name} ${last_name}`;
-        }
-      );
+      // 4. Invite and accept all other users
+      for (const userId of testArgs.data.userIds) {
+        const user = await User.findOneBy({ id: userId });
+        if (!user) continue;
 
-      //2. Création des pairs d'utilisateurs => algo
+        const invitation = await invitationService.createInvitation(
+          user.email,
+          groupId
+        );
 
-      assert(users?.length);
-      const pairs = getRandomPairs(users);
-
-      //3. Création des Chats pour chaque pair d'utilisateur => même chose que "Should create a chat with valid data"
-
-      for (const pair of pairs) {
-        const { receiver, gifter } = pair;
-        const receiverId = receiver.split("_")[0];
-        const gifterId = gifter.split("_")[0];
-        const response = await testArgs.server?.executeOperation<{
-          createChat: Chat;
-        }>({
-          query: mutationCreateChat,
+        const acceptResp = await testArgs.server?.executeOperation({
+          query: mutationAcceptInvitation,
           variables: {
             data: {
-              name: `${gifter} donne à ${receiver}`,
-              users: [receiverId, gifterId],
-              groupId: testArgs.data.groupId[0],
+              token: invitation.token,
+              userId: user.id,
             },
           },
         });
 
-        assert(response?.body.kind === "single");
-        expect(response.body.singleResult.errors).toBeUndefined();
+        assert(acceptResp?.body.kind === "single");
+        expect(acceptResp.body.singleResult.errors).toBeUndefined();
       }
+
+      // 5. Activate the group
+      const activateResp = await testArgs.server?.executeOperation<{
+        activateGroup: boolean;
+      }>({
+        query: mutationActivateGroup,
+        variables: {
+          id: groupId,
+        },
+      });
+
+      assert(activateResp?.body.kind === "single");
+      expect(activateResp.body.singleResult.errors).toBeUndefined();
+
+      // 6. Fetch group and verify users
+      const groupCheckResp = await testArgs.server?.executeOperation<{
+        group: Group;
+      }>({
+        query: queryGroup,
+        variables: { id: groupId },
+      });
+
+      assert(groupCheckResp?.body.kind === "single");
+      const groupUsers =
+        groupCheckResp.body.singleResult.data?.group.users || [];
+
+      // Ensure admin is part of the group
+      expect(groupUsers.some((u) => Number(u.id) === admin.id)).toBe(true); //id is a string in GraphQL...
+
+      // 7. Verify the number of chats created
+      const chats = await Chat.find({
+        where: { group: { id: groupId } },
+        relations: ["users", "group"],
+      });
+
+      expect(chats.length).toBe(groupUsers.length);
     });
   });
 }

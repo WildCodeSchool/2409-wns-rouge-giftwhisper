@@ -2,12 +2,10 @@ export const queryGroup = `#graphql
   query group($id: ID!) {
     group(id: $id) {
       id
-      userGroups {
-        user {
-          id
-          first_name
-          last_name
-        }
+      users {
+        id
+        first_name
+        last_name
       }
     }
   }
@@ -25,6 +23,24 @@ export const mutationUpdateGroup = `#graphql
   mutation updateGroup($id: ID!, $data: GroupUpdateInput!) {
     updateGroup(id: $id, data: $data) {
       id
+    }
+  }
+`;
+
+export const mutationActivateGroup = `#graphql
+  mutation activateGroup($id: ID!) {
+    activateGroup(id: $id)
+  }
+`;
+
+export const mutationAddUsersToGroupByEmail = `#graphql
+  mutation AddUsersToGroupByEmail($emails: [String!]!, $groupId: ID!) {
+    addUsersToGroupByEmail(emails: $emails, groupId: $groupId) {
+      id
+      users {
+        id
+        email
+      }
     }
   }
 `;

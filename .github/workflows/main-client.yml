@@ -5,73 +5,32 @@ on:
     branches: [main]
     paths:
       - "frontend/**"
-      - ".github/workflows/**" # ← Ajout temporaire
   pull_request:
     branches: [main]
     paths:
       - "frontend/**"
-      - ".github/workflows/**" # ← Ajout temporaire
-  workflow_dispatch:
-    inputs:
-      deploy_frontend:
-        description: "Deploy frontend to DockerHub"
-        required: true
-        default: false
-        type: boolean
 
 jobs:
-  tests_frontend:
-    name: Run Tests & Build
+  build:
     runs-on: ubuntu-latest
-    # Exécuter si c'est une PR/push normal, PAS si c'est un deploy manuel
-    if: ${{ github.event_name != 'workflow_dispatch' }}
     steps:
       - name: Check out code
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-          cache: "npm"
-          cache-dependency-path: "./frontend/package-lock.json"
-
+      # --- FRONTEND ---
       - name: Install frontend deps
         run: npm ci
         working-directory: ./frontend
 
-      - name: Run linting
-        run: npm run lint
-        working-directory: ./frontend
+      # - name: Run frontend tests
+      #   run: npm test
+      #   working-directory: ./frontend
 
-      - name: Build frontend
-        run: npm run build
-        working-directory: ./frontend
-
-  deploy_frontend:
-    name: Deploy Frontend
-    runs-on: ubuntu-latest
-    # Deploy SEULEMENT sur main ET en mode manuel
-    if: ${{ github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && inputs.deploy_frontend }}
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18"
-          cache: "npm"
-          cache-dependency-path: "./frontend/package-lock.json"
-
-      - name: Install frontend deps
-        run: npm ci
-        working-directory: ./frontend
-
+      # --- GIT SHA ---
       - name: Get short SHA
         id: sha
         run: echo "value=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
 
+      # --- DOCKER ---
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:

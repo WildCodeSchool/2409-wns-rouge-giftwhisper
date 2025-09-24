@@ -1,145 +1,304 @@
-import { Resolver, Query, Arg, ID, Mutation } from "type-graphql";
+import { Resolver, Query, Arg, ID, Mutation, Ctx } from "type-graphql";
 import { Group, GroupCreateInput, GroupUpdateInput } from "../entities/Group";
 import { validate } from "class-validator";
 import { User } from "../entities/User";
 import { In } from "typeorm";
-import { UserGroup } from "../entities/UserGroup";
+import { invitationService } from "../services/Invitation";
+import { getUserFromContext, ContextType } from "../auth";
+import { chatService } from "../services/Chat";
+import { getGroupIfUserIsCreator } from "../utils/groupPermissions";
 
 @Resolver()
 export class GroupsResolver {
+  // Get all groups
+  @Query(() => [Group])
+  async groups(): Promise<Group[]> {
+    const groups = await Group.find({
+      relations: {
+        users: true,
+      },
+    });
+    return groups;
+  }
 
-	// Get all groups
-	@Query(() => [Group])
-	async groups(): Promise<Group[]> {
-		const groups = await Group.find({
-			relations: {
-				userGroups: true,
-			},
-		});
-		return groups;
-	}
+  // Get one group by id
+  @Query(() => Group, { nullable: true })
+  async group(@Arg("id", () => ID) id: number): Promise<Group | null> {
+    const group = await Group.findOne({
+      where: { id },
+      relations: {
+        users: true,
+        invitations: true,
+      },
+    });
+    if (group) {
+      return group;
+    } else {
+      return null;
+    }
+  }
 
-	// Get one group by id
-	@Query(() => Group, { nullable: true })
-	async group(@Arg("id", () => ID) id: number): Promise<Group | null> {
-		const group = await Group.findOne({
-			where: { id },
-			relations: {
-				userGroups: {
-					user: true				
-				},
-			},
-		});
-		if (group) {
-			return group;
-		} else {
-			return null;
-		}
-	}
+  // Get groups for a specific user
+  @Query(() => [Group])
+  async getUserGroups(
+    @Arg("userId", () => ID) userId: number
+  ): Promise<Group[]> {
+    const user = await User.findOne({
+      where: { id: userId },
+      relations: {
+        groups: {
+          users: true,
+        },
+      },
+    });
 
-	// Create a new group
-	@Mutation(() => Group)
-	async createGroup(
-		@Arg("data", () => GroupCreateInput) data:
-			GroupCreateInput): Promise<Group> {
-		const newGroup = new Group();
-		Object.assign(newGroup, data);
+    if (!user) {
+      throw new Error("User not found");
+    }
 
-		const errors = await validate(newGroup);
-		if (errors.length > 0) {
-			throw new Error(`Validation error: ${JSON.stringify(errors)}`);
-		} else {
-			await newGroup.save();
-			return newGroup;
-		}
-	}
+    return user.groups;
+  }
 
-	// Update a group
-	@Mutation(() => Group, { nullable: true })
-	async updateGroup(
-		@Arg("id", () => ID) id: number,
-		@Arg("data", () => GroupUpdateInput) data: GroupUpdateInput
-	): Promise<Group | null> {
+  
 
-		//1.Vérification si le groupe existe
-		const group = await Group.findOne({
-			where: { id },
-			relations: { userGroups: true }
-		});
+  // Create a new group
+  @Mutation(() => Group)
+  async createGroup(
+    @Arg("data", () => GroupCreateInput) data: GroupCreateInput,
+    @Ctx() context: ContextType
+  ): Promise<Group> {
+    const user = await getUserFromContext(context);
+    if (!user) {
+      throw new Error(
+        "Non autorisé - vous devez être connecté pour créer un groupe"
+      );
+    }
 
-		if (!group) {
-			throw new Error('Group not found');
-		}
+    // Refetch user to avoid partial entity issues
+    const fullUser = await User.findOneByOrFail({ id: user.id });
 
-		//2.Vérification s'il y a des utilisateurs à ajouter et s'ils ne sont pas déjà présents dans le groupe
-		if (data.userIds && data.userIds.length > 0) {
-			//2.1 Vérification si les utilisateurs existent dans la base de données
-			const existingUsers = await User.findBy({ id: In(data.userIds) });
-			if (existingUsers.length !== data.userIds.length) {
-				throw new Error('One or more users do not exist');
-			}
+    const newGroup = new Group();
+    Object.assign(newGroup, data);
+    newGroup.created_by_id = fullUser.id;
 
-			//2.2.Récupération des utilisateurs existants dans le groupe
-			const existingUserIds = group.userGroups.map(userGroup => userGroup.user.id);
+    // 👇 Ajoute l’admin comme membre dès le départ
+    newGroup.users = [fullUser];
 
-			//2.3. Comparaison des utilisateurs existants et des utilisateurs à ajouter
-			const usersAlreadyInGroup = data.userIds.filter(userId => existingUserIds.includes(userId));
+    const errors = await validate(newGroup);
+    if (errors.length > 0) {
+      throw new Error(`Validation error: ${JSON.stringify(errors)}`);
+    }
 
-			if (usersAlreadyInGroup.length > 0) {
-				throw new Error('One or more users already exist in the group');
-			}
+    await newGroup.save();
 
-			const usersToAdd = await User.findBy({ id: In(data.userIds) });
+    // Recharge le groupe avec ses relations
+    const savedGroup = await Group.findOne({
+      where: { id: newGroup.id },
+      relations: ["users"],
+    });
 
-			//2.4 Ajout des nouveaux utilisateur au groupe
-			for (const user of usersToAdd) {
-				const newUserToAdd = new UserGroup();
-				newUserToAdd.group = group;
-				newUserToAdd.user = user;
-				await newUserToAdd.save();
-				// Ajouter à la collection pour la cohérence
-				group.userGroups.push(newUserToAdd);
-			}
-		}
+    if (!savedGroup) throw new Error("Erreur lors de la création du groupe");
 
-		//3 Mise à jour des champs du groupe
-		if (data.name !== undefined) {
-			group.name = data.name;
-		}
+    return savedGroup;
+  }
 
-		if (data.end_date !== undefined) {
-			group.end_date = data.end_date;
-		}
+  /// Update a group
+  @Mutation(() => Group, { nullable: true })
+  async updateGroup(
+    @Arg("id", () => ID) id: number,
+    @Arg("data", () => GroupUpdateInput) data: GroupUpdateInput,
+    @Ctx() context: ContextType
+  ): Promise<Group | null> {
 
-		if (data.is_secret_santa !== undefined) {
-			group.is_secret_santa = data.is_secret_santa;
-		}
+    const user = await getUserFromContext(context);
+    if (!user) {
+      throw new Error(
+        "Unauthorized - you must be connected to update a group"
+      );
+    }
 
-		if (data.is_active !== undefined) {
-			group.is_active = data.is_active;
-		}
+    const group = await Group.findOneBy({ id });
+    if (!group) {
+      throw new Error("Group not found");
+    }
 
-		//4. Validation des données mises à jour
-		const errors = await validate(group);
-		if (errors.length > 0) {
-			throw new Error(`Validation error: ${JSON.stringify(errors)}`);
-		}
+    if (group.created_by_id !== user.id) {
+      throw new Error(
+        "Unauthorized - only the creator of the group can update it"
+      );
+    }
 
-		//5. Sauvegarde du groupe
-		await group.save();
-		return group;
-	}
+    if (data.name) {
+      group.name = data.name;
+    } 
 
-	// Delete a group
-	@Mutation(() => Group, { nullable: true })
-	async deleteGroup(@Arg("id", () => ID) id: number): Promise<Group | null> {
-		const group = await Group.findOneBy({ id });
-		if (group !== null) {
-			await group.remove();
-			Object.assign(group, { id });
-			return group;
-		} else {
-			return null;
-		}
-	}
+    if (data.end_date)
+    {
+      group.end_date = data.end_date;
+    } 
+
+    if (data.is_secret_santa && !group.is_active) {
+      group.is_secret_santa = data.is_secret_santa;
+    }
+
+    // Validate before saving
+    const errors = await validate(group);
+    if (errors.length > 0) {
+      throw new Error(`Validation error: ${JSON.stringify(errors)}`);
+    }
+
+    await group.save();
+
+    return group;
+  }
+
+  // Delete a group
+  @Mutation(() => Boolean)
+  async deleteGroup(
+    @Arg("id", () => ID) id: number,
+    @Ctx() context: ContextType
+  ): Promise<boolean> {
+    const user = await getUserFromContext(context);
+    if (!user) throw new Error ("Non autorisé - vous devez être connecté pour supprimer un groupe");
+
+    const group = await Group.findOneBy({ id });
+    if (!group) throw new Error ("Ce groupe n'existe pas");
+
+    if (group.created_by_id !== user.id) {
+      throw new Error ("Non autorisé - seul le créateur du groupe peut le supprimer")
+    }
+    await group.remove();
+    return true;
+  }
+
+  //Ajouter des membres à un groupe déjà existant
+  @Mutation(() => Group)
+  async addUsersToGroupByEmail(
+    @Arg("emails", () => [String]) emails: string[],
+    @Arg("groupId", () => ID) groupId: number
+  ): Promise<Group> {
+    // Get the group with its relations
+    const group = await Group.findOne({
+      where: { id: groupId },
+      relations: { users: true, invitations: true },
+    });
+    if (!group) throw new Error("Group not found");
+
+    // Remove potential duplicates from the list of emails
+    const uniqueEmails = [...new Set(emails)];
+
+    const emailPromises = uniqueEmails.map(async (email) => {
+      
+      const user = await User.findOneBy({ email });
+
+      // Check if the user is already in the group
+      const userAlreadyInGroup = user ? group.users.some((existingUser) => existingUser.id === user.id) : false;
+
+      // If the user is NOT already in the group, send an invitation
+      if (!userAlreadyInGroup) {
+        try {
+          await invitationService.createInvitation(email, groupId);
+        } catch (err) {
+          console.error(`Error sending invitation to ${email}: ${err}`);
+        }
+      }
+    });
+
+    await Promise.all(emailPromises);
+
+    return group;
+  }
+
+  @Mutation(() => Boolean)
+  async activateGroup(@Arg("id", () => ID) id: number, @Ctx() context: ContextType): Promise<boolean> {
+
+    const user = await getUserFromContext(context);
+    if (!user) {
+      throw new Error(
+        "Unauthorized - you must be connected to activate a group"
+      );
+    }
+
+    const group = await Group.findOne({ where: { id }, relations: { users: true } });
+    if (!group) {
+      throw new Error("Group not found");
+    }
+
+    if (group.created_by_id !== user.id) {
+      throw new Error ("Unauthorized - only the creator of the group can activate it")
+    }
+
+    if (group.is_active) {
+      throw new Error("Group already active");
+    }
+
+    if (group.users.length < 3) {
+      throw new Error("A group must have at least 3 users to be activated");
+    }
+
+    try {
+      
+      await chatService.generateChatsForGroup(group);
+
+      group.is_active = true;
+      await group.save();
+
+      return true;
+
+    } catch (error) {
+
+      console.error(`Error activating group ${id}: ${error}`);
+      return false;
+    }
+  }
+
+  // Remove a user from a group
+  @Mutation(() => Boolean)
+  async removeUserFromGroup(
+    @Arg("groupId", () => ID) groupId: number,
+    @Arg("userId", () => ID) userId: number,
+    @Ctx() context: ContextType
+  ): Promise<boolean> {
+    const currentUser = await getUserFromContext(context);
+    if (!currentUser) {
+      throw new Error(
+        "Non autorisé - vous devez être connecté pour supprimer un membre d'un groupe"
+      );
+    }
+
+    const group = await Group.findOne({ 
+      where: { id: groupId }, 
+      relations: ["users"] 
+    });
+    if (!group) {
+      throw new Error("Group not found");
+    }
+
+    if (group.created_by_id !== currentUser.id) {
+      throw new Error(
+        "Non autorisé - seul le créateur du groupe peut retirer des membres"
+      );
+    }
+
+    const userToRemove = group.users?.find(user => {
+      return user.id === Number(userId);
+    });
+    
+    if (!userToRemove) {
+      throw new Error("Cet utilisateur n'est pas membre de ce groupe");
+    }
+
+    if (Number(userId) === group.created_by_id) {
+      throw new Error("Impossible de retirer le créateur du groupe");
+    }
+
+    try {
+      group.users = group.users?.filter(user => user.id !== Number(userId)) || [];
+      await group.save();
+
+      return true;
+    } catch (error) {
+      throw new Error("Erreur lors de la suppression du membre du groupe");
+    }
+  }
 }

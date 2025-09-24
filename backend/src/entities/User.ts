@@ -4,14 +4,18 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinTable,
   ManyToMany,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
 import { Chat } from "./Chat";
-import { UserGroup } from "./UserGroup";
 import { IsEmail, IsStrongPassword } from "class-validator";
+import { Group } from "./Group";
+import { PasswordResetToken } from "./PasswordResetToken";
+import { Wishlist } from "./Wishlist";
+import { ChatLastConnection } from "./ChatLastConnection";
 
 @Entity()
 @ObjectType()
@@ -32,7 +36,9 @@ export class User extends BaseEntity {
   @Field()
   email!: string;
 
-  @Column()
+  // {select: false} prevents typeorm from querying the column hashedPassword from the DB
+  // so we can safely use relations {user: true} without the password being sent back
+  @Column({ select: false })
   hashedPassword!: string;
 
   @Column()
@@ -60,9 +66,20 @@ export class User extends BaseEntity {
   @Field(() => [Chat])
   chats!: Chat[];
 
-  @OneToMany(() => UserGroup, (userGroup) => userGroup.user, )
-  @Field(() => [UserGroup])
-  userGroups!: UserGroup[];
+  @ManyToMany(() => Group, (group) => group.users)
+  @JoinTable()
+  groups!: Group[];
+
+  @OneToMany(() => PasswordResetToken, (token) => token.user)
+  @Field(() => [PasswordResetToken], { nullable: true })
+  resetTokens?: PasswordResetToken[];
+
+  @OneToMany(() => Wishlist, (wishlist) => wishlist.user)
+  @Field(() => [Wishlist], { nullable: true })
+  wishlists?: Wishlist[];
+
+  @OneToMany(() => ChatLastConnection, chatLastConnection => chatLastConnection.user)
+  chatLastConnections!: ChatLastConnection[];
 }
 
 @InputType()

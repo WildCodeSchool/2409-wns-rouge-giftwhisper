@@ -1,15 +1,19 @@
 import "reflect-metadata";
 import { datasource } from "./datasource.config";
-import { ApolloServer } from "@apollo/server";
+import { ApolloServer, BaseContext } from "@apollo/server";
 import { expressMiddleware } from "@apollo/server/express4";
 import express from "express";
 import http from 'http';
 import { getSchema } from "./utils/server/schema";
 import { seedAll } from "./seeds/index.seed";
-import { Server } from "socket.io";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
+import { socketInit } from "./socket/socket";
+
+
+export let initializedApolloServer: ApolloServer<BaseContext> | undefined;
 
 async function initialize() {
+
   const dataSource = await datasource.initialize();
   console.log("Datasource is connected");
 
@@ -20,24 +24,17 @@ async function initialize() {
   const app = express();
   const httpServer = http.createServer(app);
 
-  const io: Server = new Server(httpServer, {
-    path: "api/socker.io"
-  });
-
-  io.on('connection', (socket) => {
-    console.log("A user is connected");
-    socket.emit("Hello to the gift whisper app !")
-  });
-
+  
   const server = new ApolloServer({
     schema,
     plugins: [ApolloServerPluginDrainHttpServer({ httpServer })]
   });
-
+  
+  initializedApolloServer = server;
   await server.start();
-
+  
   app.use(
-    "/",
+    "/api",
     express.json(),
     expressMiddleware(server, {
       context: async ({ req, res }) => {
@@ -45,6 +42,8 @@ async function initialize() {
       }
     })
   );
+  
+  socketInit(httpServer);
 
   await new Promise<void>((resolve) => {
     httpServer.listen({ port: 5500 }, resolve);

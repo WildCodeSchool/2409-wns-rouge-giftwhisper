@@ -5,13 +5,16 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  ManyToMany,
+  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
-import { UserGroup } from "./UserGroup";
 import { Chat } from "./Chat";
-
+import { Invitation } from "./Invitation";
+import { User } from "./User";
+import { Wishlist } from "./Wishlist";
 @Entity()
 @ObjectType()
 export class Group extends BaseEntity {
@@ -24,7 +27,7 @@ export class Group extends BaseEntity {
   @Field()
   name!: string;
 
-  @Column()
+  @Column({ type: "timestamp", nullable: true })
   @Field({ nullable: true })
   end_date?: Date;
 
@@ -44,13 +47,21 @@ export class Group extends BaseEntity {
   @Field()
   is_active!: boolean;
 
-  @OneToMany(() => UserGroup, (userGroup) => userGroup.group)
-  @Field(() => [UserGroup])
-  userGroups!: UserGroup[];
+  @Column({ nullable: false })
+  @Field(() => ID)
+  created_by_id!: number;
+
+  @ManyToMany(() => User, (user) => user.groups)
+  @Field(() => [User])
+  users!: User[];
 
   @OneToMany(() => Chat, (chat) => chat.group)
   @Field(() => [Chat])
   chats!: Chat[];
+
+  @OneToMany(() => Invitation, (invitation) => invitation.group)
+  @Field(() => [Invitation])
+  invitations!: Invitation[];
 }
 
 @InputType()
@@ -77,10 +88,4 @@ export class GroupUpdateInput {
 
   @Field({ nullable: true })
   is_secret_santa?: boolean;
-
-  @Field({ nullable: true })
-  is_active?: boolean;
-
-  @Field(() => [ID], { nullable: true })
-  userIds?: number[];
 }

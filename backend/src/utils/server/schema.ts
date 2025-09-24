@@ -3,11 +3,29 @@ import { buildSchema } from "type-graphql";
 import { UsersResolver } from "../../resolvers/Users";
 import { GroupsResolver } from "../../resolvers/Groups";
 import { ChatsResolver } from "../../resolvers/Chats";
+import { InvitationResolver } from "../../resolvers/Invitation";
 import { MessageResolver } from "../../resolvers/Message";
+import { PasswordResetResolver } from "../../resolvers/PasswordReset";
+import { PollResolver } from "../../resolvers/Poll";
+import { WishlistResolver } from "../../resolvers/Wishlist";
+import { WishlistItemResolver } from "../../resolvers/WishlistItem";
+import { ChatLastConnectionResolver } from "../../resolvers/ChatLastConnection";
+
 
 export async function getSchema() {
   const schema = await buildSchema({
-    resolvers: [UsersResolver, GroupsResolver, ChatsResolver, MessageResolver],
+    resolvers: [
+      UsersResolver,
+      GroupsResolver,
+      ChatsResolver,
+      MessageResolver,
+      InvitationResolver,
+      PasswordResetResolver,
+      PollResolver,
+      WishlistResolver,
+      WishlistItemResolver,
+      ChatLastConnectionResolver
+    ],
   });
   return schema;
 }
