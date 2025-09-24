@@ -8,6 +8,7 @@ export const GET_GROUP = gql`
       end_date
       is_secret_santa
       is_active
+      created_by_id
       users {
         id
         first_name
@@ -39,11 +40,11 @@ export const GET_USER_GROUPS = gql`
 export const CREATE_GROUP = gql`
   mutation CreateGroup($data: GroupCreateInput!) {
     createGroup(data: $data) {
-        id
-        name
-        end_date
-        is_secret_santa
-        created_at
+      id
+      name
+      end_date
+      is_secret_santa
+      created_at
     }
   }
 `;
