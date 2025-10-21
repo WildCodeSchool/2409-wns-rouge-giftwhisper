@@ -8,20 +8,187 @@ Le projet utilise une architecture de configuration centralisée pour gérer les
 
 #### Fichiers de configuration
 
-- **`src/datasource.config.ts`** : 
+- **`src/datasource.config.ts`** :
   - Point central de configuration et de connexion à la base de données
   - Détecte automatiquement l'environnement d'exécution via `process.env.NODE_ENV`
   - Configure différents paramètres selon l'environnement :
-    - Pour l'environnement de développement : connexion à la base de données principale (`db:5432`)
-    - Pour l'environnement de test : connexion à la base de données de test (`localhost:3002`)
+    - **Développement/Test** : `synchronize: true` - Met à jour automatiquement le schéma de la base de données
+    - **Production** : `synchronize: false` - Utilise les migrations pour gérer le schéma
+  - Gestion des migrations :
+    - `migrations: ["./src/migrations/*.ts"]` - Chemin des fichiers de migration
+    - `migrationsRun: isProduction` - Exécute automatiquement les migrations en production au démarrage
   - Exporte une instance `datasource` prête à être initialisée
   - Avantages : configuration unique, adaptation automatique à l'environnement, partage d'une seule instance
+
+## Migrations de base de données
+
+### Qu'est-ce qu'une migration ?
+
+Les migrations sont un système de gestion de versions pour votre schéma de base de données. Elles permettent de :
+
+- Suivre l'historique des modifications du schéma
+- Appliquer les changements de manière contrôlée en production
+- Éviter les pertes de données lors de modifications de structure
+- Collaborer efficacement en équipe sur les changements de base de données
+
+### Stratégie par environnement
+
+| Environnement     | synchronize | migrations | Comportement                                            |
+| ----------------- | ----------- | ---------- | ------------------------------------------------------- |
+| **Développement** | ✅ true     | ❌         | La base de données se met à jour automatiquement        |
+| **Test**          | ✅ true     | ❌         | Recréation propre à chaque test                         |
+| **Production**    | ❌ false    | ✅         | Les migrations s'exécutent automatiquement au démarrage |
+
+### Scripts disponibles
+
+```bash
+# Générer une migration (compare les entités avec la DB actuelle)
+npm run migration:generate src/migrations/NomDeLaMigration
+
+# Exécuter manuellement les migrations (normalement automatique en prod)
+npm run migration:run
+
+# Annuler la dernière migration
+npm run migration:revert
+```
+
+**Note importante** : Ces commandes doivent être exécutées **dans le conteneur Docker** :
+
+```bash
+# Depuis le dossier backend
+docker compose exec back npm run migration:generate src/migrations/AddPhoneToUser
+```
+
+### Workflow de développement
+
+#### 1. Modifier le schéma en développement
+
+```typescript
+// src/entities/User.ts
+@Entity()
+class User {
+  @Column()
+  firstName: string;
+
+  @Column() // ← Nouveau champ ajouté
+  phone: string;
+}
+```
+
+#### 2. Tester localement
+
+```bash
+# Lancer l'application en mode dev
+npm run start
+
+# ✨ synchronize: true met à jour la DB automatiquement
+# Testez que tout fonctionne
+```
+
+#### 3. Générer la migration avant de commiter
+
+```bash
+# Depuis le dossier backend
+docker compose exec back npm run migration:generate src/migrations/AddPhoneToUser
+
+# TypeORM génère automatiquement le fichier de migration
+# backend/src/migrations/1234567890-AddPhoneToUser.ts
+```
+
+#### 4. Vérifier la migration générée
+
+```typescript
+// src/migrations/1234567890-AddPhoneToUser.ts
+export class AddPhoneToUser1234567890 implements MigrationInterface {
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    // ✨ Code SQL généré automatiquement par TypeORM
+    await queryRunner.query(`
+      ALTER TABLE "user" ADD "phone" varchar NOT NULL
+    `);
+  }
+
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
+      ALTER TABLE "user" DROP COLUMN "phone"
+    `);
+  }
+}
+```
+
+#### 5. Commiter et déployer
+
+```bash
+git add src/entities/User.ts src/migrations/
+git commit -m "feat: add phone field to user"
+git push
+```
+
+#### 6. En production
+
+```bash
+# Sur le VPS
+./fetch-and-deploy.sh
+
+# Au démarrage de l'application :
+# 1. TypeORM se connecte à la base de données
+# 2. Il vérifie la table "migrations"
+# 3. Il exécute automatiquement les nouvelles migrations
+# 4. L'application démarre avec le schéma à jour ✨
+```
+
+### Quand générer une migration ?
+
+#### ✅ Générez une migration quand vous modifiez :
+
+- Un champ d'une entité (ajout, suppression, modification)
+- Une relation entre entités
+- Une contrainte (unique, index, etc.)
+- Toute modification de structure de table
+
+#### ❌ Pas besoin de migration pour :
+
+- Modifications de resolvers, services, ou logique métier
+- Ajout de méthodes dans les entités
+- Changements de code frontend
+- Corrections de bugs sans impact sur le schéma
+
+### Sécurité
+
+**Les migrations sont sûres à commiter dans Git** car elles ne contiennent que :
+
+- Des instructions SQL de structure (CREATE TABLE, ALTER TABLE, etc.)
+- Aucune donnée sensible (pas de mots de passe, pas de données utilisateur)
+
+⚠️ **Ne commitez JAMAIS** :
+
+- Fichiers `.env` (contiennent les secrets)
+- Dumps de base de données avec données réelles
+- Clés API ou tokens
+
+### Compatibilité PostgreSQL
+
+Les migrations générées par TypeORM utilisent du SQL standard compatible avec toutes les versions de PostgreSQL. Vous pouvez générer une migration sur PostgreSQL 17 et l'exécuter sur PostgreSQL 18 sans problème.
+
+### Résolution de problèmes
+
+#### Erreur "ENOTFOUND db"
+
+Vous essayez d'exécuter la commande en dehors de Docker. Utilisez :
+
+```bash
+docker compose exec back npm run migration:generate src/migrations/VotreMigration
+```
+
+#### "No changes in database schema were found"
+
+Votre base de données locale est déjà synchronisée avec vos entités (grâce à `synchronize: true`). C'est normal en développement. Générez une migration uniquement si vous avez fait des modifications d'entités que vous voulez déployer en production.
 
 ## Tests
 
 ### Types de tests
 
 Le projet est configuré pour exécuter deux types de tests:
+
 - **Tests unitaires**: pour tester des fonctions ou des classes isolées
 - **Tests d'intégration**: pour tester l'interaction entre plusieurs composants, notamment avec la base de données
 
@@ -49,6 +216,7 @@ Note : Il n'est pas nécessaire de démarrer l'API pour exécuter les tests d'in
 ### Configuration des tests
 
 Le projet utilise Jest pour les tests, avec deux configurations distinctes :
+
 - `jest.config.ts` : Configuration pour les tests unitaires
 - `jest.integration.config.ts` : Configuration pour les tests d'intégration
 
@@ -76,6 +244,7 @@ src/
 ```
 
 Cette structure centralisée offre plusieurs avantages :
+
 - Organisation cohérente pour tous les types de tests
 - Séparation claire entre tests unitaires et tests d'intégration
 - Organisation par fonctionnalité plutôt que par structure technique
