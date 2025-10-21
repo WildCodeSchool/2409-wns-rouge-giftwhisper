@@ -10,6 +10,7 @@ import { PollResolver } from "../../resolvers/Poll";
 import { WishlistResolver } from "../../resolvers/Wishlist";
 import { WishlistItemResolver } from "../../resolvers/WishlistItem";
 import { ChatLastConnectionResolver } from "../../resolvers/ChatLastConnection";
+import { authChecker } from "../../auth";
 
 
 export async function getSchema() {
@@ -26,6 +27,7 @@ export async function getSchema() {
       WishlistItemResolver,
       ChatLastConnectionResolver
     ],
+    authChecker
   });
   return schema;
 }

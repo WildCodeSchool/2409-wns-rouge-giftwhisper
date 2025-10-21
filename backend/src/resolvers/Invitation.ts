@@ -1,4 +1,4 @@
-import { Arg, ID, Int, Mutation, Query, Resolver } from "type-graphql";
+import { Arg, ID, Mutation, Query, Resolver } from "type-graphql";
 import { Invitation, InvitationCreateInput, InvitationValidationResult } from "../entities/Invitation";
 import { Group } from "../entities/Group";
 import { User } from "../entities/User";

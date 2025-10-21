@@ -1,29 +1,33 @@
-import { Resolver, Query, Arg, ID, Mutation, Ctx } from "type-graphql";
+import { Resolver, Query, Arg, ID, Mutation, Ctx, Authorized } from "type-graphql";
 import { Group, GroupCreateInput, GroupUpdateInput } from "../entities/Group";
 import { validate } from "class-validator";
 import { User } from "../entities/User";
-import { In } from "typeorm";
 import { invitationService } from "../services/Invitation";
 import { getUserFromContext, ContextType } from "../auth";
 import { chatService } from "../services/Chat";
-import { getGroupIfUserIsCreator } from "../utils/groupPermissions";
 
-@Resolver()
+@Resolver(() => Group)
 export class GroupsResolver {
+
+  // Used for dev purposes
   // Get all groups
-  @Query(() => [Group])
-  async groups(): Promise<Group[]> {
-    const groups = await Group.find({
-      relations: {
-        users: true,
-      },
-    });
-    return groups;
-  }
+  // @Query(() => [Group])
+  // async groups(): Promise<Group[]> {
+  //   const groups = await Group.find({
+  //     relations: {
+  //       users: true,
+  //     },
+  //   });
+  //   return groups;
+  // }
 
   // Get one group by id
   @Query(() => Group, { nullable: true })
-  async group(@Arg("id", () => ID) id: number): Promise<Group | null> {
+  @Authorized("isGroupAdmin")
+  async group(
+    @Arg("id", () => ID) id: number,
+    @Ctx() context: ContextType
+  ): Promise<Group | null> {
     const group = await Group.findOne({
       where: { id },
       relations: {
@@ -31,6 +35,7 @@ export class GroupsResolver {
         invitations: true,
       },
     });
+    context.data = { entities: [group] };
     if (group) {
       return group;
     } else {
@@ -40,29 +45,33 @@ export class GroupsResolver {
 
   // Get groups for a specific user
   @Query(() => [Group])
+  @Authorized("user")
   async getUserGroups(
-    @Arg("userId", () => ID) userId: number
+    @Ctx() context: ContextType
   ): Promise<Group[]> {
+    const userFromContext = await getUserFromContext(context);
+    if (!userFromContext) throw new Error("User not found");
     const user = await User.findOne({
-      where: { id: userId },
+      where: { id: userFromContext.id },
       relations: {
         groups: {
           users: true,
         },
       },
     });
-
-    if (!user) {
-      throw new Error("User not found");
+    context.data = { entities: user?.groups }
+    if (user) {
+      return user.groups;
+    } else {
+      return [];
     }
-
-    return user.groups;
   }
 
-  
+
 
   // Create a new group
   @Mutation(() => Group)
+  @Authorized("user")
   async createGroup(
     @Arg("data", () => GroupCreateInput) data: GroupCreateInput,
     @Ctx() context: ContextType
@@ -104,6 +113,7 @@ export class GroupsResolver {
 
   /// Update a group
   @Mutation(() => Group, { nullable: true })
+  @Authorized(['isGroupAdmin'])
   async updateGroup(
     @Arg("id", () => ID) id: number,
     @Arg("data", () => GroupUpdateInput) data: GroupUpdateInput,
@@ -130,12 +140,11 @@ export class GroupsResolver {
 
     if (data.name) {
       group.name = data.name;
-    } 
+    }
 
-    if (data.end_date)
-    {
+    if (data.end_date) {
       group.end_date = data.end_date;
-    } 
+    }
 
     if (data.is_secret_santa && !group.is_active) {
       group.is_secret_santa = data.is_secret_santa;
@@ -154,18 +163,19 @@ export class GroupsResolver {
 
   // Delete a group
   @Mutation(() => Boolean)
+  @Authorized(['isGroupAdmin'])
   async deleteGroup(
     @Arg("id", () => ID) id: number,
     @Ctx() context: ContextType
   ): Promise<boolean> {
     const user = await getUserFromContext(context);
-    if (!user) throw new Error ("Non autorisé - vous devez être connecté pour supprimer un groupe");
+    if (!user) throw new Error("Non autorisé - vous devez être connecté pour supprimer un groupe");
 
     const group = await Group.findOneBy({ id });
-    if (!group) throw new Error ("Ce groupe n'existe pas");
+    if (!group) throw new Error("Ce groupe n'existe pas");
 
     if (group.created_by_id !== user.id) {
-      throw new Error ("Non autorisé - seul le créateur du groupe peut le supprimer")
+      throw new Error("Non autorisé - seul le créateur du groupe peut le supprimer")
     }
     await group.remove();
     return true;
@@ -173,6 +183,7 @@ export class GroupsResolver {
 
   //Ajouter des membres à un groupe déjà existant
   @Mutation(() => Group)
+  @Authorized(['isGroupAdmin'])
   async addUsersToGroupByEmail(
     @Arg("emails", () => [String]) emails: string[],
     @Arg("groupId", () => ID) groupId: number
@@ -188,7 +199,7 @@ export class GroupsResolver {
     const uniqueEmails = [...new Set(emails)];
 
     const emailPromises = uniqueEmails.map(async (email) => {
-      
+
       const user = await User.findOneBy({ email });
 
       // Check if the user is already in the group
@@ -210,7 +221,11 @@ export class GroupsResolver {
   }
 
   @Mutation(() => Boolean)
-  async activateGroup(@Arg("id", () => ID) id: number, @Ctx() context: ContextType): Promise<boolean> {
+  @Authorized(['isGroupAdmin'])
+  async activateGroup(
+    @Arg("id", () => ID) id: number,
+    @Ctx() context: ContextType
+  ): Promise<boolean> {
 
     const user = await getUserFromContext(context);
     if (!user) {
@@ -225,7 +240,7 @@ export class GroupsResolver {
     }
 
     if (group.created_by_id !== user.id) {
-      throw new Error ("Unauthorized - only the creator of the group can activate it")
+      throw new Error("Unauthorized - only the creator of the group can activate it")
     }
 
     if (group.is_active) {
@@ -237,7 +252,7 @@ export class GroupsResolver {
     }
 
     try {
-      
+
       await chatService.generateChatsForGroup(group);
 
       group.is_active = true;
@@ -254,6 +269,7 @@ export class GroupsResolver {
 
   // Remove a user from a group
   @Mutation(() => Boolean)
+  @Authorized(['isGroupAdmin'])
   async removeUserFromGroup(
     @Arg("groupId", () => ID) groupId: number,
     @Arg("userId", () => ID) userId: number,
@@ -266,9 +282,9 @@ export class GroupsResolver {
       );
     }
 
-    const group = await Group.findOne({ 
-      where: { id: groupId }, 
-      relations: ["users"] 
+    const group = await Group.findOne({
+      where: { id: groupId },
+      relations: ["users"]
     });
     if (!group) {
       throw new Error("Group not found");
@@ -283,7 +299,7 @@ export class GroupsResolver {
     const userToRemove = group.users?.find(user => {
       return user.id === Number(userId);
     });
-    
+
     if (!userToRemove) {
       throw new Error("Cet utilisateur n'est pas membre de ce groupe");
     }

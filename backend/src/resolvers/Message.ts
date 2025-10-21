@@ -6,7 +6,7 @@ import { PollOption } from "../entities/PollOptions";
 import { User } from "../entities/User";
 import { Chat } from "../entities/Chat";
 import { ChatLastConnection } from "../entities/ChatLastConnection";
-import { LessThan, MoreThan } from "typeorm";
+import { MoreThan } from "typeorm";
 
 @Resolver()
 export class MessageResolver {
@@ -29,19 +29,21 @@ export class MessageResolver {
   async getMessagesByChatId(
     @Arg('chatId', () => ID) chatId: number,
     @Arg('skip', () => Int, { nullable: true }) skip: number,
-    @Arg('take', () => Int, { nullable: true }) take: number
+    @Arg('take', () => Int, { nullable: true }) take: number,
+    @Ctx() context: ContextType
   ) {
     const messages = await Message.find({
-      relations: ['poll', 'poll.createdBy', 'poll.options', 'poll.options.votes', 'poll.options.votes.user', 'chat', 'createdBy'],
+      relations: ['poll', 'poll.createdBy', 'poll.options', 'poll.options.votes', 'poll.options.votes.user', 'chat', 'chat.users', 'createdBy'],
       where: {
         chat: {
-          id: chatId
+          id: chatId,
         }
       },
       skip: skip ?? 0,
       take: take ?? 25,
       order: { createdAt: 'DESC' },
     });
+    context.data = {entities: [messages[0]?.chat]};
     return messages;
   }
 
