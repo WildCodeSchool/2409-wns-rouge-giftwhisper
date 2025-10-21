@@ -66,12 +66,19 @@ export const checkAuthorisation = async (authInfo: AuthInfo) => {
   }
 }
 
+/**
+ * 
+ * @param info graphqQL info from the AuthChecker middleware
+ * @param entity name in lowercase of the entity you wish get the id of
+ * @returns id (number) or undefined
+ * @description when calling a resolver with an id variable, it may have different names (ex: 'id', 'groupId', 'updatedGroupId'), this function deals with this issue and returns the id from the info object
+ */
 const getEntityIdFromGQLInfo = (info: GraphQLResolveInfo, entity: string): number | undefined => {
   let id;
   for (const key in info.variableValues) {
     if (key.toLowerCase().includes(entity) && key.toLowerCase().includes('id')) {
       id = Number(info.variableValues[key]);
-    } else if (key.toLowerCase() === "id") {
+    } else if (key.toLowerCase() === "id" && !id) {
       id = Number(info.variableValues[key]);
     }
   }
@@ -89,7 +96,6 @@ export const authChecker: AuthChecker<ContextType> = async (
   } else if (roles.includes('isPartOfGroup') || roles.includes('isGroupAdmin')) {
     const method = roles.includes('isGroupAdmin') ? 'isGroupAdmin' : 'isPartOfGroup';
     if (!info.variableValues) return false;
-    //This is not ideal, but we have both version of the variable used in the resolvers `id` or `groupId`
     const groupId = getEntityIdFromGQLInfo(info, "group");
     const group = await Group.findOne({ where: { id: groupId }, relations: { users: true } });
     return await checkAuthorisation({ method, requestingUserId: user.id, entity: group });

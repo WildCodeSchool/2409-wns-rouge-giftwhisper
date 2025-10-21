@@ -132,12 +132,6 @@ export class GroupsResolver {
       throw new Error("Group not found");
     }
 
-    if (group.created_by_id !== user.id) {
-      throw new Error(
-        "Unauthorized - only the creator of the group can update it"
-      );
-    }
-
     if (data.name) {
       group.name = data.name;
     }
@@ -174,9 +168,6 @@ export class GroupsResolver {
     const group = await Group.findOneBy({ id });
     if (!group) throw new Error("Ce groupe n'existe pas");
 
-    if (group.created_by_id !== user.id) {
-      throw new Error("Non autorisé - seul le créateur du groupe peut le supprimer")
-    }
     await group.remove();
     return true;
   }
@@ -239,10 +230,6 @@ export class GroupsResolver {
       throw new Error("Group not found");
     }
 
-    if (group.created_by_id !== user.id) {
-      throw new Error("Unauthorized - only the creator of the group can activate it")
-    }
-
     if (group.is_active) {
       throw new Error("Group already active");
     }
@@ -288,12 +275,6 @@ export class GroupsResolver {
     });
     if (!group) {
       throw new Error("Group not found");
-    }
-
-    if (group.created_by_id !== currentUser.id) {
-      throw new Error(
-        "Non autorisé - seul le créateur du groupe peut retirer des membres"
-      );
     }
 
     const userToRemove = group.users?.find(user => {
