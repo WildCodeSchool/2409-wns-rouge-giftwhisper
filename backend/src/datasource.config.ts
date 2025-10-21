@@ -15,6 +15,7 @@ import { DataSource } from "typeorm";
 
 // Détection automatique de l'environnement
 const isTest = process.env.NODE_ENV === "test";
+const isProduction = process.env.NODE_ENV === "production";
 
 // Configuration de la base de données selon l'environnement
 export const datasource = new DataSource({
@@ -27,6 +28,16 @@ export const datasource = new DataSource({
   password: isTest ? "test" : process.env.POSTGRES_PASSWORD,
   database: isTest ? "giftwhisper_test" : process.env.POSTGRES_DB,
   entities: ["./src/entities/*.ts"],
-  synchronize: true, // Crée automatiquement les tables basées sur les entités
-  logging: !isTest, // Désactive les logs en mode test pour plus de clarté
+
+  // DEV/TEST : synchronize auto (pas besoin de migrations)
+  // PROD : pas de synchronize (utilise les migrations)
+  synchronize: !isProduction,
+
+  // Dossier des migrations
+  migrations: ["./src/migrations/*.ts"],
+
+  // En PROD : exécute automatiquement les nouvelles migrations au démarrage
+  migrationsRun: isProduction,
+
+  logging: !isTest,
 });
