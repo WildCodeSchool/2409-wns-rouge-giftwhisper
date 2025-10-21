@@ -15,6 +15,7 @@ import { GET_GROUP } from "@/api/group";
 import { Chat } from "@/utils/types/chat";
 import { useSocket } from "@/hooks/useSocket";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 function ChatSelect() {
   const [unreadMessageCountByChat, setUnreadMessageCountByChat] = useState<
@@ -23,6 +24,7 @@ function ChatSelect() {
   const navigate = useNavigate();
   const { groupId, chatId } = useParams<{ groupId: string; chatId: string }>();
   const { socketListeners, socketEmitters } = useSocket(groupId);
+  const { user } = useAuth();
 
   const { data, loading } = useQuery<{ getChatsByGroup: Chat[] }>(
     GET_CHAT_BY_GROUP_ID,
@@ -61,7 +63,12 @@ function ChatSelect() {
   }
 
   const chats = data.getChatsByGroup;
-  const groupName = groupData?.group?.name || "Groupe";
+  const group = groupData?.group;
+  const groupName = group?.name || "Groupe";
+  const isOwner =
+    user?.id != null &&
+    group?.created_by_id != null &&
+    String(user.id) === String(group.created_by_id);
 
   return (
     <>
@@ -86,15 +93,18 @@ function ChatSelect() {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-        <button
-          className="bg-primary rounded-full p-2 text-white shadow-lg cursor-pointer hover:scale-110 hover:shadow-md"
-          onClick={() => navigate(`/group/${groupId}/settings`)}
-        >
-          <Settings
-            size={25}
-            className="rounded-full spin-once hover:spin-once"
-          />
-        </button>
+        {isOwner && (
+          <button
+            className="bg-primary rounded-full p-2 text-white shadow-lg cursor-pointer hover:scale-110 hover:shadow-md"
+            onClick={() => navigate(`/group/${groupId}/settings`)}
+            aria-label="Paramètres du groupe"
+          >
+            <Settings
+              size={25}
+              className="rounded-full spin-once hover:spin-once"
+            />
+          </button>
+        )}
       </header>
       <section className="flex flex-col pt-10">
         {chats.map((chat) => (
