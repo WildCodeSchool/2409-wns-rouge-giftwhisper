@@ -48,7 +48,7 @@ class EmailService {
          <h2>Réinitialisation de mot de passe</h2>
         <p>Vous avez demandé à réinitialiser votre mot de passe.</p>
         <p>Cliquez sur le lien ci-dessous pour choisir un nouveau mot de passe :</p>
-        <a href="${resetUrl}">${resetUrl}</a>
+        <a href="${resetUrl}">Réinitialiser mon mot de passe</a>
         <p><i>Ce lien expirera dans 1 heure.</i></p>
       `,
     });

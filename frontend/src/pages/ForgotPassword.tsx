@@ -57,6 +57,7 @@ export function ForgotPassword() {
                   <FormControl>
                     <Input
                       type="email"
+                      required
                       placeholder="votre@email.com"
                       {...field}
                     />
