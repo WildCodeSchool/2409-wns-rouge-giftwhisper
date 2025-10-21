@@ -5,11 +5,6 @@ on:
     branches: [staging]
     paths:
       - "backend/**"
-  pull_request:
-    branches: [staging]
-    paths:
-      - "backend/**"
-
 jobs:
   tests_backend:
     name: Run Tests
