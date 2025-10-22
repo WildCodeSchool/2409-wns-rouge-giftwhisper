@@ -5,6 +5,11 @@ on:
     branches: [staging]
     paths:
       - "backend/**"
+  pull_request:
+    branches: [staging]
+    paths:
+      - "backend/**"
+
 jobs:
   tests_backend:
     name: Run Tests
@@ -44,6 +49,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     needs: tests_backend
+    # Ne se déclenche que sur push (après merge), pas sur PR
+    if: github.event_name == 'push'
     steps:
       - name: Check out code
         uses: actions/checkout@v4
