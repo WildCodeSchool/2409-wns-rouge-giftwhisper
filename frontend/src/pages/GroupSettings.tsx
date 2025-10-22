@@ -40,7 +40,7 @@ import {
   GET_GROUP_ADMIN,
   DELETE_GROUP,
 } from "@/api/group";
-import { GET_INVITATIONS_BY_GROUP } from "@/api/invitation";
+import { DELETE_INVITATION, GET_INVITATIONS_BY_GROUP } from "@/api/invitation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -906,9 +906,9 @@ export default function GroupSettings() {
                               ).toLocaleDateString("fr-FR")}
                             </p>
                           </div>
-                          <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full border border-yellow-200">
+                          {/* <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full border border-yellow-200">
                             En attente
-                          </span>
+                          </span> */}
 
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
