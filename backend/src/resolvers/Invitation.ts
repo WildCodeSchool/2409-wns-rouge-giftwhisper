@@ -56,7 +56,7 @@ export class InvitationResolver {
       throw new Error("Invitation invalide ou expirée");
     }
     const contextUser = await getUserFromContext(context);
-    const user = await User.findOneBy({ id: contextUser?.id });
+    const user = await User.findOneBy({ id: data.userId });
 
     if (!user) {
       throw new Error("Aucun utilisateur trouvé pour cette invitation");

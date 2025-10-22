@@ -96,13 +96,13 @@ export function chatResolverTest(testArgs: TestArgsType) {
               userId: user.id,
             },
           },
-        },  {
-        contextValue: {
-          req: { headers: {} },
-          res: {},
-          user: user,
-        },
-      });
+        }, {
+          contextValue: {
+            req: { headers: {} },
+            res: {},
+            user: user,
+          },
+        });
 
         assert(acceptResp?.body.kind === "single");
         expect(acceptResp.body.singleResult.errors).toBeUndefined();
