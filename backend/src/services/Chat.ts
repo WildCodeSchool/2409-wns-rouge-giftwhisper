@@ -69,7 +69,7 @@ export class ChatService {
             .map((user) => Object.assign(new User(), user));
           chat.group = Object.assign(new Group(), group);
 
-          chat.name = `Pour ${excludeUser.first_name} ${excludeUser.last_name}`;
+          chat.name = `${excludeUser.first_name} ${excludeUser.last_name}`;
 
           const errors = await validate(chat);
           if (errors.length > 0) {
