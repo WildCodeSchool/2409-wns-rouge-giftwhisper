@@ -33,7 +33,7 @@ services:
       - front
 
   db:
-    image: postgres
+    image: postgres:17-alpine
     ports:
       - 3001:5432
     env_file:
@@ -42,7 +42,7 @@ services:
       - dbdata:/var/lib/postgresql/data
 
   db-test:
-    image: postgres
+    image: postgres:17-alpine
     ports:
       - 3002:5432
     environment:

@@ -53,6 +53,18 @@ function ChatWindow() {
     (chat: Chat) => String(chat.id) === chatId
   );
   const chatGradient = currentChat ? getGradientByName(currentChat.name) : "";
+  const isSecretSanta = currentChat?.group?.is_secret_santa || false;
+
+  // Extraire le nom du receiver pour le mode Secret Santa
+  let receiverName = "";
+  if (isSecretSanta && currentChat) {
+    const [receiver] = currentChat.name.split(" ");
+    const [_, receiverId, name] = receiver.split("_");
+    const isReceiver = Number(receiverId) === Number(user?.id);
+    if (!isReceiver) {
+      receiverName = name; // Le nom de la personne à qui on offre
+    }
+  }
 
   useEffect(() => {
     if (!user || !groupId || !chatId) return;
@@ -176,6 +188,8 @@ function ChatWindow() {
             onRemoveVote={handleRemoveVotePoll}
             onRemoveAllVotes={handleRemoveAllUserVotesPoll}
             chatGradient={chatGradient}
+            isSecretSanta={isSecretSanta}
+            receiverName={receiverName} // Nouvelle prop
           />
 
           <ScrollToBottomButton

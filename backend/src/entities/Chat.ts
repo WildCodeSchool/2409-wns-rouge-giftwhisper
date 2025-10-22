@@ -41,7 +41,7 @@ export class Chat extends BaseEntity {
   users!: User[];
 
   @Field(() => Group)
-  @ManyToOne(() => Group, (group) => group.chats)
+  @ManyToOne(() => Group, (group) => group.chats, { onDelete: "CASCADE" })
   group!: Group;
 
   @OneToMany(() => Message, (message) => message.chat)
@@ -51,7 +51,10 @@ export class Chat extends BaseEntity {
   @Field(() => Date, { nullable: true })
   lastMessageDate?: Date;
 
-  @OneToMany(() => ChatLastConnection, chatLastConnection => chatLastConnection.chat)
+  @OneToMany(
+    () => ChatLastConnection,
+    (chatLastConnection) => chatLastConnection.chat
+  )
   @Field(() => [ChatLastConnection], { nullable: true })
   chatLastConnections!: ChatLastConnection[];
 

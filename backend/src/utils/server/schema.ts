@@ -12,7 +12,6 @@ import { WishlistItemResolver } from "../../resolvers/WishlistItem";
 import { ChatLastConnectionResolver } from "../../resolvers/ChatLastConnection";
 import { authChecker } from "../../auth";
 
-
 export async function getSchema() {
   const schema = await buildSchema({
     resolvers: [
@@ -25,9 +24,9 @@ export async function getSchema() {
       PollResolver,
       WishlistResolver,
       WishlistItemResolver,
-      ChatLastConnectionResolver
+      ChatLastConnectionResolver,
     ],
-    authChecker
+    authChecker,
   });
   return schema;
 }
