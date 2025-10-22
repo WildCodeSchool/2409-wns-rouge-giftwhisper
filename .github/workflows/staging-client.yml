@@ -5,10 +5,16 @@ on:
     branches: [staging]
     paths:
       - "frontend/**"
+  pull_request:
+    branches: [staging]
+    paths:
+      - "frontend/**"
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Ne se déclenche que sur push (après merge), pas sur PR
+    if: github.event_name == 'push'
     steps:
       - name: Check out code
         uses: actions/checkout@v4
