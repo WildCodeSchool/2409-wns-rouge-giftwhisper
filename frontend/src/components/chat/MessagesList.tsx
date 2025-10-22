@@ -12,7 +12,7 @@ interface MessagesListProps {
   onRemoveAllVotes: (pollId: number) => void;
   chatGradient: string;
   isSecretSanta?: boolean;
-  receiverName?: string; // Nouvelle prop
+  receiverName?: string;
 }
 
 export function MessagesList({
@@ -26,7 +26,7 @@ export function MessagesList({
   onRemoveAllVotes,
   chatGradient,
   isSecretSanta = false,
-  receiverName = "", // Nouvelle prop avec valeur par défaut
+  receiverName = "",
 }: MessagesListProps) {
   return (
     <section onScroll={onScroll} className="overflow-y-auto flex-1 px-6 py-4">
@@ -50,7 +50,7 @@ export function MessagesList({
                 onRemoveAllVotes={onRemoveAllVotes}
                 chatGradient={chatGradient}
                 isSecretSanta={isSecretSanta}
-                receiverName={receiverName} // Nouvelle prop passée
+                receiverName={receiverName}
               />
             );
           })}

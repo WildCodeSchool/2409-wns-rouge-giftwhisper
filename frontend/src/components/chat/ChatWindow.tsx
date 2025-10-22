@@ -189,7 +189,7 @@ function ChatWindow() {
             onRemoveAllVotes={handleRemoveAllUserVotesPoll}
             chatGradient={chatGradient}
             isSecretSanta={isSecretSanta}
-            receiverName={receiverName} // Nouvelle prop
+            receiverName={receiverName}
           />
 
           <ScrollToBottomButton
