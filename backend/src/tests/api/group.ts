@@ -11,6 +11,25 @@ export const queryGroup = `#graphql
   }
 `;
 
+export const queryGroupAdmin = `#graphql
+  query GetGroupDetails($id: ID!) {
+    groupDetails(id: $id) {
+      id
+      name
+      end_date
+      is_secret_santa
+      is_active
+      created_by_id
+      users {
+        id
+        first_name
+        last_name
+        email
+      }
+    }
+  }
+`;
+
 export const mutationCreateGroup = `#graphql
   mutation createGroup($data: GroupCreateInput!) {
     createGroup(data: $data) {
