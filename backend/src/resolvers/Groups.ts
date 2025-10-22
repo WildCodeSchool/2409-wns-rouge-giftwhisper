@@ -26,10 +26,8 @@ export class GroupsResolver {
   @Authorized(["isPartOfGroup"])
   async group(
     @Arg("id", () => ID) id: number,
-    @Ctx() context: ContextType
   ): Promise<Group | null> {
     const group = await Group.findOneBy({ id });
-    context.data = { entities: [group] };
     if (group) {
       return group;
     } else {
