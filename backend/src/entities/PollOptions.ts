@@ -1,11 +1,11 @@
 import { Field, ID, ObjectType } from "type-graphql";
 import {
-    BaseEntity,
-    Column,
-    Entity,
-    ManyToOne,
-    OneToMany,
-    PrimaryGeneratedColumn,
+  BaseEntity,
+  Column,
+  Entity,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
 } from "typeorm";
 import { Poll } from "./Poll";
 import { PollVote } from "./PollVote";
@@ -21,7 +21,7 @@ export class PollOption extends BaseEntity {
   @Field()
   text!: string;
 
-  @ManyToOne(() => Poll, (poll) => poll.options)
+  @ManyToOne(() => Poll, (poll) => poll.options, { onDelete: "CASCADE" })
   @Field(() => Poll)
   poll!: Poll;
 

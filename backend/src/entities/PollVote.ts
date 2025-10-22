@@ -19,15 +19,20 @@ export class PollVote extends BaseEntity {
   @Field(() => ID)
   id!: number;
 
-  @ManyToOne(() => User, (user) => user.id)
-  @Field(() => User)
-  user!: User;
+  @ManyToOne(() => User, (user) => user.id, {
+    onDelete: "SET NULL",
+    nullable: true,
+  })
+  @Field(() => User, { nullable: true })
+  user?: User;
 
-  @ManyToOne(() => Poll, (poll) => poll.votes)
+  @ManyToOne(() => Poll, (poll) => poll.votes, { onDelete: "CASCADE" })
   @Field(() => Poll)
   poll!: Poll;
 
-  @ManyToOne(() => PollOption, (option) => option.votes)
+  @ManyToOne(() => PollOption, (option) => option.votes, {
+    onDelete: "CASCADE",
+  })
   @Field(() => PollOption)
   option!: PollOption;
 

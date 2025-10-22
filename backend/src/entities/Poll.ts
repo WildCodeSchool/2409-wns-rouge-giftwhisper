@@ -36,11 +36,17 @@ export class Poll extends BaseEntity {
   @Field({ nullable: true })
   endDate?: Date;
 
-  @ManyToOne(() => User, (user) => user.id)
-  @Field(() => User)
-  createdBy!: User;
+  @ManyToOne(() => User, (user) => user.id, {
+    onDelete: "SET NULL",
+    nullable: true,
+  })
+  @Field(() => User, { nullable: true })
+  createdBy?: User;
 
-  @ManyToOne(() => Chat, (chat) => chat.id, { nullable: true })
+  @ManyToOne(() => Chat, (chat) => chat.id, {
+    nullable: true,
+    onDelete: "CASCADE",
+  })
   @Field(() => Chat, { nullable: true })
   chat?: Chat;
 
