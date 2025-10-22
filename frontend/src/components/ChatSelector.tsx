@@ -82,7 +82,7 @@ function ChatSelector({
         </li>
         <li className="flex flex-col items-start gap-0 flex-1">
           <p className="text-xl leading-none font-semibold text-primary text-nowrap">
-            {chat.group.is_secret_santa ? chatName : `${chatName}`}
+            {chat.group.is_secret_santa ? chatName : `Pour ${chatName}`}
           </p>
           <p className="text-xs text-black mt-0.5">
             {unreadMessageCountByChat[chat.id] > 0
