@@ -37,10 +37,7 @@ function Dashboard() {
   const [validateInvitationToken] = useLazyQuery(VALIDATE_INVITATION_TOKEN);
   const [acceptInvitationMutation] = useMutation(ACCEPT_INVITATION);
 
-  const { data, loading, error } = useQuery(GET_USER_GROUPS, {
-    variables: { userId: user?.id },
-    skip: !user?.id,
-  });
+  const { data, loading, error } = useQuery(GET_USER_GROUPS);
 
   // Palette de couleurs pour les cards de groupes
   const groupColors = [

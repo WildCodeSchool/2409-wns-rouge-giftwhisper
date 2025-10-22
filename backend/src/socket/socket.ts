@@ -36,7 +36,6 @@ export function socketInit(httpServer: HttpServer) {
     const socketMiddleWares = new SocketMiddleWares(socket, io, initializedApolloServer);
     socket.on('join-room', socketMiddleWares.joinRoom);
     socket.on('leave-room', socketMiddleWares.leaveRoom);
-    socket.on('disconnect', socketMiddleWares.leaveRoom);
     socket.on('get-messages-history', socketMiddleWares.getMessages);
     socket.on("more-messages", socketMiddleWares.getMessages);
     socket.on("message", socketMiddleWares.createMessage);

@@ -1,28 +1,26 @@
-import { Arg, ID, Mutation, Query, Ctx, Resolver } from "type-graphql";
-import { Chat, ChatCreateInput } from "../entities/Chat";
-import { In, MoreThan } from "typeorm";
-import { User } from "../entities/User";
-import { Group } from "../entities/Group";
-import { chatService } from "../services/Chat";
+import { Arg, ID, Query, Ctx, Resolver, Authorized } from "type-graphql";
+import { Chat } from "../entities/Chat";
+import { MoreThan } from "typeorm";
 import { Message } from "../entities/Message";
 import { ContextType, getUserFromContext } from "../auth";
 import { ChatLastConnection } from "../entities/ChatLastConnection";
 
 @Resolver()
 export class ChatsResolver {
-  @Query(() => [Chat])
-  async chats(): Promise<Chat[]> {
-    const chats = await Chat.find({
-      relations: {
-        users: true,
-        group: true,
-      },
-    });
+  // @Query(() => [Chat])
+  // async chats(): Promise<Chat[]> {
+  //   const chats = await Chat.find({
+  //     relations: {
+  //       users: true,
+  //       group: true,
+  //     },
+  //   });
 
-    return chats;
-  }
+  //   return chats;
+  // }
 
   @Query(() => [Chat])
+  @Authorized(['isPartOfGroup'])
   async getChatsByGroup(
     @Arg('groupId', () => ID) groupId: number,
     @Ctx() context: ContextType
@@ -32,7 +30,6 @@ export class ChatsResolver {
     const chats = await Chat.find({
       relations: {
         group: true,
-        users: true
       },
       where: {
         group: { id: groupId },
@@ -60,6 +57,7 @@ export class ChatsResolver {
   }
 
   @Query(() => Date)
+  @Authorized(['isPartOfChat'])
   async getLastMessageDate(
     @Arg('chatId', () => ID, { nullable: true }) chatId: number
   ): Promise<Date | null> {
@@ -78,7 +76,10 @@ export class ChatsResolver {
   }
 
   @Query(() => Chat)
-  async chat(@Arg("id", () => ID) id: string): Promise<Chat> {
+  @Authorized(['isPartOfChat'])
+  async chat(
+    @Arg("id", () => ID) id: string
+  ): Promise<Chat> {
     const chat = await Chat.findOne({ where: { id: parseInt(id) } });
     if (!chat) {
       throw new Error("Chat not found");
@@ -86,55 +87,62 @@ export class ChatsResolver {
     return chat;
   }
 
-  @Mutation(() => Chat)
-  async createChat(@Arg("data") data: ChatCreateInput): Promise<Chat> {
-    const users = await User.find({
-      where: { id: In(data.users.map((users) => users)) },
-    });
+  // Was used only for testing
+  // @Mutation(() => Chat)
+  // async createChat(
+  //   @Arg("data") data: ChatCreateInput
+  // ): Promise<Chat> {
+  //   const users = await User.find({
+  //     where: { id: In(data.users.map((users) => users)) },
+  //   });
 
-    if (users.length !== data.users.length) {
-      throw new Error("Some users not found");
-    }
+  //   if (users.length !== data.users.length) {
+  //     throw new Error("Some users not found");
+  //   }
 
-    const groupId = await Group.findOne({ where: { id: data.groupId } });
+  //   const groupId = await Group.findOne({ where: { id: data.groupId } });
 
-    if (!groupId) {
-      throw new Error("Group not found");
-    }
+  //   if (!groupId) {
+  //     throw new Error("Group not found");
+  //   }
 
-    const chat = new Chat();
-    if (data.name !== undefined) {
-      chat.name = data.name;
-    }
-    chat.users = users;
-    chat.group = groupId;
+  //   const chat = new Chat();
+  //   if (data.name !== undefined) {
+  //     chat.name = data.name;
+  //   }
+  //   chat.users = users;
+  //   chat.group = groupId;
 
-    await chat.save();
-    return chat;
-  }
+  //   await chat.save();
+  //   return chat;
+  // }
 
-  @Mutation(() => Chat)
-  async deleteChat(@Arg("id", () => ID) id: string): Promise<boolean> {
-    const chat = await Chat.findOne({ where: { id: parseInt(id) } });
-    if (!chat) {
-      throw new Error("Chat not found");
-    }
-    await chat.remove();
-    return true;
-  }
+  // Not used
+  // @Mutation(() => Chat)
+  // async deleteChat(
+  //   @Arg("id", () => ID) id: string
+  // ): Promise<boolean> {
+  //   const chat = await Chat.findOne({ where: { id: parseInt(id) } });
+  //   if (!chat) {
+  //     throw new Error("Chat not found");
+  //   }
+  //   await chat.remove();
+  //   return true;
+  // }
 
-  @Mutation(() => Boolean)
-  async generateGroupChats(
-    @Arg("groupId", () => ID) groupId: number
-  ): Promise<boolean> {
-    const group = await Group.findOne({
-      where: { id: groupId },
-      relations: { users: true },
-    });
+  // Not used
+  // @Mutation(() => Boolean)
+  // async generateGroupChats(
+  //   @Arg("groupId", () => ID) groupId: number
+  // ): Promise<boolean> {
+  //   const group = await Group.findOne({
+  //     where: { id: groupId },
+  //     relations: { users: true },
+  //   });
 
-    if (!group) throw new Error("Group not found");
+  //   if (!group) throw new Error("Group not found");
 
-    await chatService.generateChatsForGroup(group);
-    return true;
-  }
+  //   await chatService.generateChatsForGroup(group);
+  //   return true;
+  // }
 }

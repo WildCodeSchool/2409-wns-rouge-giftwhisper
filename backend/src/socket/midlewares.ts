@@ -77,6 +77,7 @@ export class SocketMiddleWares {
   }
 
   disconnetSocket = async () => {
+    await this.leaveRoom();
     this.socket.leave(this.groupRoomId);
   };
 
@@ -90,7 +91,7 @@ export class SocketMiddleWares {
         skip: options?.skip,
         take: options?.take
       }
-    });
+    }, { contextValue: { user: this.user } });
     const messages = getDataFromServerGQLReponse(response, 'getMessagesByChatId');
     if (messages) {
       if (!options) {

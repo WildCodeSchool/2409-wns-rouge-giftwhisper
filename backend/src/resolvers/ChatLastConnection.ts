@@ -1,10 +1,11 @@
-import { Arg, Ctx, ID, Mutation, Query, Resolver } from "type-graphql";
+import { Arg, Authorized, Ctx, ID, Mutation, Query, Resolver } from "type-graphql";
 import { ChatLastConnection } from "../entities/ChatLastConnection";
 import { ContextType, ContextUserType, getUserFromContext } from "../auth";
 
 @Resolver()
 export class ChatLastConnectionResolver {
   @Query(() => Date, { nullable: true })
+  @Authorized(['isPartOfChat'])
   async getLastConnectionDate(
     @Arg('id', () => ID) id: number,
     @Ctx() context: ContextType
@@ -19,6 +20,7 @@ export class ChatLastConnectionResolver {
   }
 
   @Mutation(() => Boolean)
+  @Authorized(['isPartOfChat'])
   async saveLastConnection(
     @Arg('chatId', () => ID) chatId: number,
     @Ctx() context: ContextUserType | ContextType,
