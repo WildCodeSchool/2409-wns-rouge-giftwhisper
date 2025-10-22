@@ -52,12 +52,12 @@ function ChatSelector({
   let chatIcon = <GiftIcon />;
   if (chat.group.is_secret_santa) {
     const [receiver] = chat.name.split(' ');
-    const receiverId = receiver.split('_')[1];
+    const [_, receiverId, receiverName] = receiver.split('_');
     const isReceiver = Number(receiverId) === Number(user?.id);
     if (isReceiver) {
       chatName = "Je reçois de ?";
     } else {
-      chatName = "J'offre à ?";
+      chatName = `J'offre à ${receiverName}`;
       chatIcon = <SnowflakeIcon />;
     }
   }
