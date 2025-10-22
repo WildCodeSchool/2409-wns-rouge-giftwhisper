@@ -89,11 +89,12 @@ export class UsersResolver {
 
   // Login
   @Mutation(() => User, { nullable: true })
-  async login(@Arg("data") data: UserLoginInput, @Ctx() context: any) {
+  async login(@Arg("data") data: UserLoginInput, @Ctx() context: ContextType) {
     const { req, res } = context;
     const { email, password } = data;
     //The user.hashedPassword is protected in the entity with {select: false} so we have to use
     //a queryBuilder in order to retrieve the password from the DB
+    context.data = { resolverMethod: 'login' };
     const user = await User.createQueryBuilder("user")
       .addSelect("user.hashedPassword")
       .where("email = :email", { email })
@@ -114,6 +115,7 @@ export class UsersResolver {
       cookie.set("giftwhisper", token, {
         httpOnly: true,
         maxAge: 1000 * 60 * 60 * 72,
+        sameSite: "strict"
       });
       return user;
     } else {

@@ -54,7 +54,6 @@ export default function SignIn() {
         email: data.email,
         password: data.password,
       });
-
       if (response) {
         toast.success("Connexion réussie !");
         navigate("/dashboard");

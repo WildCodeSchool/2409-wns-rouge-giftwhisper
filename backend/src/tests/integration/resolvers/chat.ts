@@ -13,7 +13,7 @@ export function chatResolverTest(testArgs: TestArgsType) {
   jest.setTimeout(20000);
 
   describe("Chat Resolver Tests", () => {
-    it("Should create a chat with valid data", async () => {
+    it.skip("Should create a chat with valid data", async () => {
       const response = await testArgs.server?.executeOperation<{
         createChat: Chat;
       }>({

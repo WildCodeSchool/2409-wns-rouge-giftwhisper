@@ -36,7 +36,7 @@ export function useSocket(groupId: string | undefined) {
   const socket = getSocket(groupId);
   const emitters = {
     /**
-     * @deprecated Used for debug purposes, should be remove in prod 
+     * @deprecated Used for debug purposes, should be removed in prod 
      */
     debugging: () => socket.emit("debugging"),
     joinChatRoom: (chatId: string) => socket.emit<SocketCustomEvents["emitters"]>("join-room", chatId),

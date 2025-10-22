@@ -20,8 +20,8 @@ export const GET_GROUP = gql`
 `;
 
 export const GET_USER_GROUPS = gql`
-  query GetUserGroups($userId: ID!) {
-    getUserGroups(userId: $userId) {
+  query GetUserGroups {
+    getUserGroups {
       id
       name
       end_date

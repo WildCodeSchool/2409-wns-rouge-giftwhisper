@@ -1,4 +1,4 @@
-import { Arg, Ctx, ID, Int, Mutation, Query, Resolver } from "type-graphql";
+import { Arg, Authorized, Ctx, ID, Int, Mutation, Query, Resolver } from "type-graphql";
 import { Message } from "../entities/Message";
 import { ContextType, ContextUserType, getUserFromContext } from "../auth";
 import { CreatePollInput, Poll } from "../entities/Poll";
@@ -6,46 +6,51 @@ import { PollOption } from "../entities/PollOptions";
 import { User } from "../entities/User";
 import { Chat } from "../entities/Chat";
 import { ChatLastConnection } from "../entities/ChatLastConnection";
-import { LessThan, MoreThan } from "typeorm";
+import { MoreThan } from "typeorm";
 
 @Resolver()
 export class MessageResolver {
 
-  @Query(() => [Message], { nullable: true })
-  async messages() {
-    const messages = await Message.find();
-    if (!messages.length) return null;
-    return messages;
-  }
+  // Dev Resolvers
+  // @Query(() => [Message], { nullable: true })
+  // async messages() {
+  //   const messages = await Message.find();
+  //   if (!messages.length) return null;
+  //   return messages;
+  // }
 
-  @Query(() => Message, { nullable: true })
-  async getMessageById(
-    @Arg('id', () => ID) id: number
-  ) {
-    return Message.findOneBy({ id });
-  }
+  // @Query(() => Message, { nullable: true })
+  // async getMessageById(
+  //   @Arg('id', () => ID) id: number
+  // ) {
+  //   return Message.findOneBy({ id });
+  // }
 
   @Query(() => [Message])
+  @Authorized(["isPartOfChat"])
   async getMessagesByChatId(
     @Arg('chatId', () => ID) chatId: number,
     @Arg('skip', () => Int, { nullable: true }) skip: number,
-    @Arg('take', () => Int, { nullable: true }) take: number
+    @Arg('take', () => Int, { nullable: true }) take: number,
+    @Ctx() context: ContextType
   ) {
     const messages = await Message.find({
-      relations: ['poll', 'poll.createdBy', 'poll.options', 'poll.options.votes', 'poll.options.votes.user', 'chat', 'createdBy'],
+      relations: ['poll', 'poll.createdBy', 'poll.options', 'poll.options.votes', 'poll.options.votes.user', 'chat', 'chat.users', 'createdBy'],
       where: {
         chat: {
-          id: chatId
+          id: chatId,
         }
       },
       skip: skip ?? 0,
       take: take ?? 25,
       order: { createdAt: 'DESC' },
     });
+    context.data = {entities: [messages[0]?.chat]};
     return messages;
   }
 
   @Query(() => Number)
+  @Authorized(["isPartOfChat"])
   async getUnreadCount(
     @Arg('chatId', () => ID) chatId: number,
     @Ctx() context: ContextType | ContextUserType
@@ -68,6 +73,7 @@ export class MessageResolver {
   }
 
   @Mutation(() => Message)
+  @Authorized(["isPartOfChat"])
   async createMessage(
     @Ctx() context: ContextUserType | ContextType,
     @Arg('content', () => String) content: string,
@@ -89,6 +95,7 @@ export class MessageResolver {
   }
 
   @Mutation(() => Message)
+  @Authorized(["isPartOfChat"])
   async createPollWithMessage(
     @Arg("data") data: CreatePollInput,
     @Ctx() context: ContextType | ContextUserType
