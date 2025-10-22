@@ -3,7 +3,7 @@ import { Chat } from "../../../entities/Chat";
 import { mutationCreateChat } from "../../api/chat";
 import { assert } from "../index.test";
 import { Group } from "../../../entities/Group";
-import { mutationActivateGroup, queryGroup } from "../../api/group";
+import { mutationActivateGroup, queryGroupAdmin } from "../../api/group";
 import { invitationService } from "../../../services/Invitation";
 import { User } from "../../../entities/User";
 import { mutationAcceptInvitation } from "../../api/invitation";
@@ -129,9 +129,9 @@ export function chatResolverTest(testArgs: TestArgsType) {
 
       // 6. Fetch group and verify users
       const groupCheckResp = await testArgs.server?.executeOperation<{
-        group: Group;
+        groupDetails: Group;
       }>({
-        query: queryGroup,
+        query: queryGroupAdmin,
         variables: { id: groupId },
       }, {
         contextValue: {
@@ -140,10 +140,8 @@ export function chatResolverTest(testArgs: TestArgsType) {
           user: admin,
         },
       });
-
       assert(groupCheckResp?.body.kind === "single");
-      const groupUsers =
-        groupCheckResp.body.singleResult.data?.group.users || [];
+      const groupUsers = groupCheckResp.body.singleResult.data?.groupDetails.users || [];
 
       // Ensure admin is part of the group
       expect(groupUsers.some((u) => Number(u.id) === admin.id)).toBe(true); //id is a string in GraphQL...

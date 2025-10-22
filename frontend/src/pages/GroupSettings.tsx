@@ -32,7 +32,7 @@ import { HelpCircle, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useParams } from "react-router-dom";
 import { useQuery, useMutation } from "@apollo/client";
-import { GET_GROUP, REMOVE_USER_FROM_GROUP, UPDATE_GROUP, ADD_USERS_TO_GROUP, ACTIVATE_GROUP } from "@/api/group";
+import { REMOVE_USER_FROM_GROUP, UPDATE_GROUP, ADD_USERS_TO_GROUP, ACTIVATE_GROUP, GET_GROUP_ADMIN } from "@/api/group";
 import { GET_INVITATIONS_BY_GROUP } from "@/api/invitation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -112,7 +112,7 @@ function GroupActivationAlert({ isSecretSanta, onActivate, className = "", userC
 
 export default function GroupSettings() {
   const { id } = useParams();
-  const { data, loading, error, refetch } = useQuery(GET_GROUP, {
+  const { data, loading, error, refetch } = useQuery(GET_GROUP_ADMIN, {
     variables: { id },
   });
 
@@ -146,18 +146,18 @@ export default function GroupSettings() {
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    if (data?.group) {
+    if (data?.groupDetails) {
       const groupData = {
-        name: data.group.name,
-        end_date: data.group.end_date ? new Date(data.group.end_date) : null,
-        is_secret_santa: data.group.is_secret_santa,
-        is_active: data.group.is_active,
+        name: data.groupDetails.name,
+        end_date: data.groupDetails.end_date ? new Date(data.groupDetails.end_date) : null,
+        is_secret_santa: data.groupDetails.is_secret_santa,
+        is_active: data.groupDetails.is_active,
       };
       
-      setGroupName(data.group.name);
-      setEndDate(data.group.end_date ? new Date(data.group.end_date) : null);
-      setIsSecretSanta(data.group.is_secret_santa);
-      setIsActive(data.group.is_active);
+      setGroupName(data.groupDetails.name);
+      setEndDate(data.groupDetails.end_date ? new Date(data.groupDetails.end_date) : null);
+      setIsSecretSanta(data.groupDetails.is_secret_santa);
+      setIsActive(data.groupDetails.is_active);
       setOriginalData(groupData);
     }
   }, [data]);
@@ -182,7 +182,7 @@ export default function GroupSettings() {
 
   if (loading) return <div>Chargement...</div>;
   if (error) return <div>Erreur lors du chargement du groupe</div>;
-  if (!data?.group) return <div>Groupe non trouvé</div>;
+  if (!data?.groupDetails) return <div>Groupe non trouvé</div>;
 
   const handleSubmit = async () => {
     try {
@@ -552,7 +552,7 @@ export default function GroupSettings() {
               isSecretSanta={isSecretSanta} 
               onActivate={handleActivateGroup} 
               className="lg:block hidden"
-              userCount={data.group.users.length}
+              userCount={data.groupDetails.users.length}
             />
           )}
         </div>
@@ -578,7 +578,7 @@ export default function GroupSettings() {
                     </div>
                   ) : (
                     <p className="text-base text-gray-600">
-                      {data.group.users.length} membre{data.group.users.length > 1 ? 's' : ''}
+                      {data.groupDetails.users.length} membre{data.groupDetails.users.length > 1 ? 's' : ''}
                     </p>
                   )}
                 </div>
@@ -607,21 +607,21 @@ export default function GroupSettings() {
 
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="members">Membres ({data.group.users.length})</TabsTrigger>
+                  <TabsTrigger value="members">Membres ({data.groupDetails.users.length})</TabsTrigger>
                   <TabsTrigger value="invitations">
                     Invitations ({invitationsData?.getInvitationsByGroup?.length || 0})
                   </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="members" className="space-y-3 mt-4">
-                  {data.group.users.length === 0 ? (
+                  {data.groupDetails.users.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
                       <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
                       <p>Aucun membre pour le moment</p>
                       <p className="text-sm">Ajoutez des membres pour commencer</p>
                     </div>
                   ) : (
-                    data.group.users.map((member: any) => {
+                    data.groupDetails.users.map((member: any) => {
                       const status = getMemberStatus(member.email);
                       const invitationDate = getInvitationDate(member.email);
                       
@@ -730,7 +730,7 @@ export default function GroupSettings() {
           <GroupActivationAlert 
             isSecretSanta={isSecretSanta} 
             onActivate={handleActivateGroup} 
-            userCount={data.group.users.length}
+            userCount={data.groupDetails.users.length}
           />
         </div>
       )}
