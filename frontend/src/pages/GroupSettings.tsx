@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/tooltip";
 import { HelpCircle, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation } from "@apollo/client";
 import {
   REMOVE_USER_FROM_GROUP,
@@ -38,8 +38,9 @@ import {
   ADD_USERS_TO_GROUP,
   ACTIVATE_GROUP,
   GET_GROUP_ADMIN,
+  DELETE_GROUP,
 } from "@/api/group";
-import { DELETE_INVITATION, GET_INVITATIONS_BY_GROUP } from "@/api/invitation";
+import { GET_INVITATIONS_BY_GROUP } from "@/api/invitation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -128,6 +129,7 @@ function GroupActivationAlert({
 
 export default function GroupSettings() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { data, loading, error, refetch } = useQuery(GET_GROUP_ADMIN, {
     variables: { id },
   });
@@ -143,6 +145,7 @@ export default function GroupSettings() {
   const [updateGroup] = useMutation(UPDATE_GROUP);
   const [addUsersToGroup] = useMutation(ADD_USERS_TO_GROUP);
   const [activateGroup] = useMutation(ACTIVATE_GROUP);
+  const [deleteGroup] = useMutation(DELETE_GROUP);
 
   const [groupName, setGroupName] = useState("");
   const [endDate, setEndDate] = useState<Date | null>(null);
@@ -329,6 +332,34 @@ export default function GroupSettings() {
         "Une erreur est survenue lors de l'activation du groupe";
 
       toast.error("Erreur lors de l'activation", {
+        description: errorMessage,
+      });
+    }
+  };
+
+  const handleDeleteGroup = async () => {
+    try {
+      await deleteGroup({
+        variables: {
+          id: id,
+        },
+      });
+
+      toast.success("Groupe supprimé", {
+        description: "Le groupe a été supprimé avec succès.",
+      });
+
+      // Rediriger vers le dashboard
+      navigate("/dashboard");
+    } catch (error: any) {
+      console.error("Erreur lors de la suppression du groupe:", error);
+
+      const errorMessage =
+        error.graphQLErrors?.[0]?.message ||
+        error.message ||
+        "Une erreur est survenue lors de la suppression du groupe";
+
+      toast.error("Erreur lors de la suppression", {
         description: errorMessage,
       });
     }
@@ -633,6 +664,59 @@ export default function GroupSettings() {
               userCount={data.groupDetails.users.length}
             />
           )}
+
+          {/* Suppression du groupe */}
+          <Card className="border-red-200 bg-red-50 p-4 sm:p-6">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-red-800 text-base sm:text-lg">
+                Suppression du groupe
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <p className="text-red-700 text-sm mb-4">
+                La suppression du groupe est irréversible. Tous les chats,
+                messages et données associés seront définitivement perdus.
+              </p>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="destructive"
+                    className="w-full bg-red-600 hover:bg-red-700"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Supprimer le groupe
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Supprimer le groupe ?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Cette action est irréversible et supprimera définitivement
+                      :
+                      <ul className="list-disc list-inside mt-2 space-y-1">
+                        <li>Le groupe "{groupName}"</li>
+                        <li>Tous les chats et messages associés</li>
+                        <li>Toutes les wishlists et cadeaux</li>
+                        <li>Toutes les invitations en attente</li>
+                      </ul>
+                      <p className="mt-3 font-semibold text-red-600">
+                        Cette opération ne peut pas être annulée.
+                      </p>
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Annuler</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDeleteGroup}
+                      className="bg-red-600 hover:bg-red-700"
+                    >
+                      Supprimer définitivement
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Right Column - Members Management */}

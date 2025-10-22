@@ -44,7 +44,10 @@ export class InvitationService {
         newInvitation.group = group;
 
         //3. On enregistre l'invitation dans la transaction
-        const errors = await validate(newInvitation);
+        const errors = await validate(newInvitation, {
+          skipMissingProperties: true,
+          forbidUnknownValues: false,
+        });
         if (errors.length > 0) {
           throw new Error(`Validation error: ${JSON.stringify(errors)}`);
         }

@@ -50,7 +50,10 @@ export class ChatService {
           chat.group = Object.assign(new Group(), group);
           chat.name = `receiver_${receiverUser.id}_${receiverUser.first_name} gifter_${gifterUser.id}`;
 
-          const errors = await validate(chat);
+          const errors = await validate(chat, {
+            skipMissingProperties: true,
+            forbidUnknownValues: false,
+          });
           if (errors.length > 0) {
             throw new Error(`Validation error: ${JSON.stringify(errors)}`);
           }
@@ -69,9 +72,12 @@ export class ChatService {
             .map((user) => Object.assign(new User(), user));
           chat.group = Object.assign(new Group(), group);
 
-          chat.name = `Pour ${excludeUser.first_name} ${excludeUser.last_name}`;
+          chat.name = `${excludeUser.first_name} ${excludeUser.last_name}`;
 
-          const errors = await validate(chat);
+          const errors = await validate(chat, {
+            skipMissingProperties: true,
+            forbidUnknownValues: false,
+          });
           if (errors.length > 0) {
             throw new Error(`Validation error: ${JSON.stringify(errors)}`);
           }

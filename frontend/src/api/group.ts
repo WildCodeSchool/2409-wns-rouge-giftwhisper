@@ -100,3 +100,9 @@ export const ACTIVATE_GROUP = gql`
     activateGroup(id: $id)
   }
 `;
+
+export const DELETE_GROUP = gql`
+  mutation DeleteGroup($id: ID!) {
+    deleteGroup(id: $id)
+  }
+`;

@@ -15,8 +15,6 @@ import {
 } from "../entities/Invitation";
 import { Group } from "../entities/Group";
 import { User } from "../entities/User";
-import { invitationService } from "../services/Invitation";
-import { InvitationAcceptInput } from "../entities/Invitation";
 import { ContextType, getUserFromContext } from "../auth";
 
 @Resolver()
@@ -30,7 +28,7 @@ export class InvitationResolver {
 
   @Query(() => InvitationValidationResult, { nullable: true })
   async validateInvitationToken(
-    @Arg("token") token: string
+    @Arg("token", () => String) token: string
   ): Promise<InvitationValidationResult | null> {
     // 1. On récupère l'invitation par son token
     const invitation = await Invitation.findOne({
@@ -54,20 +52,21 @@ export class InvitationResolver {
   @Mutation(() => Boolean)
   @Authorized(["user"])
   async acceptInvitation(
-    @Arg("data", () => InvitationAcceptInput) data: InvitationAcceptInput,
+    @Arg("token", () => String) token: string,
     @Ctx() context: ContextType
   ): Promise<boolean> {
+    const userFromContext = await getUserFromContext(context);
+    if (!userFromContext) throw new Error("Invalid user");
     // 1. On récupère l'invitation
     const invitation = await Invitation.findOne({
-      where: { token: data.token },
+      where: { token: token },
       relations: ["group"],
     });
 
     if (!invitation) {
       throw new Error("Invitation invalide ou expirée");
     }
-    const contextUser = await getUserFromContext(context);
-    const user = await User.findOneBy({ id: data.userId });
+    const user = await User.findOneBy({ id: userFromContext.id });
 
     if (!user) {
       throw new Error("Aucun utilisateur trouvé pour cette invitation");
@@ -89,7 +88,7 @@ export class InvitationResolver {
     }
 
     const isUserAlreadyMember = groupWithUsers.users.some(
-      (u) => u.id === data.userId
+      (u) => u.id === userFromContext.id
     );
 
     if (isUserAlreadyMember) {

@@ -18,6 +18,8 @@ interface MessageItemProps {
   onRemoveVote: (pollId: number, optionId: number) => void;
   onRemoveAllVotes: (pollId: number) => void;
   chatGradient: string;
+  isSecretSanta?: boolean;
+  receiverName?: string;
 }
 
 export function MessageItem({
@@ -31,8 +33,25 @@ export function MessageItem({
   onRemoveVote,
   onRemoveAllVotes,
   chatGradient,
+  isSecretSanta = false,
+  receiverName = "",
 }: MessageItemProps) {
   const isOwnMessage = message.createdBy.id === currentUserId;
+
+  // Fonction pour déterminer le nom à afficher
+  const getDisplayName = () => {
+    if (isOwnMessage) {
+      return "Vous"; // L'utilisateur voit toujours son propre nom
+    }
+
+    if (isSecretSanta) {
+      // Si on a un receiverName, c'est qu'on est le gifter
+      // et on affiche le nom de la personne à qui on offre
+      return receiverName || "Secret Santa";
+    }
+
+    return message.createdBy.first_name; // Nom normal en mode classique
+  };
 
   return (
     <div
@@ -52,7 +71,7 @@ export function MessageItem({
       >
         <div className={`w-2 h-2 ${chatGradient} rounded-full`}></div>
         <span className="text-xs text-slate-500 font-medium">
-          {message.createdBy.first_name}
+          {getDisplayName()}
         </span>
       </div>
 

@@ -34,7 +34,7 @@ export class Invitation extends BaseEntity {
   @Field()
   updated_at!: Date;
 
-  @ManyToOne(() => Group, (group) => group.invitations)
+  @ManyToOne(() => Group, (group) => group.invitations, { onDelete: "CASCADE" })
   @Field(() => Group)
   group!: Group;
 }
@@ -48,14 +48,6 @@ export class InvitationCreateInput {
   email!: string;
 }
 
-@InputType()
-export class InvitationAcceptInput {
-  @Field()
-  token!: string;
-
-  @Field(() => ID)
-  userId!: number;
-}
 
 @ObjectType()
 export class InvitationValidationResult {
@@ -65,5 +57,3 @@ export class InvitationValidationResult {
   @Field()
   invitationEmail!: string;
 }
-
-

@@ -102,10 +102,7 @@ function Dashboard() {
     try {
       const { data } = await acceptInvitationMutation({
         variables: {
-          data: {
-            token: invitationDetails.token,
-            userId: parseInt(user.id.toString(), 10),
-          },
+          token: invitationDetails.token,
         },
       });
 
