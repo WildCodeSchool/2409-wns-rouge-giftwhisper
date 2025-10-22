@@ -1,5 +1,5 @@
 export const mutationAcceptInvitation = `#graphql
-  mutation AcceptInvitation($data: InvitationAcceptInput!) {
-    acceptInvitation(data: $data)
+  mutation AcceptInvitation($token: String!) {
+    acceptInvitation(token: $token)
   }
 `;

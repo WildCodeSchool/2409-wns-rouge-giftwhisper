@@ -7,7 +7,6 @@ import { mutationActivateGroup, queryGroupAdmin } from "../../api/group";
 import { invitationService } from "../../../services/Invitation";
 import { User } from "../../../entities/User";
 import { mutationAcceptInvitation } from "../../api/invitation";
-import * as authUtils from "../../../auth";
 
 export function chatResolverTest(testArgs: TestArgsType) {
   jest.setTimeout(20000);
@@ -42,10 +41,7 @@ export function chatResolverTest(testArgs: TestArgsType) {
       });
       await admin.save();
 
-      // 2. Mock auth context with the admin
-      jest.spyOn(authUtils, "getUserFromContext").mockResolvedValue(admin);
-
-      // 3. Create a Secret Santa group
+      // 2. Create a Secret Santa group
       const groupResp = await testArgs.server?.executeOperation<{
         createGroup: Group;
       }>({
@@ -78,7 +74,7 @@ export function chatResolverTest(testArgs: TestArgsType) {
       const groupId = groupResp.body.singleResult.data?.createGroup.id!;
       expect(groupId).toBeDefined();
 
-      // 4. Invite and accept all other users
+      // 3. Invite and accept all other users
       for (const userId of testArgs.data.userIds) {
         const user = await User.findOneBy({ id: userId });
         if (!user) continue;
@@ -87,14 +83,10 @@ export function chatResolverTest(testArgs: TestArgsType) {
           user.email,
           groupId
         );
-
         const acceptResp = await testArgs.server?.executeOperation({
           query: mutationAcceptInvitation,
           variables: {
-            data: {
-              token: invitation.token,
-              userId: user.id,
-            },
+            token: invitation.token,
           },
         }, {
           contextValue: {
@@ -108,7 +100,7 @@ export function chatResolverTest(testArgs: TestArgsType) {
         expect(acceptResp.body.singleResult.errors).toBeUndefined();
       }
 
-      // 5. Activate the group
+      // 4. Activate the group
       const activateResp = await testArgs.server?.executeOperation<{
         activateGroup: boolean;
       }>({
@@ -127,7 +119,7 @@ export function chatResolverTest(testArgs: TestArgsType) {
       assert(activateResp?.body.kind === "single");
       expect(activateResp.body.singleResult.errors).toBeUndefined();
 
-      // 6. Fetch group and verify users
+      // 5. Fetch group and verify users
       const groupCheckResp = await testArgs.server?.executeOperation<{
         groupDetails: Group;
       }>({
@@ -146,7 +138,7 @@ export function chatResolverTest(testArgs: TestArgsType) {
       // Ensure admin is part of the group
       expect(groupUsers.some((u) => Number(u.id) === admin.id)).toBe(true); //id is a string in GraphQL...
 
-      // 7. Verify the number of chats created
+      // 6. Verify the number of chats created
       const chats = await Chat.find({
         where: { group: { id: groupId } },
         relations: ["users", "group"],

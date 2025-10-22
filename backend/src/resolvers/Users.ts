@@ -16,7 +16,10 @@ import { ContextType } from "../auth";
 export class UsersResolver {
   //Create
   @Mutation(() => User)
-  async createUser(@Arg("data") data: UserCreateInput): Promise<User> {
+  async createUser(
+    @Arg("data") data: UserCreateInput,
+    @Ctx() context: ContextType
+  ): Promise<User> {
     const newUser = new User();
     newUser.email = data.email;
     newUser.first_name = data.first_name;
@@ -24,6 +27,8 @@ export class UsersResolver {
     newUser.date_of_birth = data.date_of_birth;
 
     newUser.hashedPassword = await argon2.hash(data.password);
+
+    context.data = {resolverMethod: "createUser"}
 
     const errors = await validate(newUser);
     if (errors.length > 0) {

@@ -15,7 +15,7 @@ export type AuthInfo = {
   requestingUserId: number;
   entity: EntityEnum;
 }
-export type ResolverMethod = 'login' | 'requestPasswordReset' | 'cancelPasswordResetRequests';
+export type ResolverMethod = 'login' | 'requestPasswordReset' | 'cancelPasswordResetRequests' | "createUser";
 export type ContextData = { entities?: EntityEnum[], resolverMethod?: ResolverMethod };
 export type ContextType = { req: any; res: any; user: User | null | undefined; data?: ContextData };
 /**

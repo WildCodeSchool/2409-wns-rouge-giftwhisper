@@ -1,8 +1,8 @@
 import { gql } from "@apollo/client";
 
 export const ACCEPT_INVITATION = gql`
-  mutation AcceptInvitation($data: InvitationAcceptInput!) {
-    acceptInvitation(data: $data)
+  mutation AcceptInvitation($token: String!) {
+    acceptInvitation(token: $token)
   }
 `;
 
