@@ -22,9 +22,12 @@ export class Message extends BaseEntity {
   @Field()
   content!: string;
 
-  @ManyToOne(() => User, (user) => user.id)
-  @Field(() => User)
-  createdBy!: User;
+  @ManyToOne(() => User, (user) => user.id, {
+    onDelete: "SET NULL",
+    nullable: true,
+  })
+  @Field(() => User, { nullable: true })
+  createdBy?: User;
 
   @CreateDateColumn()
   @Field()
@@ -34,11 +37,11 @@ export class Message extends BaseEntity {
   @Field()
   messageType!: string;
 
-  @ManyToOne(() => Poll, { nullable: true })
+  @ManyToOne(() => Poll, { nullable: true, onDelete: "SET NULL" })
   @Field(() => Poll, { nullable: true })
   poll?: Poll;
 
-  @ManyToOne(() => Chat, (chat) => chat.messages)
+  @ManyToOne(() => Chat, (chat) => chat.messages, { onDelete: "CASCADE" })
   @Field(() => Chat)
   chat!: Chat;
 }
