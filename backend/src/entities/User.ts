@@ -44,6 +44,7 @@ function isAuthorized(
       || data?.resolverMethod === "login" 
       || data?.resolverMethod === "requestPasswordReset"
       || data?.resolverMethod === "cancelPasswordResetRequests"
+      || data?.resolverMethod === "createUser"
     ) {
       return next();
     } else if (data && data.entities && authorisations && user) {
