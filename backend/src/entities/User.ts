@@ -39,7 +39,12 @@ function isAuthorized(
     const user = await getUserFromContext(context);
     const { data } = context;
     const isUser = user?.id === root.id;
-    if (isUser || data?.resolverMethod === "login") {
+    if (
+      isUser 
+      || data?.resolverMethod === "login" 
+      || data?.resolverMethod === "requestPasswordReset"
+      || data?.resolverMethod === "cancelPasswordResetRequests"
+    ) {
       return next();
     } else if (data && data.entities && authorisations && user) {
       const { entities } = data;

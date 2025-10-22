@@ -1,18 +1,21 @@
-import Cookies from "cookies";
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
-import { ContextType } from "../auth";
 import { User } from "../entities/User";
 import { PasswordResetToken } from "../entities/PasswordResetToken";
 import argon2 from "argon2";
 import { randomBytes } from "crypto";
 import { MoreThan } from "typeorm";
 import { emailService } from "../services/Email";
+import { ContextType } from "../auth";
 
 @Resolver()
 export class PasswordResetResolver {
   //Processes the password reset request
   @Mutation(() => Boolean)
-  async requestPasswordReset(@Arg("email") email: string): Promise<boolean> {
+  async requestPasswordReset(
+    @Arg("email") email: string,
+    @Ctx() context: ContextType
+  ): Promise<boolean> {
+    context.data = { resolverMethod: "requestPasswordReset" }
     const user = await User.findOneBy({ email });
     if (!user) {
       console.log("Password reset requested for non-existing user");
@@ -89,9 +92,12 @@ export class PasswordResetResolver {
 
   @Mutation(() => Boolean)
   async cancelPasswordResetRequests(
-    @Arg("email") email: string
+    @Arg("email") email: string,
+    @Ctx() context: ContextType
   ): Promise<boolean> {
     const user = await User.findOneBy({ email });
+    context.data = { resolverMethod: "cancelPasswordResetRequests" }
+
     if (!user) {
       console.log("Tentative d'annulation pour un utilisateur inexistant");
       return true;

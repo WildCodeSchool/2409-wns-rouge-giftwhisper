@@ -1,4 +1,4 @@
-import { Arg, Ctx, ID, Mutation, Query, Resolver } from "type-graphql";
+import { Arg, Authorized, Ctx, ID, Mutation, Query, Resolver } from "type-graphql";
 import { Poll, CreatePollInput } from "../entities/Poll";
 import { PollVote } from "../entities/PollVote";
 import { PollOption } from "../entities/PollOptions";
@@ -9,6 +9,7 @@ import { Chat } from "../entities/Chat";
 @Resolver()
 export class PollResolver {
   @Mutation(() => Poll)
+  @Authorized(['isPartOfChat'])
   async createPoll(
     @Arg("data") data: CreatePollInput,
     @Ctx() context: ContextType
@@ -34,6 +35,7 @@ export class PollResolver {
   }
 
   @Mutation(() => Poll, { nullable: true })
+  @Authorized(['isPollPartOfChat'])
   async votePoll(
     @Arg("pollId", () => ID) pollId: number,
     @Arg("optionId", () => ID) optionId: number,
@@ -48,7 +50,7 @@ export class PollResolver {
       },
     });
     const poll = await Poll.findOne({
-      where: { id: pollId },
+      where: { id: pollId }, relations: ['chat', 'chat.users']
     });
     if (!poll) return null;
     if (existingVote && !poll.allowMultipleVotes) return null;
@@ -57,7 +59,7 @@ export class PollResolver {
     vote.poll = { id: pollId } as Poll;
     vote.option = { id: optionId } as PollOption;
     await vote.save();
-
+    if (poll.chat) context.data = { entities: [poll.chat] };
     const updatedPoll = await Poll.findOne({
       where: { id: pollId },
       relations: [
@@ -71,6 +73,7 @@ export class PollResolver {
   }
 
   @Mutation(() => Boolean, { nullable: true })
+  @Authorized(['isPollPartOfChat'])
   async removeVotePoll(
     @Arg("pollId", () => ID) pollId: number,
     @Arg("optionId", () => ID) optionId: number,
@@ -93,6 +96,7 @@ export class PollResolver {
   }
 
   @Mutation(() => Boolean, { nullable: true })
+  @Authorized(['isPollPartOfChat'])
   async removeUserVote(
     @Arg("pollId", () => ID) pollId: number,
     @Ctx() context: ContextType | ContextUserType
@@ -107,6 +111,7 @@ export class PollResolver {
   }
 
   @Query(() => Poll)
+  @Authorized(['isPollPartOfChat'])
   async poll(@Arg("id", () => ID) id: number): Promise<Poll> {
     return Poll.findOneOrFail({
       where: { id },

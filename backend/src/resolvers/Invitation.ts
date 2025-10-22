@@ -1,18 +1,20 @@
-import { Arg, ID, Mutation, Query, Resolver } from "type-graphql";
+import { Arg, Authorized, Ctx, ID, Mutation, Query, Resolver } from "type-graphql";
 import { Invitation, InvitationCreateInput, InvitationValidationResult } from "../entities/Invitation";
 import { Group } from "../entities/Group";
 import { User } from "../entities/User";
 import { invitationService } from "../services/Invitation";
 import { InvitationAcceptInput } from "../entities/Invitation";
+import { ContextType, getUserFromContext } from "../auth";
 
 @Resolver()
 export class InvitationResolver {
-  @Mutation(() => Invitation)
-  async createInvitation(
-    @Arg("data", () => InvitationCreateInput) data: InvitationCreateInput
-  ): Promise<Invitation> {
-    return invitationService.createInvitation(data.email, data.groupId);
-  }
+
+  // @Mutation(() => Invitation)
+  // async createInvitation(
+  //   @Arg("data", () => InvitationCreateInput) data: InvitationCreateInput
+  // ): Promise<Invitation> {
+  //   return invitationService.createInvitation(data.email, data.groupId);
+  // }
 
   @Query(() => InvitationValidationResult, { nullable: true })
   async validateInvitationToken(
@@ -37,9 +39,12 @@ export class InvitationResolver {
     };
   }
 
+  // WARNING : We should get the user from the context, not from InvitationAcceptInput variables
   @Mutation(() => Boolean)
+  @Authorized(['user'])
   async acceptInvitation(
-  @Arg("data", () => InvitationAcceptInput) data: InvitationAcceptInput
+    @Arg("data", () => InvitationAcceptInput) data: InvitationAcceptInput,
+    @Ctx() context: ContextType
   ): Promise<boolean> {
     // 1. On récupère l'invitation
     const invitation = await Invitation.findOne({
@@ -50,10 +55,10 @@ export class InvitationResolver {
     if (!invitation) {
       throw new Error("Invitation invalide ou expirée");
     }
+    const contextUser = await getUserFromContext(context);
+    const user = await User.findOneBy({ id: contextUser?.id });
 
-    const user = await User.findOneBy({ id: data.userId }); 
-
-    if (!user){
+    if (!user) {
       throw new Error("Aucun utilisateur trouvé pour cette invitation");
     }
 
@@ -67,11 +72,11 @@ export class InvitationResolver {
       where: { id: invitation.group.id },
       relations: { users: true },
     });
-    
+
     if (!groupWithUsers) {
       throw new Error("Groupe non trouvé");
     }
-    
+
     const isUserAlreadyMember = groupWithUsers.users.some(u => u.id === data.userId);
 
     if (isUserAlreadyMember) {
@@ -88,12 +93,12 @@ export class InvitationResolver {
       if (!group) {
         throw new Error("Groupe non trouvé");
       }
-  
+
       // 3. On ajoute l'utilisateur au groupe 
       try {
         // On vérifie si l'utilisateur existe déjà dans le groupe
         const userExists = group.users.some(u => u.id === user.id);
-        
+
         if (!userExists) {
           group.users.push(user);
           await group.save();
@@ -104,22 +109,25 @@ export class InvitationResolver {
       }
 
     }
-    
+
     // 4. On supprime l'invitation
     await Invitation.remove(invitation);
 
     return true;
   }
 
-  @Query(() => [Invitation])
-  async getAllInvitations(): Promise<Invitation[]> {
-    return await Invitation.find({
-      relations: ["group"], // inclure le groupe si besoin
-    });
-  }
+  // @Query(() => [Invitation])
+  // async getAllInvitations(): Promise<Invitation[]> {
+  //   return await Invitation.find({
+  //     relations: ["group"], // inclure le groupe si besoin
+  //   });
+  // }
 
   @Query(() => [Invitation])
-  async getInvitationsByGroup(@Arg("groupId", () => ID) groupId: number): Promise<Invitation[]> {
+  @Authorized(['isGroupAdmin'])
+  async getInvitationsByGroup(
+    @Arg("groupId", () => ID) groupId: number
+  ): Promise<Invitation[]> {
     return await Invitation.find({
       where: { group: { id: groupId } },
       relations: ["group"],
@@ -127,19 +135,20 @@ export class InvitationResolver {
     });
   }
 
-  @Mutation(() => Boolean)
-  async deleteInvitation(
-    @Arg("invitationId") invitationId: number
-  ): Promise<boolean> {
-    const invitation = await Invitation.findOne({
-      where: { id: invitationId },
-    });
+  // Not used
+  // @Mutation(() => Boolean)
+  // async deleteInvitation(
+  //   @Arg("invitationId") invitationId: number
+  // ): Promise<boolean> {
+  //   const invitation = await Invitation.findOne({
+  //     where: { id: invitationId },
+  //   });
 
-    if (!invitation) {
-      throw new Error("Invitation non trouvée.");
-    }
+  //   if (!invitation) {
+  //     throw new Error("Invitation non trouvée.");
+  //   }
 
-    await Invitation.remove(invitation);
-    return true;
-  }
+  //   await Invitation.remove(invitation);
+  //   return true;
+  // }
 }

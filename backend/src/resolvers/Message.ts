@@ -1,4 +1,4 @@
-import { Arg, Ctx, ID, Int, Mutation, Query, Resolver } from "type-graphql";
+import { Arg, Authorized, Ctx, ID, Int, Mutation, Query, Resolver } from "type-graphql";
 import { Message } from "../entities/Message";
 import { ContextType, ContextUserType, getUserFromContext } from "../auth";
 import { CreatePollInput, Poll } from "../entities/Poll";
@@ -11,21 +11,23 @@ import { MoreThan } from "typeorm";
 @Resolver()
 export class MessageResolver {
 
-  @Query(() => [Message], { nullable: true })
-  async messages() {
-    const messages = await Message.find();
-    if (!messages.length) return null;
-    return messages;
-  }
+  // Dev Resolvers
+  // @Query(() => [Message], { nullable: true })
+  // async messages() {
+  //   const messages = await Message.find();
+  //   if (!messages.length) return null;
+  //   return messages;
+  // }
 
-  @Query(() => Message, { nullable: true })
-  async getMessageById(
-    @Arg('id', () => ID) id: number
-  ) {
-    return Message.findOneBy({ id });
-  }
+  // @Query(() => Message, { nullable: true })
+  // async getMessageById(
+  //   @Arg('id', () => ID) id: number
+  // ) {
+  //   return Message.findOneBy({ id });
+  // }
 
   @Query(() => [Message])
+  @Authorized(["isPartOfChat"])
   async getMessagesByChatId(
     @Arg('chatId', () => ID) chatId: number,
     @Arg('skip', () => Int, { nullable: true }) skip: number,
@@ -48,6 +50,7 @@ export class MessageResolver {
   }
 
   @Query(() => Number)
+  @Authorized(["isPartOfChat"])
   async getUnreadCount(
     @Arg('chatId', () => ID) chatId: number,
     @Ctx() context: ContextType | ContextUserType
@@ -70,6 +73,7 @@ export class MessageResolver {
   }
 
   @Mutation(() => Message)
+  @Authorized(["isPartOfChat"])
   async createMessage(
     @Ctx() context: ContextUserType | ContextType,
     @Arg('content', () => String) content: string,
@@ -91,6 +95,7 @@ export class MessageResolver {
   }
 
   @Mutation(() => Message)
+  @Authorized(["isPartOfChat"])
   async createPollWithMessage(
     @Arg("data") data: CreatePollInput,
     @Ctx() context: ContextType | ContextUserType
