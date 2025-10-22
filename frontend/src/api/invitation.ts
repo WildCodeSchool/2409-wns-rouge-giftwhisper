@@ -32,3 +32,9 @@ export const GET_INVITATIONS_BY_GROUP = gql`
     }
   }
 `;
+
+export const DELETE_INVITATION = gql`
+  mutation DeleteInvitation($invitationId: Int!) {
+    deleteInvitation(invitationId: $invitationId)
+  }
+`;
