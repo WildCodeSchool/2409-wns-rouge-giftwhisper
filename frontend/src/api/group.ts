@@ -9,6 +9,19 @@ export const GET_GROUP = gql`
       is_secret_santa
       is_active
       created_by_id
+    }
+  }
+`;
+
+export const GET_GROUP_ADMIN = gql`
+  query GetGroupDetails($id: ID!) {
+    groupDetails(id: $id) {
+      id
+      name
+      end_date
+      is_secret_santa
+      is_active
+      created_by_id
       users {
         id
         first_name
@@ -32,6 +45,7 @@ export const GET_USER_GROUPS = gql`
         id
         first_name
         last_name
+        email
       }
     }
   }

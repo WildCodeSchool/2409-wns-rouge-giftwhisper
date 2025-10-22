@@ -21,10 +21,25 @@ export class GroupsResolver {
   //   return groups;
   // }
 
-  // Get one group by id
+
   @Query(() => Group, { nullable: true })
-  @Authorized("isGroupAdmin")
+  @Authorized(["isPartOfGroup"])
   async group(
+    @Arg("id", () => ID) id: number,
+    @Ctx() context: ContextType
+  ): Promise<Group | null> {
+    const group = await Group.findOneBy({ id });
+    context.data = { entities: [group] };
+    if (group) {
+      return group;
+    } else {
+      return null;
+    }
+  }
+
+  @Query(() => Group, { nullable: true })
+  @Authorized(["isGroupAdmin"])
+  async groupDetails(
     @Arg("id", () => ID) id: number,
     @Ctx() context: ContextType
   ): Promise<Group | null> {
@@ -45,7 +60,7 @@ export class GroupsResolver {
 
   // Get groups for a specific user
   @Query(() => [Group])
-  @Authorized("user")
+  @Authorized(["user"])
   async getUserGroups(
     @Ctx() context: ContextType
   ): Promise<Group[]> {
