@@ -8,7 +8,10 @@
     "test:unit:watch": "jest --watch",
     "test:integration": "cross-env NODE_ENV=test jest --config jest.integration.config.ts --runInBand",
     "test:integration:watch": "cross-env NODE_ENV=test jest --config jest.integration.config.ts --watch --runInBand",
-    "start": "tsnd ./src/index.ts"
+    "start": "tsnd ./src/index.ts",
+    "migration:generate": "docker compose exec back npm run migration:generate",
+    "migration:run": "docker compose exec back npm run migration:run",
+    "migration:revert": "docker compose exec back npm run migration:revert"
   },
   "author": "",
   "license": "ISC",

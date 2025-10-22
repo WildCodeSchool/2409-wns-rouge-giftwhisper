@@ -25,31 +25,30 @@ export function MessagesList({
   chatGradient,
 }: MessagesListProps) {
   return (
-    <section
-      onScroll={onScroll}
-      className="overflow-y-auto flex flex-col flex-1 px-6 py-4 space-y-3"
-    >
-      {messages &&
-        messages.map((message, i) => {
-          const isLastItem = i === messages.length - 1;
-          const isFirstItem = i === 0;
+    <section onScroll={onScroll} className="overflow-y-auto flex-1 px-6 py-4">
+      <div className="flex flex-col space-y-3 min-h-full justify-end">
+        {messages &&
+          messages.map((message, i) => {
+            const isLastItem = i === messages.length - 1;
+            const isFirstItem = i === 0;
 
-          return (
-            <MessageItem
-              key={message.id}
-              message={message}
-              currentUserId={currentUserId}
-              isLastItem={isLastItem}
-              isFirstItem={isFirstItem}
-              lastMessageRef={isLastItem ? lastMessageRef : undefined}
-              firstMessageRef={isFirstItem ? firstMessageRef : undefined}
-              onVote={onVote}
-              onRemoveVote={onRemoveVote}
-              onRemoveAllVotes={onRemoveAllVotes}
-              chatGradient={chatGradient}
-            />
-          );
-        })}
+            return (
+              <MessageItem
+                key={message.id}
+                message={message}
+                currentUserId={currentUserId}
+                isLastItem={isLastItem}
+                isFirstItem={isFirstItem}
+                lastMessageRef={isLastItem ? lastMessageRef : undefined}
+                firstMessageRef={isFirstItem ? firstMessageRef : undefined}
+                onVote={onVote}
+                onRemoveVote={onRemoveVote}
+                onRemoveAllVotes={onRemoveAllVotes}
+                chatGradient={chatGradient}
+              />
+            );
+          })}
+      </div>
     </section>
   );
 }
