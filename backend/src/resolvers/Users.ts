@@ -20,20 +20,20 @@ export class UsersResolver {
     @Arg("data") data: UserCreateInput,
     @Ctx() context: ContextType
   ): Promise<User> {
+    // Valider d'abord les données d'entrée
+    const errors = await validate(data);
+    if (errors.length > 0) {
+      throw new Error(`Validation error: ${JSON.stringify(errors)}`);
+    }
+
     const newUser = new User();
     newUser.email = data.email;
     newUser.first_name = data.first_name;
     newUser.last_name = data.last_name;
     newUser.date_of_birth = data.date_of_birth;
-
     newUser.hashedPassword = await argon2.hash(data.password);
 
-    context.data = {resolverMethod: "createUser"}
-
-    const errors = await validate(newUser);
-    if (errors.length > 0) {
-      throw new Error(`Validation error: ${JSON.stringify(errors)}`);
-    }
+    context.data = { resolverMethod: "createUser" };
 
     await newUser.save();
     return newUser;
@@ -99,7 +99,7 @@ export class UsersResolver {
     const { email, password } = data;
     //The user.hashedPassword is protected in the entity with {select: false} so we have to use
     //a queryBuilder in order to retrieve the password from the DB
-    context.data = { resolverMethod: 'login' };
+    context.data = { resolverMethod: "login" };
     const user = await User.createQueryBuilder("user")
       .addSelect("user.hashedPassword")
       .where("email = :email", { email })
@@ -120,7 +120,7 @@ export class UsersResolver {
       cookie.set("giftwhisper", token, {
         httpOnly: true,
         maxAge: 1000 * 60 * 60 * 72,
-        sameSite: "strict"
+        sameSite: "strict",
       });
       return user;
     } else {
