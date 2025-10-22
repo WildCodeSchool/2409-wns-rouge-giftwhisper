@@ -48,7 +48,7 @@ export class ChatService {
             Object.assign(new User(), receiverUser),
           ];
           chat.group = Object.assign(new Group(), group);
-          chat.name = `receiver_${receiverUser.id} gifter_${gifterUser.id}`;
+          chat.name = `receiver_${receiverUser.id}_${receiverUser.first_name} gifter_${gifterUser.id}`;
 
           const errors = await validate(chat);
           if (errors.length > 0) {
