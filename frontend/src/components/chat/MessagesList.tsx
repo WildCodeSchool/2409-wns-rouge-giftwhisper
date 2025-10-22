@@ -11,6 +11,8 @@ interface MessagesListProps {
   onRemoveVote: (pollId: number, optionId: number) => void;
   onRemoveAllVotes: (pollId: number) => void;
   chatGradient: string;
+  isSecretSanta?: boolean;
+  receiverName?: string;
 }
 
 export function MessagesList({
@@ -23,6 +25,8 @@ export function MessagesList({
   onRemoveVote,
   onRemoveAllVotes,
   chatGradient,
+  isSecretSanta = false,
+  receiverName = "",
 }: MessagesListProps) {
   return (
     <section onScroll={onScroll} className="overflow-y-auto flex-1 px-6 py-4">
@@ -45,6 +49,8 @@ export function MessagesList({
                 onRemoveVote={onRemoveVote}
                 onRemoveAllVotes={onRemoveAllVotes}
                 chatGradient={chatGradient}
+                isSecretSanta={isSecretSanta}
+                receiverName={receiverName}
               />
             );
           })}
