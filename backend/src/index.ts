@@ -4,12 +4,20 @@ import { ApolloServer, BaseContext } from "@apollo/server";
 import { expressMiddleware } from "@apollo/server/express4";
 import express from "express";
 import http from "http";
+import cors from "cors";
 import { getSchema } from "./utils/server/schema";
 import { seedAll } from "./seeds/index.seed";
 import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
 import { socketInit } from "./socket/socket";
 
 export let initializedApolloServer: ApolloServer<BaseContext> | undefined;
+export const allowedOrigins =
+  process.env.NODE_ENV === "production"
+    ? [process.env.FRONTEND_URL || "https://092024-rouge-3.wns.wilders.dev"]
+    : [
+        "http://localhost:8000",
+        "https://staging.092024-rouge-3.wns.wilders.dev",
+      ];
 
 async function initialize() {
   const dataSource = await datasource.initialize();
@@ -30,9 +38,15 @@ async function initialize() {
   initializedApolloServer = server;
   await server.start();
 
+  const corsOptions = {
+    origin: allowedOrigins,
+    credentials: true,
+  };
+
   app.use(
     "/api",
-    express.json(),
+    cors(corsOptions),
+    express.json({ limit: "1mb" }),
     expressMiddleware(server, {
       context: async ({ req, res }) => {
         return { req, res };
