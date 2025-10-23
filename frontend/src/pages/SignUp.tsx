@@ -18,6 +18,7 @@ import type { z } from "zod";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { PasswordInput } from "@/components/form/PasswordInput";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type SignUpFormData = z.infer<typeof signUpSchema>;
 
@@ -33,6 +34,7 @@ export default function SignUp() {
       birthdate: "",
       email: "",
       password: "",
+      acceptTerms: false,
     },
   });
 
@@ -164,6 +166,46 @@ export default function SignUp() {
                     <Input type="password" placeholder="••••••••" {...field} />
                   </FormControl>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="acceptTerms"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="flex-1">
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      <span>
+                        J'accepte les{" "}
+                        <Link
+                          to="/legal-notice"
+                          className="text-primary font-semibold hover:underline"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          mentions légales
+                        </Link>{" "}
+                        et la{" "}
+                        <Link
+                          to="/privacy-policy"
+                          className="text-primary font-semibold hover:underline"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          politique de confidentialité
+                        </Link>
+                      </span>
+                    </FormLabel>
+                    <FormMessage />
+                  </div>
                 </FormItem>
               )}
             />
