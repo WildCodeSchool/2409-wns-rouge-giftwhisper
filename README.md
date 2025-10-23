@@ -1,4 +1,5 @@
 # 🎁 GiftWhisper
+
 Secret Santa Management Platform
 
 GiftWhisper is a modern web application designed to facilitate Secret Santa gift exchanges with an intuitive interface and robust backend architecture.
@@ -15,6 +16,7 @@ GiftWhisper is a modern web application designed to facilitate Secret Santa gift
 - [Development](#-development)
 - [Database](#️-database)
 - [Continuous Integration (CI)](#-continuous-integration-ci)
+- [Deployment](#-deployment)
 
 ## 🔍 Overview
 
@@ -23,6 +25,7 @@ GiftWhisper is built with a modern full-stack architecture, featuring a GraphQL 
 ## 🛠️ Technical Stack
 
 ### Frontend
+
 - **React 19** - JavaScript library for building user interfaces
 - **TypeScript** - JavaScript with syntax for types
 - **Vite** - Fast build tool and development server
@@ -33,6 +36,7 @@ GiftWhisper is built with a modern full-stack architecture, featuring a GraphQL 
 - **Socket.IO Client** - Real-time communication
 
 ### Backend
+
 - **Node.js** - Runtime environment
 - **TypeScript** - JavaScript with syntax for types
 - **Apollo Server** - GraphQL server implementation
@@ -45,6 +49,7 @@ GiftWhisper is built with a modern full-stack architecture, featuring a GraphQL 
 - **Jest** - Testing framework
 
 ### Infrastructure
+
 - **Docker & Docker Compose** - Containerization and orchestration
 - **PostgreSQL** - Primary database
 - **pgAdmin** - Database administration interface
@@ -96,21 +101,25 @@ giftwhisper/
 ### Option 1: Using Docker (Recommended)
 
 1. **Clone the repository:**
+
    ```bash
    git clone <repository-url>
    cd giftwhisper
    ```
 
 2. **Configure environment variables:**
+
    ```bash
    cp .env.example .env
    ```
 
    Edit `.env` with your configuration. Most values can stay as default, but you'll need to:
+
    - Generate a `JWT_SECRET_KEY`
    - Ask a team member for SMTP credentials if you need to test email functionality
 
 3. **Start all services:**
+
    ```bash
    docker-compose up -d
    ```
@@ -123,6 +132,7 @@ giftwhisper/
 ### Option 2: Manual Installation
 
 1. **Clone and setup:**
+
    ```bash
    git clone <repository-url>
    cd giftwhisper
@@ -132,6 +142,7 @@ giftwhisper/
 2. **Setup PostgreSQL database manually**
 
 3. **Install and run backend:**
+
    ```bash
    cd backend
    npm install
@@ -149,18 +160,19 @@ giftwhisper/
 
 The application uses Docker Compose with the following services:
 
-| Service | Port | Description |
-|---------|------|-------------|
-| **front** | 5173 | React frontend application |
-| **back** | 5500 | Node.js GraphQL API |
-| **nginx** | 8000 | Reverse proxy (main access point) |
-| **db** | 3001 | PostgreSQL database |
-| **db-test** | 3002 | PostgreSQL test database |
+| Service     | Port | Description                       |
+| ----------- | ---- | --------------------------------- |
+| **front**   | 5173 | React frontend application        |
+| **back**    | 5500 | Node.js GraphQL API               |
+| **nginx**   | 8000 | Reverse proxy (main access point) |
+| **db**      | 3001 | PostgreSQL database               |
+| **db-test** | 3002 | PostgreSQL test database          |
 | **pgadmin** | 5050 | Database administration interface |
 
 ## ⌨️ Useful Commands
 
 ### Docker
+
 ```bash
 # Start all services
 docker-compose up -d
@@ -176,6 +188,7 @@ docker-compose up --build
 ```
 
 ### Backend Development
+
 ```bash
 cd backend
 
@@ -197,6 +210,7 @@ npm run test:integration:watch
 ```
 
 ### Frontend Development
+
 ```bash
 cd frontend
 
@@ -229,6 +243,7 @@ The backend is built with TypeORM and Type-GraphQL, providing a robust GraphQL A
 - **Testing** - Jest for unit and integration tests
 
 Key files:
+
 - `src/index.ts` - Server entry point
 - `src/entities/` - Database models
 - `src/resolvers/` - GraphQL resolvers
@@ -245,6 +260,7 @@ The frontend is a modern React application with:
 - **Real-time Updates** - Socket.IO client integration
 
 Key files:
+
 - `src/App.tsx` - Main application component
 - `src/components/` - Reusable UI components
 - `src/api/` - GraphQL queries and mutations
@@ -263,21 +279,26 @@ The application uses PostgreSQL with TypeORM for database operations:
 The project includes GitHub Actions workflows for automated testing and deployment:
 
 ### Staging Workflows
+
 - **staging-client.yml** - Frontend testing and deployment to staging
 - **staging-server.yml** - Backend testing with PostgreSQL and deployment
 
 ### Production Workflows
+
 - **main-client.yml** - Production frontend deployment
 - **main-server.yml** - Production backend deployment with full test suite
 
 Each workflow includes:
+
 - Dependency installation
 - Code linting (where applicable)
 - Test execution
 - Docker image building and pushing to Docker Hub
 
 ### Environment Variables for CI
+
 Configure these secrets in your GitHub repository:
+
 - `DOCKERHUB_USERNAME` & `DOCKERHUB_TOKEN` - Docker Hub credentials
 - `TEST_POSTGRES_USER` & `TEST_POSTGRES_PASSWORD` - Test database credentials
 
@@ -290,6 +311,7 @@ Both `main` and `staging` branches are protected and require pull requests for a
 #### Development Workflow
 
 1. **Feature Development:**
+
    ```bash
    # Create a new feature branch from staging
    git checkout staging
@@ -304,6 +326,7 @@ Both `main` and `staging` branches are protected and require pull requests for a
    ```
 
 2. **Pull Request to Staging:**
+
    - Open a PR from your feature branch to `staging`
    - Ensure all CI checks pass
    - Request code review from team members
@@ -315,6 +338,7 @@ Both `main` and `staging` branches are protected and require pull requests for a
    - This triggers production deployment after merge
 
 #### Branch Strategy
+
 - **`main`** - Production branch (protected)
 - **`staging`** - Pre-production testing branch (protected)
 - **`feature/*`** - Individual feature branches
@@ -334,6 +358,7 @@ For email functionality, configure SMTP settings in your `.env` file. For Gmail:
 ### Common Issues
 
 **Port conflicts:**
+
 ```bash
 # Check if ports are in use
 sudo netstat -tlnp | grep :8000
@@ -341,6 +366,7 @@ sudo netstat -tlnp | grep :5500
 ```
 
 **Database connection issues:**
+
 ```bash
 # Reset database
 docker-compose down -v
@@ -348,11 +374,29 @@ docker-compose up -d
 ```
 
 **Permission issues with volumes:**
+
 ```bash
 # Fix volume permissions
 sudo chown -R $USER:$USER ./backend/src
 sudo chown -R $USER:$USER ./frontend/src
 ```
+
+## 🚀 Deployment
+
+Le projet utilise une pipeline CI/CD complète avec GitHub Actions et DockerHub :
+
+- **Staging** : Déploiement automatique via webhook DockerHub
+- **Production** : Déploiement manuel pour un contrôle maximal
+
+Pour la documentation complète du déploiement, consultez : **[docs/Deploiement.md](docs/Deploiement.md)**
+
+Cette documentation couvre :
+
+- Architecture de déploiement et flux CI/CD
+- Configuration des environnements (staging/production)
+- Déploiement automatique (staging) vs manuel (production)
+- Commandes de déploiement manuel et rollback
+- Monitoring, logs et troubleshooting
 
 ## 📚 Additional Resources
 
