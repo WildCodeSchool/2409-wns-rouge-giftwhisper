@@ -27,6 +27,10 @@ export const signUpSchema = z
     confirmPassword: z
       .string()
       .min(8, "Le mot de passe doit contenir au moins 8 caractères"),
+    acceptTerms: z.boolean().refine((val) => val === true, {
+      message:
+        "Vous devez accepter les conditions d'utilisation et la politique de confidentialité",
+    }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Les mots de passe ne correspondent pas",

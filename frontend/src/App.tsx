@@ -15,6 +15,8 @@ import Settings from "./pages/Settings";
 import SignUp from "./pages/SignUp";
 import InvitationHandler from "./components/InvitationHandler";
 import { Toaster } from "./components/ui/sonner";
+import LegalNotice from "./pages/LegalNotice";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import {
   ProtectedLayout,
   PublicOnlyLayout,
@@ -41,6 +43,8 @@ function App() {
             <Route Component={PageLayout}>
               <Route path="/" Component={HomePage} />
               <Route path="/about" Component={About} />
+              <Route path="/legal-notice" Component={LegalNotice} />
+              <Route path="/privacy-policy" Component={PrivacyPolicy} />
 
               {/* Routes publiques (uniquement accessibles si NON authentifié) */}
               <Route element={<PublicOnlyLayout />}>
