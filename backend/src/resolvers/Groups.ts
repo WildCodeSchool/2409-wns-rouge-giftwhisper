@@ -84,7 +84,7 @@ export class GroupsResolver {
 
   // Create a new group
   @Mutation(() => Group)
-  @Authorized("user")
+  @Authorized(["user"])
   async createGroup(
     @Arg("data", () => GroupCreateInput) data: GroupCreateInput,
     @Ctx() context: ContextType
