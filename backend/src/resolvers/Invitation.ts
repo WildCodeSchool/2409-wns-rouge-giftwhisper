@@ -1,12 +1,24 @@
-import { Arg, Authorized, Ctx, ID, Mutation, Query, Resolver } from "type-graphql";
-import { Invitation, InvitationValidationResult } from "../entities/Invitation";
+import {
+  Arg,
+  Authorized,
+  Ctx,
+  ID,
+  Int,
+  Mutation,
+  Query,
+  Resolver,
+} from "type-graphql";
+import {
+  Invitation,
+  InvitationCreateInput,
+  InvitationValidationResult,
+} from "../entities/Invitation";
 import { Group } from "../entities/Group";
 import { User } from "../entities/User";
 import { ContextType, getUserFromContext } from "../auth";
 
 @Resolver()
 export class InvitationResolver {
-
   // @Mutation(() => Invitation)
   // async createInvitation(
   //   @Arg("data", () => InvitationCreateInput) data: InvitationCreateInput
@@ -18,7 +30,6 @@ export class InvitationResolver {
   async validateInvitationToken(
     @Arg("token", () => String) token: string
   ): Promise<InvitationValidationResult | null> {
-
     // 1. On récupère l'invitation par son token
     const invitation = await Invitation.findOne({
       where: { token },
@@ -33,19 +44,19 @@ export class InvitationResolver {
     // 3. On renvoie le groupe ET l'email de l'invitation
     return {
       group: invitation.group,
-      invitationEmail: invitation.email
+      invitationEmail: invitation.email,
     };
   }
 
   // WARNING : We should get the user from the context, not from InvitationAcceptInput variables
   @Mutation(() => Boolean)
-  @Authorized(['user'])
+  @Authorized(["user"])
   async acceptInvitation(
     @Arg("token", () => String) token: string,
     @Ctx() context: ContextType
   ): Promise<boolean> {
     const userFromContext = await getUserFromContext(context);
-    if (!userFromContext) throw new Error('Invalid user');
+    if (!userFromContext) throw new Error("Invalid user");
     // 1. On récupère l'invitation
     const invitation = await Invitation.findOne({
       where: { token: token },
@@ -76,14 +87,15 @@ export class InvitationResolver {
       throw new Error("Groupe non trouvé");
     }
 
-    const isUserAlreadyMember = groupWithUsers.users.some(u => u.id === userFromContext.id);
+    const isUserAlreadyMember = groupWithUsers.users.some(
+      (u) => u.id === userFromContext.id
+    );
 
     if (isUserAlreadyMember) {
       // L'utilisateur est déjà membre, on supprime quand même l'invitation
       await Invitation.remove(invitation);
       return true;
     } else {
-
       const group = await Group.findOne({
         where: { id: invitation.group.id },
         relations: { users: true },
@@ -93,20 +105,22 @@ export class InvitationResolver {
         throw new Error("Groupe non trouvé");
       }
 
-      // 3. On ajoute l'utilisateur au groupe 
+      // 3. On ajoute l'utilisateur au groupe
       try {
         // On vérifie si l'utilisateur existe déjà dans le groupe
-        const userExists = group.users.some(u => u.id === user.id);
+        const userExists = group.users.some((u) => u.id === user.id);
 
         if (!userExists) {
           group.users.push(user);
           await group.save();
         }
       } catch (error) {
-        console.error("Erreur lors de l'ajout de l'utilisateur au groupe:", error);
+        console.error(
+          "Erreur lors de l'ajout de l'utilisateur au groupe:",
+          error
+        );
         throw new Error("Erreur lors de l'ajout de l'utilisateur au groupe");
       }
-
     }
 
     // 4. On supprime l'invitation
@@ -123,7 +137,7 @@ export class InvitationResolver {
   // }
 
   @Query(() => [Invitation])
-  @Authorized(['isGroupAdmin'])
+  @Authorized(["isGroupAdmin"])
   async getInvitationsByGroup(
     @Arg("groupId", () => ID) groupId: number
   ): Promise<Invitation[]> {
@@ -134,7 +148,6 @@ export class InvitationResolver {
     });
   }
 
-  // Not used
   // @Mutation(() => Boolean)
   // async deleteInvitation(
   //   @Arg("invitationId") invitationId: number
@@ -150,4 +163,17 @@ export class InvitationResolver {
   //   await Invitation.remove(invitation);
   //   return true;
   // }
+
+  @Mutation(() => Boolean)
+  //@Authorized(["isGroupAdmin"])
+  async deleteInvitation(
+    @Arg("invitationId", () => Int) invitationId: number
+  ): Promise<boolean> {
+    const invitation = await Invitation.findOne({
+      where: { id: invitationId },
+    });
+    if (!invitation) throw new Error("Invitation non trouvée.");
+    await Invitation.remove(invitation);
+    return true;
+  }
 }
