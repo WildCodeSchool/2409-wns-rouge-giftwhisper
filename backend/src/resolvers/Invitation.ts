@@ -48,7 +48,6 @@ export class InvitationResolver {
     };
   }
 
-  // WARNING : We should get the user from the context, not from InvitationAcceptInput variables
   @Mutation(() => Boolean)
   @Authorized(["user"])
   async acceptInvitation(
@@ -165,7 +164,7 @@ export class InvitationResolver {
   // }
 
   @Mutation(() => Boolean)
-  //@Authorized(["isGroupAdmin"])
+  @Authorized(["isInvitationPartOfGroupAdmin"])
   async deleteInvitation(
     @Arg("invitationId", () => Int) invitationId: number
   ): Promise<boolean> {

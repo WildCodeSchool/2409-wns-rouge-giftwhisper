@@ -115,6 +115,11 @@ export const authChecker: AuthChecker<ContextType> = async (
     const poll = await Poll.findOne({ where: { id: pollId }, relations: ['chat', 'chat.users'] });
     if (!poll?.chat) return false;
     return await checkAuthorisation({ method: "isPartOfChat", requestingUserId: user.id, entity: poll.chat });
+  } else if (roles.includes('isInvitationPartOfGroupAdmin')) {
+    const invitationId = getEntityIdFromGQLInfo(info.variableValues, "invitation");
+    const invitation = await Invitation.findOne({ where: { id: invitationId }, relations: ['group'] });
+    if (!invitation?.group) return false;
+    return await checkAuthorisation({ method: "isGroupAdmin", requestingUserId: user.id, entity: invitation.group });
   }
   return false;
 };
