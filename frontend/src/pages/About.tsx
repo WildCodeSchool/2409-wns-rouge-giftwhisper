@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function About() {
+  const { isAuthenticated } = useAuth();
   return (
     <div className="flex flex-col items-center px-4 py-10 gap-8 md:px-20 xl:px-56 2xl:px-80">
       <header className="w-full text-center md:text-left">
@@ -41,12 +43,21 @@ export default function About() {
       </section>
 
       <div className="flex flex-col md:flex-row gap-4 mt-8">
-        <Button variant="outline">
-          <Link to="/">Retour à l'accueil</Link>
-        </Button>
-        <Button variant="primary">
-          <Link to="/sign-up">S'inscrire</Link>
-        </Button>
+
+        {!isAuthenticated ? (
+          <>
+            <Button variant="outline">
+              <Link to="/">Retour à l'accueil</Link>
+            </Button>
+            <Button variant="primary">
+              <Link to="/sign-up">S'inscrire</Link>
+            </Button>
+          </>
+        ) : (
+          <Button variant="outline">
+            <Link to="/dashboard">Retour à l'accueil</Link>
+          </Button>
+        )}
       </div>
     </div>
   );
