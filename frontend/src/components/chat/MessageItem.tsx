@@ -1,5 +1,6 @@
 import { PollMessage } from "../PollMessage";
 import { Poll } from "@/utils/types/chat";
+import { getGradientByName } from "../ChatSelector";
 
 interface MessageItemProps {
   message: {
@@ -69,7 +70,7 @@ export function MessageItem({
           isOwnMessage ? "flex-row-reverse" : ""
         }`}
       >
-        <div className={`w-2 h-2 ${chatGradient} rounded-full`}></div>
+        <div className={`w-2 h-2 ${getGradientByName(message.createdBy.first_name)} rounded-full`}></div>
         <span className="text-xs text-slate-500 font-medium">
           {getDisplayName()}
         </span>
