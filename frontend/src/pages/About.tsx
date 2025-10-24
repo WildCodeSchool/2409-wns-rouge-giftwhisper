@@ -5,60 +5,51 @@ import { useAuth } from "@/hooks/useAuth";
 export default function About() {
   const { isAuthenticated } = useAuth();
   return (
-    <div className="flex flex-col items-center px-4 py-10 gap-8 md:px-20 xl:px-56 2xl:px-80">
-      <header className="w-full text-center md:text-left">
-        <h1 className="text-3xl font-bold text-primary mb-4">
-          À propos de GiftWhisper
-        </h1>
-        <p className="text-lg md:text-xl text-muted-foreground">
-          Offrir un cadeau, c’est du bonheur… mais l’organisation peut vite
+    <div className="min-h-screen flex flex-col justify-between px-4 py-6">
+      <header className="flex flex-col items-center gap-4 py-12">
+        <h1 className="text-3xl text-primary">À PROPOS DE GIFTWHISPER</h1>
+        <p className="text-lg md:text-xl text-muted-foreground text-center">
+          Offrir un cadeau, c'est du bonheur… mais l'organisation peut vite
           devenir un casse-tête ! 🎁
         </p>
       </header>
 
-      <section className="flex flex-col gap-6 text-justify">
-        <p>
-          <strong>GiftWhisper</strong> est une plateforme qui t’aide à organiser
-          facilement des cadeaux à plusieurs. Que ce soit pour un anniversaire,
-          un départ ou un Secret Santa, finis les galères de messagerie et
-          d’organisation !
-        </p>
-
-        <p>
-          En quelques clics, tu peux créer un groupe, inviter des participants,
-          échanger des idées de cadeaux, et même tirer au sort les rôles si tu
-          choisis le mode Secret Santa.
-        </p>
-
-        <p>
-          Notre mission : rendre l’organisation de cadeaux simple, fluide, et
-          agréable pour tout le monde.
-        </p>
-
-        <p>
-          Et bien sûr, <strong>le respect de ta vie privée est une priorité</strong> :
-          tes données sont utilisées uniquement pour t’offrir une meilleure
-          expérience, jamais revendues (pour l'instant).
-        </p>
-      </section>
-
-      <div className="flex flex-col md:flex-row gap-4 mt-8">
-
-        {!isAuthenticated ? (
-          <>
+      <main className="flex-1 flex flex-col items-center justify-start">
+        <section className="flex flex-col gap-6 text-justify w-full max-w-6xl px-8 md:px-16 lg:px-24 xl:px-32">
+          <p>
+            <strong>GiftWhisper</strong> est une plateforme qui t'aide à organiser
+            facilement des cadeaux à plusieurs. Que ce soit pour un anniversaire,
+            un départ ou un Secret Santa, finis les galères de messagerie et
+            d'organisation !
+          </p>
+          <p>
+            En quelques clics, tu peux créer un groupe, inviter des participants,
+            échanger des idées de cadeaux, et même tirer au sort les rôles si tu
+            choisis le mode Secret Santa.
+          </p>
+          <p>
+            Notre mission : rendre l'organisation de cadeaux simple, fluide, et
+            agréable pour tout le monde.
+          </p>
+          <p>
+            Et bien sûr, <strong>le respect de ta vie privée est une priorité</strong> :
+            tes données sont utilisées uniquement pour t'offrir une meilleure
+            expérience, jamais revendues (pour l'instant).
+          </p>
+          <div className="flex flex-col md:flex-row gap-4 justify-center items-center mt-12">
             <Button variant="outline">
-              <Link to="/">Retour à l'accueil</Link>
+            <Link to={isAuthenticated ? "/dashboard" : "/"}>
+                {isAuthenticated ? "Retour au tableau de bord" : "Retour à l'accueil"}
+              </Link>
             </Button>
-            <Button variant="primary">
-              <Link to="/sign-up">S'inscrire</Link>
-            </Button>
-          </>
-        ) : (
-          <Button variant="outline">
-            <Link to="/dashboard">Retour à l'accueil</Link>
-          </Button>
-        )}
-      </div>
+            {!isAuthenticated && (
+              <Button variant="primary">
+                <Link to="/sign-up">S'inscrire</Link>
+              </Button>
+            )}
+          </div>
+        </section>
+      </main>
     </div>
   );
 }
