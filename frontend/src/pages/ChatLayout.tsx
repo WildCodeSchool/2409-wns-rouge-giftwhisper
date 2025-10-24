@@ -23,7 +23,7 @@ function ChatLayout() {
 
   return (
     <>
-      <div className="flex h-full overflow-hidden">
+      <div className="flex h-full min-h-0 overflow-hidden">
         {/* Desktop: Toujours afficher la sidebar */}
         <aside className="bg-[#FAFAFA] hidden md:flex md:flex-col">
           <ChatSelect />
@@ -33,18 +33,20 @@ function ChatLayout() {
         {isMobile ? (
           <>
             {!chatId ? (
-              <div className="flex flex-col w-full md:hidden">
+              <div className="flex flex-col flex-1 w-full md:hidden">
                 <ChatSelect />
               </div>
             ) : (
-              <div className="flex flex-col w-full md:hidden">
+              <div className="flex flex-col flex-1 min-h-0 w-full md:hidden">
                 <Outlet />
               </div>
             )}
           </>
         ) : (
           /* Desktop: Toujours afficher l'Outlet */
-          <Outlet />
+          <div className="flex-1 h-full min-h-0 overflow-hidden">
+            <Outlet />
+          </div>
         )}
       </div>
     </>

@@ -29,7 +29,7 @@ export function MessagesList({
   receiverName = "",
 }: MessagesListProps) {
   return (
-    <section onScroll={onScroll} className="overflow-y-auto flex-1 px-6 py-4">
+    <section onScroll={onScroll} className="overflow-y-auto flex-1 min-h-0 px-6 py-4">
       <div className="flex flex-col space-y-3 min-h-full justify-end">
         {messages &&
           messages.map((message, i) => {

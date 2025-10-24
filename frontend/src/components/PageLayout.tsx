@@ -13,7 +13,7 @@ export function PageLayout() {
         <HeaderPage classname="bg-[#D36567] flex items-center h-[64px] md:h-[120px] px-5 py-2 md:px-11 md:py-4">
           <HeaderContent />
         </HeaderPage>
-        <div className="flex-1 flex flex-col">
+        <div className={`flex-1 flex flex-col ${isChatPage ? 'min-h-0' : ''}`}>
           <Outlet />
         </div>
         {!isChatPage && <Footer />}

@@ -171,8 +171,8 @@ function ChatWindow() {
 
   return (
     <>
-      <article className="flex flex-col w-full h-full bg-white">
-        <div className="flex flex-col flex-1 overflow-hidden relative">
+      <article className="flex flex-col w-full h-full bg-white min-h-0">
+        <div className="flex flex-col flex-1 min-h-0 overflow-hidden relative">
           <LoadMoreButton
             onClick={loadMoreMessages}
             isVisible={displayMoreMessage}
@@ -198,14 +198,14 @@ function ChatWindow() {
             }
             isVisible={displayAutoScrollDown}
           />
-
-          <ChatInputForm
-            message={message}
-            onMessageChange={setMessage}
-            onSubmit={handleSubmit}
-            onCreatePoll={() => setShowPollModal(true)}
-          />
         </div>
+
+        <ChatInputForm
+          message={message}
+          onMessageChange={setMessage}
+          onSubmit={handleSubmit}
+          onCreatePoll={() => setShowPollModal(true)}
+        />
       </article>
 
       <CreatePollModal
