@@ -15,16 +15,26 @@ interface GroupCardDisplayProps {
 }
 
 // Displays a list of group cards with conditional rendering for active and inactive groups
-export default function GroupCardDisplay({ groups, user, groupColors }: GroupCardDisplayProps) {
+export default function GroupCardDisplay({
+  groups,
+  user,
+  groupColors,
+}: GroupCardDisplayProps) {
   const navigate = useNavigate();
-  const [showTooltip, setShowTooltip] = useState<{ [key: string]: boolean }>({});
+  const [showTooltip, setShowTooltip] = useState<{ [key: string]: boolean }>(
+    {}
+  );
 
   useEffect(() => {
     if (!Object.values(showTooltip).some(Boolean)) return;
     const handleClickOutside = (event: MouseEvent) => {
       Object.keys(showTooltip).forEach((groupId) => {
         if (showTooltip[groupId]) {
-          if (!(event.target as HTMLElement).closest(`#inactive-group-card-${groupId}`)) {
+          if (
+            !(event.target as HTMLElement).closest(
+              `#inactive-group-card-${groupId}`
+            )
+          ) {
             setShowTooltip((prev) => ({ ...prev, [groupId]: false }));
           }
         }
@@ -37,7 +47,7 @@ export default function GroupCardDisplay({ groups, user, groupColors }: GroupCar
   return (
     <>
       {groups.map((group, idx) => {
-        const isAdmin = group.users?.[0]?.id === user?.id; // ici l'admin est le 1er membre du groupe, à modifier plus tard
+        const isAdmin = group.created_by_id === user?.id;
         const inactiveClass = !group.is_active ? "opacity-50 bg-gray-200" : "";
 
         // Active Group: normal card
@@ -86,10 +96,13 @@ export default function GroupCardDisplay({ groups, user, groupColors }: GroupCar
                   <div
                     id={cardId}
                     className="opacity-50 bg-gray-200 cursor-not-allowed pointer-events-auto"
-                    onClick={e => {
+                    onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      setShowTooltip(prev => ({ ...prev, [group.id]: !prev[group.id] }));
+                      setShowTooltip((prev) => ({
+                        ...prev,
+                        [group.id]: !prev[group.id],
+                      }));
                     }}
                     tabIndex={0}
                     role="button"
@@ -109,7 +122,9 @@ export default function GroupCardDisplay({ groups, user, groupColors }: GroupCar
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
-                  Ce groupe est en attente d'acceptation de toutes les invitations du groupe, vous serez notifié lorsqu'il sera actif.
+                  Ce groupe est en attente d'acceptation de toutes les
+                  invitations du groupe, vous serez notifié lorsqu'il sera
+                  actif.
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
