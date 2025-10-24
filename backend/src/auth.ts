@@ -89,32 +89,54 @@ const getEntityIdFromGQLInfo = (variableValues: any, entity: string): number | u
   return id;
 };
 
-// todo: Refacto
-export const authChecker: AuthChecker<ContextType> = async (
-  { root, args, context, info },
+type AuthCheckerAuthorizationType = AuthorisationType | 'isPollPartOfChat' | 'isInvitationPartOfGroupAdmin' | 'user';
+interface AuthCheckerAuthorizationInfo {
+  id: number | undefined;
+  entity: any;
+  relations?: string[];
+  authMethod?: AuthorisationType;
+}
+
+// INFO DEV : Since the authorization logic is based on the appartenance of a user to a given entity (group or chat) if the authCheck
+// is called without a variable allowing us to identify either of this entity, we need to go the extra step and link the queried resolver to
+// one of those entity (exemple below for isPollPartOfChat & isInvitationPartOfGroupAdmin) 
+// ex : - isPollPartOfChat : query => poll with chat => check authorization to chat
+// - isInvitationPartOfGroupAdmin : query => invitation with group => check the authorization to group (in this case admin)
+export const authChecker: AuthChecker<ContextType, AuthCheckerAuthorizationType> = async (
+  { context, info },
   roles
 ) => {
+  if (!Array.isArray(roles)) throw new Error('The user authorization roles must be an array');
   const user = await getUserFromContext(context);
   if (!user) return false;
-  if (roles.includes('user')) {
-    return true;
-  } else if (roles.includes('isPartOfGroup') || roles.includes('isGroupAdmin')) {
-    const method = roles.includes('isGroupAdmin') ? 'isGroupAdmin' : 'isPartOfGroup';
-    if (!info.variableValues) return false;
-    const groupId = getEntityIdFromGQLInfo(info.variableValues, "group");
-    const group = await Group.findOne({ where: { id: groupId }, relations: { users: true } });
-    return await checkAuthorisation({ method, requestingUserId: user.id, entity: group });
-  } else if (roles.includes('isPartOfChat')) {
-    if (!info.variableValues) return false;
-    const chatId = getEntityIdFromGQLInfo(info.variableValues, "chat");
-    const chat = await Chat.findOne({ where: { id: chatId }, relations: { users: true } });
-    return await checkAuthorisation({ method: "isPartOfChat", requestingUserId: user.id, entity: chat });
-  } else if (roles.includes('isPollPartOfChat')) {
-    if (!info.variableValues) return false;
-    const pollId = getEntityIdFromGQLInfo(info.variableValues, "poll");
-    const poll = await Poll.findOne({ where: { id: pollId }, relations: ['chat', 'chat.users'] });
-    if (!poll?.chat) return false;
-    return await checkAuthorisation({ method: "isPartOfChat", requestingUserId: user.id, entity: poll.chat });
+
+  const { variableValues } = info;
+  const authorizations: Record<AuthCheckerAuthorizationType, AuthCheckerAuthorizationInfo> = {
+    user: { id: user.id, entity: User },
+    isPartOfGroup: { id: getEntityIdFromGQLInfo(variableValues, "group"), entity: Group, authMethod: "isPartOfGroup", relations: ['users'] },
+    isGroupAdmin: { id: getEntityIdFromGQLInfo(variableValues, "group"), entity: Group, authMethod: 'isGroupAdmin' },
+    isPartOfChat: { id: getEntityIdFromGQLInfo(variableValues, "chat"), entity: Chat, authMethod: 'isPartOfChat', relations: ['users'] },
+    isPollPartOfChat: { id: getEntityIdFromGQLInfo(variableValues, "poll"), entity: Poll, relations: ['chat', 'chat.users'], authMethod: 'isPartOfChat' },
+    isInvitationPartOfGroupAdmin: { id: getEntityIdFromGQLInfo(variableValues, "invitation"), entity: Invitation, relations: ['group'], authMethod: 'isGroupAdmin' },
   }
+
+  for (const role of roles) {
+    if (!authorizations[role]) throw new Error('Authorized role not recognized in the AuthChecker');
+    if (role === 'user') return true;
+    const { id, entity, relations, authMethod } = authorizations[role];
+    const entityInstance = await entity.findOne({ where: { id }, relations: relations ?? [] });
+    if (!authMethod) throw new Error('Authorization method missing in the AuthCheck');
+    if (role === 'isPollPartOfChat') {
+      if (!entityInstance.chat) return false
+      return checkAuthorisation({ method: authMethod, requestingUserId: user.id, entity: entityInstance.chat });
+    }
+    if (role === 'isInvitationPartOfGroupAdmin') {
+      if (!entityInstance.group) return false
+      return checkAuthorisation({ method: authMethod, requestingUserId: user.id, entity: entityInstance.group });
+    }
+    return checkAuthorisation({ method: authMethod, requestingUserId: user.id, entity: entityInstance });
+  }
+
   return false;
 };
+

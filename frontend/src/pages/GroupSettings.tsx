@@ -40,7 +40,7 @@ import {
   GET_GROUP_ADMIN,
   DELETE_GROUP,
 } from "@/api/group";
-import { GET_INVITATIONS_BY_GROUP } from "@/api/invitation";
+import { DELETE_INVITATION, GET_INVITATIONS_BY_GROUP } from "@/api/invitation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -134,9 +134,12 @@ export default function GroupSettings() {
     variables: { id },
   });
 
-  const { data: invitationsData } = useQuery(GET_INVITATIONS_BY_GROUP, {
-    variables: { groupId: id },
-  });
+  const { data: invitationsData, refetch: refetchInvitations } = useQuery(
+    GET_INVITATIONS_BY_GROUP,
+    {
+      variables: { groupId: id },
+    }
+  );
 
   const [removeUserFromGroup] = useMutation(REMOVE_USER_FROM_GROUP);
   const [updateGroup] = useMutation(UPDATE_GROUP);
@@ -149,6 +152,8 @@ export default function GroupSettings() {
   const [isSecretSanta, setIsSecretSanta] = useState(false);
   const [isActive, setIsActive] = useState(true);
   const [memberToDelete, setMemberToDelete] = useState<any | null>(null);
+
+  const [deleteInvitation] = useMutation(DELETE_INVITATION);
 
   // États pour l'ajout de membres
   const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
@@ -235,6 +240,7 @@ export default function GroupSettings() {
 
       // Rafraîchir les données du groupe
       await refetch();
+      await refetchInvitations();
 
       toast.success("Modifications enregistrées", {
         description: "Les paramètres ont bien été mis à jour.",
@@ -270,6 +276,25 @@ export default function GroupSettings() {
     }
   };
 
+  const handleDeleteInvitation = async (invitationId: number) => {
+    try {
+      await deleteInvitation({
+        variables: { invitationId },
+      });
+      await refetchInvitations();
+      toast.success("Invitation supprimée");
+    } catch (error: any) {
+      console.error("Erreur lors de la suppression de l'invitation:", error);
+      const errorMessage =
+        error?.graphQLErrors?.[0]?.message ||
+        error?.message ||
+        "Une erreur est survenue lors de la suppression de l'invitation";
+      toast.error("Erreur lors de la suppression", {
+        description: errorMessage,
+      });
+    }
+  };
+
   const handleCancel = () => {
     // Reset to original values
     if (originalData) {
@@ -297,6 +322,10 @@ export default function GroupSettings() {
       });
 
       // Afficher le succès
+      // Rafraîchir les données du groupe
+      await refetch();
+      await refetchInvitations();
+
       toast.success("Groupe activé", {
         description:
           "Les chats ont été générés et le groupe est maintenant actif.",
@@ -367,6 +396,7 @@ export default function GroupSettings() {
 
       // Rafraîchir les données du groupe
       await refetch();
+      await refetchInvitations();
       setMemberToDelete(null);
     } catch (error: any) {
       console.error("Erreur lors de la suppression du membre:", error);
@@ -411,6 +441,7 @@ export default function GroupSettings() {
 
       // Rafraîchir les données du groupe
       await refetch();
+      await refetchInvitations();
 
       toast.success("Invitations envoyées", {
         description: `Les invitations ont été envoyées à ${
@@ -912,9 +943,46 @@ export default function GroupSettings() {
                               ).toLocaleDateString("fr-FR")}
                             </p>
                           </div>
-                          <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full border border-yellow-200">
+                          {/* <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full border border-yellow-200">
                             En attente
-                          </span>
+                          </span> */}
+
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className="text-red-600 border-red-200 hover:bg-red-50"
+                                aria-label={`Supprimer l'invitation ${invitation.email}`}
+                                title="Supprimer l'invitation"
+                              >
+                                <Trash2 className="w-5 h-5" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Supprimer cette invitation ?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Cette action est irréversible. L'invitation
+                                  sera supprimée.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Annuler</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() =>
+                                    handleDeleteInvitation(
+                                      Number(invitation.id)
+                                    )
+                                  }
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  Confirmer
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       )
                     )
