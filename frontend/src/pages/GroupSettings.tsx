@@ -169,6 +169,9 @@ export default function GroupSettings() {
   const [originalData, setOriginalData] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
 
+  // État pour le chargement de l'activation
+  const [isActivating, setIsActivating] = useState(false);
+
   useEffect(() => {
     if (data?.groupDetails) {
       const groupData = {
@@ -309,12 +312,16 @@ export default function GroupSettings() {
 
   const handleActivateGroup = async () => {
     try {
+      // Activer l'état de chargement visuel
+      setIsActivating(true);
+
       await activateGroup({
         variables: {
           id: id,
         },
       });
 
+      // Afficher le succès
       // Rafraîchir les données du groupe
       await refetch();
       await refetchInvitations();
@@ -322,9 +329,18 @@ export default function GroupSettings() {
       toast.success("Groupe activé", {
         description:
           "Les chats ont été générés et le groupe est maintenant actif.",
+        duration: 1000,
       });
+
+      // Rediriger vers le dashboard après un court délai
+      setTimeout(() => {
+        navigate("/dashboard", { replace: true });
+      }, 2000);
     } catch (error: any) {
       console.error("Erreur lors de l'activation du groupe:", error);
+
+      // Désactiver l'état de chargement en cas d'erreur
+      setIsActivating(false);
 
       const errorMessage =
         error.graphQLErrors?.[0]?.message ||
@@ -480,6 +496,27 @@ export default function GroupSettings() {
 
     return invitation ? new Date(invitation.created_at) : null;
   };
+
+  // Affichage du loader pendant l'activation
+  if (isActivating) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-4 py-6 bg-gray-50">
+        <div className="flex flex-col items-center gap-6">
+          <div className="relative">
+            <div className="w-20 h-20 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+          </div>
+          <div className="text-center space-y-2">
+            <h2 className="text-2xl font-bold text-primary">
+              Activation du groupe en cours...
+            </h2>
+            <p className="text-gray-600">
+              Génération des chats et configuration du groupe
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col px-4 py-6 bg-gray-50">
