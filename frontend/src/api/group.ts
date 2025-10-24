@@ -41,6 +41,7 @@ export const GET_USER_GROUPS = gql`
       is_secret_santa
       is_active
       created_at
+      created_by_id
       users {
         id
         first_name
