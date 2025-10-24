@@ -13,7 +13,7 @@ type ChatSelectorProps = {
   >;
 };
 
-function getGradientByName(name: string) {
+export function getGradientByName(name: string) {
   let colorSchemeGradientIndex = 0;
   for (const char of name) {
     colorSchemeGradientIndex += char.charCodeAt(0);
@@ -24,6 +24,7 @@ function getGradientByName(name: string) {
     ];
   return gardient;
 }
+
 function ChatSelector({
   chat,
   unreadMessageCountByChat,
