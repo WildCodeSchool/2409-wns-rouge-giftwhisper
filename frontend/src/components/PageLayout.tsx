@@ -1,9 +1,12 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { HeaderPage } from "./HeaderPage";
 import { HeaderContent } from "./HeaderContent";
 import { Footer } from "./Footer";
 
 export function PageLayout() {
+  const location = useLocation();
+  const isChatPage = location.pathname.includes("/chat-window");
+
   return (
     <>
       <main className="h-screen flex flex-col">
@@ -13,7 +16,7 @@ export function PageLayout() {
         <div className="flex-1 flex flex-col">
           <Outlet />
         </div>
-        <Footer />
+        {!isChatPage && <Footer />}
       </main>
     </>
   );
