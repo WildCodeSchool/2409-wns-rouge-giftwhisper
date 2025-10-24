@@ -37,7 +37,7 @@ function Dashboard() {
   const [validateInvitationToken] = useLazyQuery(VALIDATE_INVITATION_TOKEN);
   const [acceptInvitationMutation] = useMutation(ACCEPT_INVITATION);
 
-  const { data, loading, error } = useQuery(GET_USER_GROUPS);
+  const { data, loading, error } = useQuery(GET_USER_GROUPS, { fetchPolicy: 'network-only' });
 
   // Palette de couleurs pour les cards de groupes
   const groupColors = [
@@ -175,11 +175,10 @@ function Dashboard() {
             <div className="relative bg-white rounded-full p-2 shadow-lg border border-gray-200 overflow-hidden">
               {/* Indicateur animé avec effet élastique satisfaisant */}
               <div
-                className={`absolute top-2 bottom-2 rounded-full bg-gradient-to-r from-[#D36567] to-[#B12A5B] shadow-lg transition-all duration-700 ease-out transform-gpu ${
-                  giftMode === "classic"
+                className={`absolute top-2 bottom-2 rounded-full bg-gradient-to-r from-[#D36567] to-[#B12A5B] shadow-lg transition-all duration-700 ease-out transform-gpu ${giftMode === "classic"
                     ? "left-2 w-[calc(50%-4px)]"
                     : "left-[calc(50%)] w-[calc(50%-8px)]"
-                }`}
+                  }`}
                 style={{
                   transitionTimingFunction: "cubic-bezier(0.34, 1.56, 0.64, 1)",
                 }}
@@ -189,11 +188,10 @@ function Dashboard() {
               <div className="relative flex">
                 <button
                   onClick={() => setGiftMode("classic")}
-                  className={`relative z-10 px-8 py-3 cursor-pointer rounded-full text-base font-semibold transition-all duration-500 flex-1 transform ${
-                    giftMode === "classic"
+                  className={`relative z-10 px-8 py-3 cursor-pointer rounded-full text-base font-semibold transition-all duration-500 flex-1 transform ${giftMode === "classic"
                       ? "text-white translate-y-0"
                       : "text-gray-600 hover:text-gray-900 hover:-translate-y-0.5"
-                  }`}
+                    }`}
                   style={{
                     transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)",
                   }}
@@ -202,11 +200,10 @@ function Dashboard() {
                 </button>
                 <button
                   onClick={() => setGiftMode("secret")}
-                  className={`relative z-10 px-8 py-3 cursor-pointer rounded-full text-base font-semibold transition-all duration-500 flex-1 transform ${
-                    giftMode === "secret"
+                  className={`relative z-10 px-8 py-3 cursor-pointer rounded-full text-base font-semibold transition-all duration-500 flex-1 transform ${giftMode === "secret"
                       ? "text-white translate-y-0"
                       : "text-gray-600 hover:text-gray-900 hover:-translate-y-0.5"
-                  }`}
+                    }`}
                   style={{
                     transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)",
                   }}
