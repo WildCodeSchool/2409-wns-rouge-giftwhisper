@@ -23,7 +23,7 @@ function ChatLayout() {
 
   return (
     <>
-      <div className="flex h-screen overflow-hidden">
+      <div className="flex h-full overflow-hidden">
         {/* Desktop: Toujours afficher la sidebar */}
         <aside className="bg-[#FAFAFA] hidden md:flex md:flex-col">
           <ChatSelect />
