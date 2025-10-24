@@ -70,7 +70,7 @@ export function MessageItem({
           isOwnMessage ? "flex-row-reverse" : ""
         }`}
       >
-        <div className={`w-2 h-2 ${getGradientByName(message.createdBy.first_name) ? getGradientByName(message.createdBy.first_name) : chatGradient} rounded-full`}></div>
+        <div className={`w-2 h-2 ${message?.createdBy?.first_name ? getGradientByName(message.createdBy.first_name) : chatGradient} rounded-full`}></div>
         <span className="text-xs text-slate-500 font-medium">
           {getDisplayName()}
         </span>
